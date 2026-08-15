@@ -7,6 +7,7 @@ import { routes } from "./routes/index.js";
 import { env } from "./config/env.js";
 import dotenv from "dotenv";
 import { pinoHttp } from "pino-http";
+import { sequelize } from "./config/sequelize.js";
 
 dotenv.config()
 
@@ -59,8 +60,21 @@ async function start() {
 
   app.use("/api/v1", routes);
 
-  app.listen(HTTP_PORT, HTTP_HOST, () => {
+  try {
+    await sequelize.authenticate()
+    console.log("DATABASE CONNECTION ESTABILISHED")
+  } catch (error) {
+    console.error(`CANNOT CONNECT TO DATABASE: ${error}`)
+    process.exit(1)
+  }
+
+  const httpServer = app.listen(HTTP_PORT, HTTP_HOST, () => {
     console.log(`HTTP SERVER RUNNING ON PORT: ${HTTP_PORT}`)
+  })
+
+  httpServer.on("error", (error: NodeJS.ErrnoException) => {
+    console.error(`ERROR ON START HTTP SERVER: ${error.message}`)
+    process.exit(1)
   })
 }
 
