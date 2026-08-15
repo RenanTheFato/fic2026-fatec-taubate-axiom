@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { hash } from "bcryptjs";
-import { z } from "zod/v4";
+import { z, ZodError } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { CreateUserService } from "../../services/user/create-user-service.js";
 
@@ -24,7 +24,7 @@ export class CreateUserController {
     try {
       userValidate.parse(req.body)
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         const errors = error.issues.map((err) => ({
           code: err.code,
           message: err.message,
