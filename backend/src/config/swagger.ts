@@ -1,12 +1,15 @@
 import { createDocument, ZodOpenApiOperationObject } from "zod-openapi";
 import { createUserDoc } from "../docs/user/create-user.doc.js";
+import { getUserProfileDoc } from "../docs/user/get-user-profile.doc.js";
+import type { ApiDoc } from "../docs/api.types.doc.js";
 
-function toOperation(doc: typeof createUserDoc): ZodOpenApiOperationObject {
+function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
     tags: doc.tags,
     summary: doc.summary,
     description: doc.description,
-    requestBody: { content: { "application/json": { schema: doc.body } } },
+    ...(doc.security ? { security: doc.security } : {}),
+    ...(doc.body ? { requestBody: { content: { "application/json": { schema: doc.body } } } } : {}),
     responses: Object.fromEntries(
       Object.entries(doc.response).map(([status, schema]) => [
         status,
@@ -34,5 +37,6 @@ export const openApiDocument = createDocument({
   },
   paths: {
     "/user/create": { post: toOperation(createUserDoc) },
+    "/user/profile": { post: toOperation(getUserProfileDoc) },
   },
 })
