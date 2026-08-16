@@ -1,13 +1,15 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import swaggerUi from "swagger-ui-express";
 import { routes } from "./routes/index.js";
 import { env } from "./config/env.js";
 import dotenv from "dotenv";
 import { pinoHttp } from "pino-http";
 import { sequelize } from "./config/sequelize.js";
+import { openApiDocument } from "./config/swagger.js";
 
 dotenv.config()
 
@@ -57,7 +59,8 @@ async function start() {
 
   // cookie-parser
   app.use(cookieParser())
-
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  app.get("/openapi.json", (req, res) => res.json(openApiDocument));
   app.use("/api/v1", routes);
 
   try {
