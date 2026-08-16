@@ -21,6 +21,8 @@ export class CreateUserService {
       role: "volunteer"
     })
 
-    return user
+    const { hashed_password: _hashed_password, ...userResponse } = user.get({ plain: true })
+
+    return userResponse
   }
 }
