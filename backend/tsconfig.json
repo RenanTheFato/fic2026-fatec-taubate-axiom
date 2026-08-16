@@ -6,7 +6,7 @@
     "lib": ["es2024"],
     "module": "nodenext",
     "target": "es2024",
-    "types": ["node"],
+    "types": ["node", "jest"],
     
     "strict": true,
     "esModuleInterop": true,
