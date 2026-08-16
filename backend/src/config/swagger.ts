@@ -2,6 +2,7 @@ import { createDocument, ZodOpenApiOperationObject } from "zod-openapi";
 import { createUserDoc } from "../docs/user/create-user.doc.js";
 import { getUserProfileDoc } from "../docs/user/get-user-profile.doc.js";
 import type { ApiDoc } from "../docs/api.types.doc.js";
+import { authUserDoc } from "../docs/user/auth-user.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -37,6 +38,7 @@ export const openApiDocument = createDocument({
   },
   paths: {
     "/user/create": { post: toOperation(createUserDoc) },
+    "/user/auth": { post: toOperation(authUserDoc) },
     "/user/profile": { post: toOperation(getUserProfileDoc) },
   },
 })
