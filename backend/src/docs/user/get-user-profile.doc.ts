@@ -1,0 +1,57 @@
+import { z } from "zod/v4";
+
+export const getUserProfileDoc = {
+  tags: ["user", "profile"],
+  summary: "View authenticated user information",
+  description: "Fetches the profile data of the currently authenticated user. Requires a valid JWT token.",
+  security: [
+    {
+      bearerAuth: []
+    }
+  ],
+  response: {
+    200: z.object({
+      message: z.string()
+        .describe("Success message."),
+      user: z.object({
+        id: z.string()
+          .describe("Unique identifier of the user.")
+          .meta({
+            example: "example_id"
+          }),
+        email: z.email().describe("User's email address.")
+          .meta({
+            example: "johndoe@email.com"
+          }),
+        name: z.string()
+          .describe("User's full name.")
+          .meta({
+            example: "johndoe"
+          }),
+        role: z.string()
+          .describe("User's role (e.g. admin | staff | volunteer)")
+          .meta({
+            example: "admin, staff or volunteer example"
+          }),
+        created_at: z.date().describe("Account creation timestamp."),
+        updated_at: z.date().describe("Last update timestamp."),
+      }),
+    }).describe("User data successfully fetched."),
+
+    400: z.object({
+      error: z.string(),
+    }).describe("Missing user ID or user does not exist."),
+
+    401: z.object({
+      error: z.string(),
+    }).describe("Unauthorized. Missing, invalid or expired JWT token."),
+
+    404: z.object({
+      error: z.string(),
+    }).describe("User not found in database."),
+
+    500: z.object({
+      error: z.string(),
+    }).describe("Unexpected server error."),
+  }
+}
