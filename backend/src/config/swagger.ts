@@ -39,6 +39,6 @@ export const openApiDocument = createDocument({
   paths: {
     "/user/create": { post: toOperation(createUserDoc) },
     "/user/auth": { post: toOperation(authUserDoc) },
-    "/user/profile": { post: toOperation(getUserProfileDoc) },
+    "/user/profile": { get: toOperation(getUserProfileDoc) },
   },
 })
