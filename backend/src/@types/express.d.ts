@@ -1,4 +1,5 @@
 import "express";
+import type { UserRole } from "../models/user-model.js";
 
 declare global {
   namespace Express {
@@ -7,7 +8,7 @@ declare global {
         id: string,
         email: string,
         name: string,
-        role: "admin" | "staff" | "volunteer";
+        role: UserRole;
         created_at: Date,
         updated_at: Date
       }>
