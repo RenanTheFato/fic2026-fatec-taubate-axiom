@@ -1,12 +1,16 @@
 import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
 import { sequelize } from "../config/sequelize.js";
 
+export const USER_ROLES = ["admin", "staff", "volunteer"] as const
+
+export type UserRole = typeof USER_ROLES[number]
+
 export class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare id: CreationOptional<string>
   declare name: string
   declare email: string
   declare hashed_password: string
-  declare role: "admin" | "staff" | "volunteer"
+  declare role: UserRole
   declare readonly created_at: CreationOptional<Date>
   declare readonly updated_at: CreationOptional<Date>
 }
@@ -33,7 +37,7 @@ User.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM("admin", "staff", "volunteer"),
+      type: DataTypes.ENUM(...USER_ROLES),
       allowNull: false,
       defaultValue: "volunteer",
     },
