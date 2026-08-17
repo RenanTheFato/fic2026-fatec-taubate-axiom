@@ -22,7 +22,7 @@ export const createUserDoc = {
   body: z.object({
     email: z.email().describe("User email address (must be unique in the system).").meta({ example: "johndoe@email.com" }),
     password: z.string().describe("User password with security constraints.").meta({ example: "your_very_strong_password" }),
-    username: z.string().describe("The display name of the user.").meta({ example: "John Doe" }),
+    name: z.string().describe("The display name of the user.").meta({ example: "John Doe" }),
   }),
   response: {
     201: z.object({ message: z.string().describe("Success message.") }).describe("User account created successfully."),
