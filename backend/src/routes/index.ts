@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { userRoutes } from "./user-routes.js";
+import { campaignRoutes } from "./campaign-routes.js";
 
 export const routes = Router()
 
@@ -10,3 +11,4 @@ routes.get("/ping", (req: Request, res: Response) => {
 })
 
 routes.use("/user", userRoutes)
+routes.use("/campaign", campaignRoutes)
