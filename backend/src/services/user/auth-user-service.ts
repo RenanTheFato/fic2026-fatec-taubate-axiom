@@ -24,6 +24,6 @@ export class AuthUserService {
 
     const token = jwt.sign({ id: userIsRegistered.id }, String(process.env.JWT_SECRET), { expiresIn: "2h" })
 
-    return { token }
+    return token 
   }
 }
