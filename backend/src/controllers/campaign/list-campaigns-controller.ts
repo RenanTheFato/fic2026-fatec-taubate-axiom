@@ -5,7 +5,7 @@ import { ListCampaignsService } from "../../services/campaign/list-campaigns-ser
 export class ListCampaignsController {
   async handle(req: Request, res: Response) {
 
-    const campaignParams = z.object({
+    const campaignQuery = z.object({
       page: z.number({ error: "The page must be an number" })
         .positive({ error: "The page number must be greater than zero" })
         .optional()
@@ -17,10 +17,10 @@ export class ListCampaignsController {
         .default(50),
     })
 
-    const parsedCampaignParams = campaignParams.safeParse(req.params)
+    const parsedCampaignQuery = campaignQuery.safeParse(req.query)
 
-    if (!parsedCampaignParams.success) {
-      const errors = parsedCampaignParams.error.issues.map((err) => ({
+    if (!parsedCampaignQuery.success) {
+      const errors = parsedCampaignQuery.error.issues.map((err) => ({
         message: err.message,
         code: err.code,
         path: err.path.join("/")
@@ -29,7 +29,7 @@ export class ListCampaignsController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { page, limit } = parsedCampaignParams.data
+    const { page, limit } = parsedCampaignQuery.data
 
     try {
       const listCampaignsService = new ListCampaignsService()
