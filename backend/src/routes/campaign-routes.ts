@@ -8,6 +8,7 @@ import { PublishCampaignController } from "../controllers/campaign/publish-campa
 import { ListAllCampaignsController } from "../controllers/campaign/list-all-campaigns-controller.js";
 import { FinishCampaignController } from "../controllers/campaign/finish-campaign-controller.js";
 import { CancelCampaignController } from "../controllers/campaign/cancel-campaign-controller.js";
+import { DeleteCampaignController } from "../controllers/campaign/delete-campaign-controller.js";
 
 export const campaignRoutes = Router()
 
@@ -37,4 +38,8 @@ campaignRoutes.patch("/finish/:campaign_id", AuthMiddleware, RoleMiddleware("adm
 
 campaignRoutes.patch("/cancel/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new CancelCampaignController().handle(req, res)
+})
+
+campaignRoutes.delete("/delete/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+  return new DeleteCampaignController().handle(req, res)
 })
