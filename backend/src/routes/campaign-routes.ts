@@ -6,6 +6,7 @@ import { ListCampaignsController } from "../controllers/campaign/list-campaigns-
 import { GetCampaignBySlugController } from "../controllers/campaign/get-campaign-by-slug-controller.js";
 import { PublishCampaignController } from "../controllers/campaign/publish-campaign-controller.js";
 import { ListAllCampaignsController } from "../controllers/campaign/list-all-campaigns-controller.js";
+import { FinishCampaignController } from "../controllers/campaign/finish-campaign-controller.js";
 
 export const campaignRoutes = Router()
 
@@ -27,4 +28,8 @@ campaignRoutes.get("/:slug", async (req: Request, res: Response) => {
 
 campaignRoutes.patch("/publish/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
   return new PublishCampaignController().handle(req, res)
+})
+
+campaignRoutes.patch("/finish/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+  return new FinishCampaignController().handle(req, res)
 })
