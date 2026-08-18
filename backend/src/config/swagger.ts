@@ -9,6 +9,7 @@ import { listCampaignsDoc } from "../docs/campaign/list-campaigns.doc.js";
 import { getCampaignBySlugDoc } from "../docs/campaign/get-campaign-by-slug.doc.js";
 import { publishCampaignDoc } from "../docs/campaign/publish-campaign.doc.js";
 import { listAllCampaignsDoc } from "../docs/campaign/list-all-campaigns.doc.js";
+import { finishCampaignDoc } from "../docs/campaign/finish-campaign.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -52,5 +53,6 @@ export const openApiDocument = createDocument({
     "/campaign/list-all": { get: toOperation(listAllCampaignsDoc) },
     "/campaign/:slug": { get: toOperation(getCampaignBySlugDoc) },
     "/campaign/publish/:campaign_id": { patch: toOperation(publishCampaignDoc) },
+    "/campaign/finish/:campaign_id": { patch: toOperation(finishCampaignDoc) },
   },
 })
