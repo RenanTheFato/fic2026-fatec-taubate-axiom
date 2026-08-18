@@ -29,5 +29,9 @@ export const publishCampaignDoc = {
     404: z.object({
       error: z.string(),
     }).describe("Campaign not found."),
+
+    500: z.object({
+      error: z.string(),
+    }).describe("Unexpected server error."),
   },
 }
