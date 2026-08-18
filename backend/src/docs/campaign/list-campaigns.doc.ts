@@ -9,7 +9,7 @@ const validationErrorSchema = z.object({
   })),
 }).describe("Input validation failed due to incorrect or missing data.")
 
-export const getUserProfileDoc = {
+export const listCampaignsDoc = {
   tags: ["campaign"],
   summary: "View all the public campaigns",
   description: "Fetches the campaigns where the status equals active or finished.",

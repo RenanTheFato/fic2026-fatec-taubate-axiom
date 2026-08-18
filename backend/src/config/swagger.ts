@@ -5,6 +5,7 @@ import type { ApiDoc } from "../docs/api.types.doc.js";
 import { authUserDoc } from "../docs/user/auth-user.doc.js";
 import { deleteUserDoc } from "../docs/user/delete-user.doc.js";
 import { createCampaignDoc } from "../docs/campaign/create-campaign.doc.js";
+import { listCampaignsDoc } from "../docs/campaign/list-campaigns.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -44,5 +45,6 @@ export const openApiDocument = createDocument({
     "/user/profile": { get: toOperation(getUserProfileDoc) },
     "/user/delete": { delete: toOperation(deleteUserDoc) },
     "/campaign/create": { post: toOperation(createCampaignDoc) },
+    "/campaign/list": { post: toOperation(listCampaignsDoc) },
   },
 })
