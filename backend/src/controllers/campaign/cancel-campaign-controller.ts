@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { UserInterface } from "../../interfaces/user-interface.js";
 import { BadRequestError, NotFoundError } from "../../config/errors.js";
-import { CancelCampaignService } from "../../services/campaign/cancel-campaign-controller.js";
+import { CancelCampaignService } from "../../services/campaign/cancel-campaign-service.js";
 
 export class CancelCampaignController {
   async handle(req: Request, res: Response) {
