@@ -58,6 +58,8 @@ export const createCampaignDoc = {
         starts_at: z.iso.datetime(),
         ends_at: z.iso.datetime().nullable(),
         status: z.string(),
+        created_at: z.iso.datetime(),
+        updated_at: z.iso.datetime(),
       }),
     }).describe("Campaign created successfully."),
 
