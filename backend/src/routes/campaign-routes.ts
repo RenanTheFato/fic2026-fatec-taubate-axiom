@@ -35,6 +35,6 @@ campaignRoutes.patch("/finish/:campaign_id", AuthMiddleware, RoleMiddleware("adm
   return new FinishCampaignController().handle(req, res)
 })
 
-campaignRoutes.patch("/finish/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+campaignRoutes.patch("/cancel/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new CancelCampaignController().handle(req, res)
 })
