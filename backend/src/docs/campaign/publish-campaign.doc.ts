@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 
-export const deleteUserDoc = {
+export const publishCampaignDoc = {
   tags: ["campaign"],
   summary: "Publish an Campaign",
   description: "Turn an draft campaign into an active and visible publicly",
