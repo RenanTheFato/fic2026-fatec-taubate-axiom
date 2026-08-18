@@ -3,6 +3,7 @@ import { CreateCampaignController } from "../controllers/campaign/create-campaig
 import { AuthMiddleware } from "../middlewares/auth-middleware.js";
 import { RoleMiddleware } from "../middlewares/role-middleware.js";
 import { ListCampaignsController } from "../controllers/campaign/list-campaigns-controller.js";
+import { GetCampaignBySlugController } from "../controllers/campaign/get-campaign-by-slug-controller.js";
 
 export const campaignRoutes = Router()
 
@@ -12,4 +13,8 @@ campaignRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"),
 
 campaignRoutes.get("/list", async(req: Request, res: Response) => {
   return new ListCampaignsController().handle(req, res)
+})
+
+campaignRoutes.get("/:slug", async(req: Request, res: Response) => {
+  return new GetCampaignBySlugController().handle(req, res)
 })
