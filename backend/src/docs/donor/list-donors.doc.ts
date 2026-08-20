@@ -10,7 +10,7 @@ const validationErrorSchema = z.object({
 }).describe("Input validation failed due to incorrect or missing data.")
 
 export const listDonorsDoc = {
-  tags: ["donors"],
+  tags: ["donor"],
   summary: "View all donors",
   description: "Fetches the donors",
   security: [
@@ -27,6 +27,10 @@ export const listDonorsDoc = {
       .optional()
       .describe("Items per page, capped at 50.")
       .meta({ example: 20 }),
+    search: z.string()
+      .optional()
+      .describe("Free text matched against the name, the email and the document. Formatting characters are stripped before matching the document.")
+      .meta({ example: "maria" }),
   }),
   response: {
     200: z.object({
@@ -34,12 +38,13 @@ export const listDonorsDoc = {
         .describe("Success message."),
       donors: z.array(z.object({
         id: z.string(),
-        user_id: z.string(),
+        user_id: z.string().nullable(),
         name: z.string(),
         email: z.string(),
-        document: z.string(),
-        document_type: z.string(),
-        phone: z.string(),
+        document: z.string().nullable(),
+        document_type: z.string().nullable(),
+        phone: z.string().nullable(),
+        anonymized_at: z.iso.datetime().nullable(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
       })),

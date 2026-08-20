@@ -16,6 +16,11 @@ export class ListDonorsController {
         .max(50, { error: "The limit has exceeded the maximum allowed limit (50)" })
         .optional()
         .default(50),
+      search: z.string()
+        .trim()
+        .min(1, { error: "The search doesn't meet the minimum number of characters (1)" })
+        .max(128, { error: "The search has exceeded the character limit (128)" })
+        .optional(),
     })
 
     const parsedDonorsQuery = donorsQuery.safeParse(req.query)
@@ -30,11 +35,11 @@ export class ListDonorsController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { page, limit } = parsedDonorsQuery.data
+    const { page, limit, search } = parsedDonorsQuery.data
 
     try {
       const listDonorsService = new ListDonorsService()
-      const { donors, total } = await listDonorsService.execute({ page, limit })
+      const { donors, total } = await listDonorsService.execute({ page, limit, search })
 
       return res.status(200).json({ message: "All Donors Fetched Successfully", donors, total })
     } catch (error: unknown) {
