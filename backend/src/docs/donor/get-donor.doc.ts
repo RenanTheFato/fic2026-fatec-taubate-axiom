@@ -10,7 +10,7 @@ const validationErrorSchema = z.object({
 }).describe("Input validation failed due to incorrect or missing data.")
 
 export const getDonorDoc = {
-  tags: ["donors"],
+  tags: ["donor"],
   summary: "View donor",
   description: "Fetch one donor information by id",
   security: [
@@ -29,12 +29,13 @@ export const getDonorDoc = {
         .describe("Success message."),
       donor: z.object({
         id: z.string(),
-        user_id: z.string(),
+        user_id: z.string().nullable(),
         name: z.string(),
         email: z.string(),
-        document: z.string(),
-        document_type: z.string(),
-        phone: z.string(),
+        document: z.string().nullable(),
+        document_type: z.string().nullable(),
+        phone: z.string().nullable(),
+        anonymized_at: z.iso.datetime().nullable(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
       }),

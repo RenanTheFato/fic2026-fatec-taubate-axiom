@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 export const authUserDoc = {
-  tags: ["user", "auth"],
+  tags: ["user"],
   summary: "Authenticate a user account",
   description: "Validates user credentials and returns an access token upon successful authentication.",
   body: z.object({

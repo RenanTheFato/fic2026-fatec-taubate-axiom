@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 export const getUserProfileDoc = {
-  tags: ["user", "profile"],
+  tags: ["user"],
   summary: "View authenticated user information",
   description: "Fetches the profile data of the currently authenticated user. Requires a valid JWT token.",
   security: [

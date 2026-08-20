@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 export const deleteUserDoc = {
-  tags: ["user", "delete"],
+  tags: ["user"],
   summary: "Delete a user by ID",
   description: "Removes a registered user from the system using their unique identifier (ID). Requires authentication.",
   security: [
