@@ -13,6 +13,7 @@ export class Donor extends Model<InferAttributes<Donor>, InferCreationAttributes
   declare document: CreationOptional<string | null>
   declare document_type: CreationOptional<DocumentType | null>
   declare phone: CreationOptional<string | null>
+  declare anonymized_at: CreationOptional<Date | null>
   declare readonly created_at: CreationOptional<Date>
   declare readonly updated_at: CreationOptional<Date>
 }
@@ -48,6 +49,10 @@ Donor.init(
     },
     phone: {
       type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    anonymized_at: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     created_at: DataTypes.DATE,
