@@ -21,6 +21,7 @@ const donorSchema = z.object({
   document: z.string().nullable(),
   document_type: z.string().nullable(),
   phone: z.string().nullable(),
+  anonymized_at: z.iso.datetime().nullable(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
 })
