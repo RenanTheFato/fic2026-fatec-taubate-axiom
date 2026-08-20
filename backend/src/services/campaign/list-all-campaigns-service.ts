@@ -3,11 +3,16 @@ import { Campaign } from "../../models/campaign-model.js";
 export class ListAllCampaignsService {
   async execute({ page, limit }: { page: number, limit: number }) {
 
-    const campaigns = await Campaign.findAll({
+    const { rows: campaigns, count: total } = await Campaign.findAndCountAll({
+      order: [
+        ["status", "ASC"],
+        ["starts_at", "DESC"],
+        ["id", "ASC"]
+      ],
       limit: limit,
       offset: (page - 1) * limit
     })
 
-    return campaigns
+    return { campaigns, total }
   }
 }
