@@ -1,9 +1,9 @@
 import { z } from "zod/v4";
 
 export const getDonorProfileDoc = {
-  tags: ["user", "profile"],
-  summary: "View authenticated user information",
-  description: "Fetches the profile data of the currently authenticated user. Requires a valid JWT token.",
+  tags: ["donor"],
+  summary: "View the donor record of the authenticated user",
+  description: "Fetches the donor linked to the currently authenticated account, taken from the token and never from a path param. Answers 404 for an account that has never donated, since no donor record exists yet.",
   security: [
     {
       bearerAuth: []
@@ -13,22 +13,23 @@ export const getDonorProfileDoc = {
     200: z.object({
       message: z.string()
         .describe("Success message."),
-      user: z.object({
+      donor: z.object({
         id: z.string(),
-        user_id: z.string(),
+        user_id: z.string().nullable(),
         name: z.string(),
         email: z.string(),
-        document: z.string(),
-        document_type: z.string(),
-        phone: z.string(),
-        created_at: z.date().describe("Account creation timestamp."),
-        updated_at: z.date().describe("Last update timestamp."),
+        document: z.string().nullable(),
+        document_type: z.string().nullable(),
+        phone: z.string().nullable(),
+        anonymized_at: z.iso.datetime().nullable(),
+        created_at: z.iso.datetime(),
+        updated_at: z.iso.datetime(),
       }),
     }).describe("Donor data successfully fetched."),
 
     400: z.object({
       error: z.string(),
-    }).describe("Missing user ID or donor does not exist."),
+    }).describe("The authenticated user id is missing from the request."),
 
     401: z.object({
       error: z.string(),
@@ -36,7 +37,7 @@ export const getDonorProfileDoc = {
 
     404: z.object({
       error: z.string(),
-    }).describe("Donor not found in database."),
+    }).describe("The authenticated account has no donor record linked to it."),
 
     500: z.object({
       error: z.string(),

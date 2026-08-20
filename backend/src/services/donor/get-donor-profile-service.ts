@@ -14,6 +14,6 @@ export class GetDonorProfileService{
         throw new NotFoundError("Donor not found")
       }
 
-      return donor
+      return donor.get({ plain: true })
   }
 }
