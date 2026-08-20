@@ -9,6 +9,11 @@ export const cancelCampaignDoc = {
       bearerAuth: [],
     },
   ],
+  params: z.object({
+    campaign_id: z.uuid()
+      .describe("Identifier of the campaign.")
+      .meta({ example: "0b7f5a12-9c4e-4f8a-9d2b-6a1f3e5c7d90" }),
+  }),
   response: {
     200: z.object({
       message: z.string()

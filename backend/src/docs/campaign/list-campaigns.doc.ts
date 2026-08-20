@@ -13,6 +13,16 @@ export const listCampaignsDoc = {
   tags: ["campaign"],
   summary: "View all the public campaigns",
   description: "Fetches the campaigns where the status equals active or finished.",
+  query: z.object({
+    page: z.coerce.number().int().positive()
+      .optional()
+      .describe("Page number, starting at 1.")
+      .meta({ example: 1 }),
+    limit: z.coerce.number().int().positive().max(50)
+      .optional()
+      .describe("Items per page, capped at 50.")
+      .meta({ example: 20 }),
+  }),
   response: {
     200: z.object({
       message: z.string()
@@ -29,7 +39,9 @@ export const listCampaignsDoc = {
         status: z.string(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
-      }))
+      })),
+      total: z.number()
+        .describe("Total number of campaigns matching the filter, for pagination."),
     }).describe("Campaigns successfully fetched."),
 
     400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
