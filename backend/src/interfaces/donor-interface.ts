@@ -8,6 +8,7 @@ export interface DonorInterface{
   document: string | null,
   document_type: DocumentType | null,
   phone: string | null,
+  anonymized_at: Date | null,
   created_at: Date,
   updated_at: Date
 }
