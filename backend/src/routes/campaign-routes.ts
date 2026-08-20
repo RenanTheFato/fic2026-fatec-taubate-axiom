@@ -9,6 +9,7 @@ import { ListAllCampaignsController } from "../controllers/campaign/list-all-cam
 import { FinishCampaignController } from "../controllers/campaign/finish-campaign-controller.js";
 import { CancelCampaignController } from "../controllers/campaign/cancel-campaign-controller.js";
 import { DeleteCampaignController } from "../controllers/campaign/delete-campaign-controller.js";
+import { UpdateCampaignController } from "../controllers/campaign/update-campaign-controller.js";
 
 export const campaignRoutes = Router()
 
@@ -42,4 +43,8 @@ campaignRoutes.patch("/cancel/:campaign_id", AuthMiddleware, RoleMiddleware("adm
 
 campaignRoutes.delete("/delete/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new DeleteCampaignController().handle(req, res)
+})
+
+campaignRoutes.put("/update/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+  return new UpdateCampaignController().handle(req, res)
 })
