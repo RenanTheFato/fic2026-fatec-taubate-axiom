@@ -15,6 +15,7 @@ import { deleteCampaignDoc } from "../docs/campaign/delete-campaign.doc.js";
 import { updateCampaignDoc } from "../docs/campaign/update-campaign.doc.js";
 import { createDonorDoc } from "../docs/donor/create-donor.doc.js";
 import { listDonorsDoc } from "../docs/donor/list-donors.doc.js";
+import { getDonorDoc } from "../docs/donor/get-donor.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -72,6 +73,6 @@ export const openApiDocument = createDocument({
 
     "/donor/create": { post: toOperation(createDonorDoc) },
     "/donor/list": { get: toOperation(listDonorsDoc) },
-
+    "/donor/{id}": { get: toOperation(getDonorDoc) },
   },
 })
