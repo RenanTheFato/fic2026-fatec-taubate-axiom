@@ -8,7 +8,7 @@ import { routes } from "./routes/index.js";
 import { env } from "./config/env.js";
 import dotenv from "dotenv";
 import { pinoHttp } from "pino-http";
-import { sequelize } from "./config/sequelize.js";
+import { sequelize } from "./models/index.js";
 import { openApiDocument } from "./config/swagger.js";
 
 dotenv.config()
