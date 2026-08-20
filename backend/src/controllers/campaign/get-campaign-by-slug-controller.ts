@@ -18,7 +18,7 @@ export class GetCampaignBySlugController {
         path: err.path.join("/")
       }))
 
-      return res.json(400).json({ error: "Validation Error Occurred", errors })
+      return res.status(400).json({ error: "Validation Error Occurred", errors })
     }
 
     const { slug } = parsedGetCampaignSlugParam.data
