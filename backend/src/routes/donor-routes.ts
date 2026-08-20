@@ -3,6 +3,7 @@ import { AuthMiddleware } from "../middlewares/auth-middleware.js";
 import { RoleMiddleware } from "../middlewares/role-middleware.js";
 import { CreateDonorController } from "../controllers/donor/create-donor-controller.js";
 import { ListDonorsController } from "../controllers/donor/list-donors-controller.js";
+import { GetDonorController } from "../controllers/donor/get-donor-controller.js";
 
 export const donorRoutes = Router()
 
@@ -12,4 +13,8 @@ donorRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"), as
 
 donorRoutes.get("/list", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
   return new ListDonorsController().handle(req, res)
+})
+
+donorRoutes.get("/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+  return new GetDonorController().handle(req, res)
 })
