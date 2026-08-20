@@ -70,4 +70,29 @@ describe("Campaign creation guarded by role (real admin journey)", () => {
     expect(guardRes.status).toHaveBeenCalledWith(403)
     expect(MockedCreateCampaignService.prototype.execute).not.toHaveBeenCalled()
   })
+
+  it("blocks a staff user from the admin-only guard used by cancel and delete", async () => {
+    const adminOnlyGuard = RoleMiddleware("admin")
+
+    const guardReq = mockRequest({ user: { id: "user-789", role: "staff" } })
+    const guardRes = mockResponse()
+    const next = jest.fn()
+
+    adminOnlyGuard(guardReq, guardRes, next)
+
+    expect(next).not.toHaveBeenCalled()
+    expect(guardRes.status).toHaveBeenCalledWith(403)
+  })
+
+  it("answers 401, not 403, when no authenticated user reached the guard", () => {
+    const guard = RoleMiddleware("admin", "staff")
+
+    const guardRes = mockResponse()
+    const next = jest.fn()
+
+    guard(mockRequest(), guardRes, next)
+
+    expect(next).not.toHaveBeenCalled()
+    expect(guardRes.status).toHaveBeenCalledWith(401)
+  })
 })
