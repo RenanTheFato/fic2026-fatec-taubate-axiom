@@ -23,12 +23,8 @@ export class PublishCampaignService {
       throw new BadRequestError("Cannot be possible to publish a campaign with status other than draft")
     }
 
-    if (Number(campaign.goal_amount) < 0) {
-      throw new BadRequestError("Cannot be possible to publish a goal lower than zero")
-    }
-
-    if (campaign.starts_at === null) {
-      throw new BadRequestError("Cannot be possible to publish a no start date")
+    if (Number(campaign.goal_amount) <= 0) {
+      throw new BadRequestError("Cannot be possible to publish a campaign with a goal of zero or lower")
     }
 
     await Campaign.update({
