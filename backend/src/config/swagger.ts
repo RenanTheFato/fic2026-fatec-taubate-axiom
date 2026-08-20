@@ -12,6 +12,8 @@ import { listAllCampaignsDoc } from "../docs/campaign/list-all-campaigns.doc.js"
 import { finishCampaignDoc } from "../docs/campaign/finish-campaign.doc.js";
 import { cancelCampaignDoc } from "../docs/campaign/cancel-campaign.doc.js";
 import { deleteCampaignDoc } from "../docs/campaign/delete-campaign.doc.js";
+import { updateCampaignDoc } from "../docs/campaign/update-campaign.doc.js";
+import { createDonorDoc } from "../docs/donor/create-donor.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -19,6 +21,12 @@ function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
     summary: doc.summary,
     description: doc.description,
     ...(doc.security ? { security: doc.security } : {}),
+    ...(doc.params || doc.query ? {
+      requestParams: {
+        ...(doc.params ? { path: doc.params } : {}),
+        ...(doc.query ? { query: doc.query } : {}),
+      }
+    } : {}),
     ...(doc.body ? { requestBody: { content: { "application/json": { schema: doc.body } } } } : {}),
     responses: Object.fromEntries(
       Object.entries(doc.response).map(([status, schema]) => [
@@ -53,10 +61,12 @@ export const openApiDocument = createDocument({
     "/campaign/create": { post: toOperation(createCampaignDoc) },
     "/campaign/list": { get: toOperation(listCampaignsDoc) },
     "/campaign/list-all": { get: toOperation(listAllCampaignsDoc) },
-    "/campaign/:slug": { get: toOperation(getCampaignBySlugDoc) },
-    "/campaign/publish/:campaign_id": { patch: toOperation(publishCampaignDoc) },
-    "/campaign/finish/:campaign_id": { patch: toOperation(finishCampaignDoc) },
-    "/campaign/cancel/:campaign_id": { patch: toOperation(cancelCampaignDoc) },
-    "/campaign/delete/:campaign_id": { delete: toOperation(deleteCampaignDoc) },
+    "/campaign/{slug}": { get: toOperation(getCampaignBySlugDoc) },
+    "/campaign/publish/{campaign_id}": { patch: toOperation(publishCampaignDoc) },
+    "/campaign/finish/{campaign_id}": { patch: toOperation(finishCampaignDoc) },
+    "/campaign/cancel/{campaign_id}": { patch: toOperation(cancelCampaignDoc) },
+    "/campaign/update/{campaign_id}": { put: toOperation(updateCampaignDoc) },
+    "/campaign/delete/{campaign_id}": { delete: toOperation(deleteCampaignDoc) },
+    "/donor/create": { post: toOperation(createDonorDoc) },
   },
 })

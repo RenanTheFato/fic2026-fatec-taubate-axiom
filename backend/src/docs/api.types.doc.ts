@@ -1,4 +1,4 @@
-import type { ZodType } from "zod/v4";
+import type { ZodObject, ZodType } from "zod/v4";
 
 export interface ApiDoc<TBody extends ZodType | undefined = ZodType | undefined, 
   TResponses extends Record<number, ZodType> = Record<number, ZodType>> {
@@ -6,6 +6,8 @@ export interface ApiDoc<TBody extends ZodType | undefined = ZodType | undefined,
   summary: string,
   description: string,
   security?: { bearerAuth: string[] }[],
+  params?: ZodObject,
+  query?: ZodObject,
   body?: TBody,
   response: TResponses,
 }
