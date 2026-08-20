@@ -6,11 +6,13 @@ export class ListCampaignsController {
   async handle(req: Request, res: Response) {
 
     const campaignQuery = z.object({
-      page: z.number({ error: "The page must be an number" })
+      page: z.coerce.number({ error: "The page must be an number" })
+        .int({ error: "The page must be an integer" })
         .positive({ error: "The page number must be greater than zero" })
         .optional()
         .default(1),
-      limit: z.number({ error: "The limit must be an number" })
+      limit: z.coerce.number({ error: "The limit must be an number" })
+        .int({ error: "The limit must be an integer" })
         .positive({ error: "The limit must be greater than zero" })
         .max(50, { error: "The limit has exceeded the maximum allowed limit (50)" })
         .optional()
@@ -33,9 +35,9 @@ export class ListCampaignsController {
 
     try {
       const listCampaignsService = new ListCampaignsService()
-      const campaigns = await listCampaignsService.execute({ page, limit })
+      const { campaigns, total } = await listCampaignsService.execute({ page, limit })
 
-      return res.status(200).json({ message: "All Campaigns Fetched Successfully", campaigns })
+      return res.status(200).json({ message: "All Campaigns Fetched Successfully", campaigns, total })
     } catch (error: unknown) {
       console.error(error)
       return res.status(500).json({ error: "Internal Server Error" })
