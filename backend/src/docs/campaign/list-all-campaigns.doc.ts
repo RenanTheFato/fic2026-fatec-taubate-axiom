@@ -13,6 +13,11 @@ export const listAllCampaignsDoc = {
   tags: ["campaign"],
   summary: "View all campaigns",
   description: "Fetches the campaigns",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
   query: z.object({
     page: z.coerce.number().int().positive()
       .optional()
