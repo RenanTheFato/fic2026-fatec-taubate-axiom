@@ -3,9 +3,12 @@ import { Product } from "../../models/product-model.js";
 
 export class ListProductsService {
   async execute({ page, limit, search }: { page: number, limit: number, search?: string }) {
+
+    const escapedSearch = search ? search.replace(/[\\%_]/g, (char) => `\\${char}`) : ""
+
     const { rows: products, count: total } = await Product.findAndCountAll({
       where: {
-        name: search,
+        name: escapedSearch,
         active: true
       },
       order: [
