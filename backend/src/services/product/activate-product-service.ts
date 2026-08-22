@@ -19,7 +19,8 @@ export class ActivateProductService {
     }
 
     await product.update({
-      active: true
+      active: true,
+      ...(product.activated_at === null ? { activated_at: new Date() } : {}),
     })
   }
 }
