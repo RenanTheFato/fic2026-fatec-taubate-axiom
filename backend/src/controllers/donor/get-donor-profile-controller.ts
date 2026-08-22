@@ -7,10 +7,6 @@ export class GetDonorProfileController {
   async handle(req: Request, res: Response) {
     const { id } = req.user as Pick<UserInterface, 'id'>
 
-    if (!id) {
-      return res.status(400).json({ error: "The id is missing" })
-    }
-
     try {
       const getDonorProfileService = new GetDonorProfileService()
       const donor = await getDonorProfileService.execute({ user_id: id })

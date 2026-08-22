@@ -5,7 +5,7 @@ import { UpdateEventCapacityService } from "../../services/event/update-event-ca
 
 export class UpdateEventCapacityController {
   async handle(req: Request, res: Response) {
-    const { event_id } = req.params as { event_id: string }
+    const { id: event_id } = req.params as { id: string }
 
     const capacityValidate = z.object({
       capacity: z.number({ error: "The capacity must be a number." })

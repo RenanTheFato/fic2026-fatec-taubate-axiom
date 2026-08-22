@@ -4,7 +4,7 @@ import { FinishEventService } from "../../services/event/finish-event-service.js
 
 export class FinishEventController {
   async handle(req: Request, res: Response) {
-    const { event_id } = req.params as { event_id: string }
+    const { id: event_id } = req.params as { id: string }
 
     try {
       const finishEventService = new FinishEventService()

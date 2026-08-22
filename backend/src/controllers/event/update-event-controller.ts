@@ -5,7 +5,7 @@ import { UpdateEventService } from "../../services/event/update-event-service.js
 
 export class UpdateEventController {
   async handle(req: Request, res: Response) {
-    const { event_id } = req.params as { event_id: string }
+    const { id: event_id } = req.params as { id: string }
 
     const eventValidate = z.object({
       campaign_id: z.uuid({ error: "The campaign id isn't a valid uuid." })
