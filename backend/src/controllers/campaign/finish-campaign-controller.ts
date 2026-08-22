@@ -1,17 +1,10 @@
 import { Request, Response } from "express";
-import { UserInterface } from "../../interfaces/user-interface.js";
 import { BadRequestError, NotFoundError } from "../../config/errors.js";
 import { FinishCampaignService } from "../../services/campaign/finish-campaign-service.js";
 
 export class FinishCampaignController {
   async handle(req: Request, res: Response) {
-    const { id } = req.user as Pick<UserInterface, 'id'>
-
-    if (!id) {
-      return res.status(400).json({ error: "The id is missing" })
-    }
-
-    const { campaign_id } = req.params as { campaign_id: string }
+    const { id: campaign_id } = req.params as { id: string }
 
     try {
       const finishCampaignService = new FinishCampaignService()

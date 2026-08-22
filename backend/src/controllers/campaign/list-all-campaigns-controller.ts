@@ -1,16 +1,9 @@
 import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { ListAllCampaignsService } from "../../services/campaign/list-all-campaigns-service.js";
-import { UserInterface } from "../../interfaces/user-interface.js";
 
 export class ListAllCampaignsController {
   async handle(req: Request, res: Response) {
-
-    const { id } = req.user as Pick<UserInterface, 'id'>
-
-    if (!id) {
-      return res.status(400).json({ error: "The id is missing" })
-    }
 
     const campaignQuery = z.object({
       page: z.coerce.number({ error: "The page must be an number" })

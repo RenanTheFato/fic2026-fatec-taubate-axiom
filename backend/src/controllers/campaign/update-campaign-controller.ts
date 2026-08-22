@@ -5,7 +5,7 @@ import { UpdateCampaignService } from "../../services/campaign/update-campaign-s
 
 export class UpdateCampaignController {
   async handle(req: Request, res: Response) {
-    const { campaign_id } = req.params as { campaign_id: string }
+    const { id: campaign_id } = req.params as { id: string }
 
     const campaignValidate = z.object({
       title: z.string()
