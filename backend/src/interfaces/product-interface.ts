@@ -7,6 +7,7 @@ export interface ProductInterface{
   stock: number,
   image_url: string | null,
   active: boolean,
+  activated_at: Date | null,
   created_at: Date,
   updated_at: Date
 }
