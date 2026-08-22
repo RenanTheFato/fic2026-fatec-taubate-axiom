@@ -27,10 +27,6 @@ export const getDonorProfileDoc = {
       }),
     }).describe("Donor data successfully fetched."),
 
-    400: z.object({
-      error: z.string(),
-    }).describe("The authenticated user id is missing from the request."),
-
     401: z.object({
       error: z.string(),
     }).describe("Unauthorized. Missing, invalid or expired JWT token."),
