@@ -4,6 +4,7 @@ import { RoleMiddleware } from "../middlewares/role-middleware.js";
 import { CreateEventController } from "../controllers/event/create-event-controller.js";
 import { ListEventsController } from "../controllers/event/list-events-controller.js";
 import { ListAllEventsController } from "../controllers/event/list-all-events-controller.js";
+import { GetEventBySlugController } from "../controllers/event/get-event-by-slug-controller.js";
 
 export const eventRoutes = Router()
 
@@ -17,4 +18,8 @@ eventRoutes.get("/list", async (req: Request, res: Response) => {
 
 eventRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
   return new ListAllEventsController().handle(req, res)
+})
+
+eventRoutes.get("/:slug", async (req: Request, res: Response) => {
+  return new GetEventBySlugController().handle(req, res)
 })
