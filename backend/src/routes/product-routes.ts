@@ -5,6 +5,7 @@ import { CreateProductController } from "../controllers/product/create-product-c
 import { ListProductsController } from "../controllers/product/list-products-controller.js";
 import { ListAllProductsController } from "../controllers/product/list-all-products-controller.js";
 import { GetProductByIdController } from "../controllers/product/get-product-by-id-controller.js";
+import { UpdateProductController } from "../controllers/product/update-product-controller.js";
 
 export const productRoutes = Router()
 
@@ -22,4 +23,8 @@ productRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "staff"),
 
 productRoutes.get("/:id", async(req: Request, res: Response) => {
   return new GetProductByIdController().handle(req, res)
+})
+
+productRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+  return new UpdateProductController().handle(req, res)
 })
