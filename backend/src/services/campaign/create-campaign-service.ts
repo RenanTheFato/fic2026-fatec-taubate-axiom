@@ -1,15 +1,7 @@
 import { BadRequestError } from "../../config/errors.js";
 import { CampaignInterface } from "../../interfaces/campaign-interface.js";
 import { Campaign } from "../../models/campaign-model.js";
-
-function slugify(title: string) {
-  return title.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
+import { slugify } from "../../utils/slugify.js";
 
 export class CreateCampaignService {
   async execute({ title, description, goal_amount, starts_at, ends_at }: Pick<CampaignInterface, 'title' | 'description' | 'goal_amount' | 'starts_at' | 'ends_at'>) {

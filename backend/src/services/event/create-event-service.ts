@@ -2,15 +2,7 @@ import { BadRequestError } from "../../config/errors.js";
 import { EventInterface } from "../../interfaces/event-interface.js";
 import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
-
-function slugify(title: string) {
-  return title.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
+import { slugify } from "../../utils/slugify.js";
 
 export class CreateEventService {
   async execute({ campaign_id, title, description, location, starts_at, ends_at, ticket_price, capacity }: Pick<EventInterface, 'campaign_id' | 'title' | 'description' | 'location' | 'starts_at' | 'ends_at' | 'ticket_price' | 'capacity'>) {
