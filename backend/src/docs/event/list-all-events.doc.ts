@@ -9,7 +9,7 @@ const validationErrorSchema = z.object({
   })),
 }).describe("Input validation failed due to incorrect or missing data.")
 
-export const listEventsDoc = {
+export const listAllEventsDoc = {
   tags: ["event"],
   summary: "View all events",
   description: "Fetches the events.",
