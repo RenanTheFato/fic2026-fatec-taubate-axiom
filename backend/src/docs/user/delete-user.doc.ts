@@ -2,8 +2,8 @@ import { z } from "zod/v4";
 
 export const deleteUserDoc = {
   tags: ["user"],
-  summary: "Delete a user by ID",
-  description: "Removes a registered user from the system using their unique identifier (ID). Requires authentication.",
+  summary: "Delete the authenticated user",
+  description: "Removes the authenticated user from the system. The id comes from the bearer token, never from the URL, so a user can only delete their own account.",
   security: [
     {
       bearerAuth: [],
@@ -11,13 +11,17 @@ export const deleteUserDoc = {
   ],
   response: {
     204: z.object({}).describe("Deleted successful, no content on response."),
-    
-    400: z.object({
+
+    401: z.object({
       error: z.string(),
-    }).describe("Invalid or missing user ID, or an error occurred while attempting to delete the user."),
+    }).describe("Unauthorized — The bearer token is missing, expired or invalid."),
 
     404: z.object({
       error: z.string(),
     }).describe("User not registered, impossible to delete."),
+
+    500: z.object({
+      error: z.string(),
+    }).describe("Unexpected server error."),
   },
 }
