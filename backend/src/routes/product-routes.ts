@@ -7,6 +7,7 @@ import { ListAllProductsController } from "../controllers/product/list-all-produ
 import { GetProductByIdController } from "../controllers/product/get-product-by-id-controller.js";
 import { UpdateProductController } from "../controllers/product/update-product-controller.js";
 import { ActivateProductController } from "../controllers/product/activate-product-controller.js";
+import { DeactivateProductController } from "../controllers/product/deactivate-product-controller.js";
 
 export const productRoutes = Router()
 
@@ -32,4 +33,8 @@ productRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "staff"
 
 productRoutes.patch("/activate/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
   return new ActivateProductController().handle(req, res)
+})
+
+productRoutes.patch("/deactivate/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+  return new DeactivateProductController().handle(req, res)
 })
