@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 const validationErrorSchema = z.object({
-  message: z.string(),
+  error: z.string(),
   errors: z.array(z.object({
     code: z.string(),
     message: z.string(),
@@ -10,7 +10,7 @@ const validationErrorSchema = z.object({
 }).describe("Input validation failed due to incorrect or missing data.")
 
 export const listAllProductsDoc = {
-  tags: ["products"],
+  tags: ["product"],
   summary: "View all products",
   description: "Fetches the products",
   security: [
@@ -31,9 +31,10 @@ export const listAllProductsDoc = {
       .optional()
       .describe("Free text matched against the name")
       .meta({ example: "bottle" }),
-    avtive: z.boolean()
+    active: z.enum(["true", "false"])
       .optional()
-      .describe("Fetch all, only actives or only non actives"),
+      .describe("Fetch all, only actives or only non actives")
+      .meta({ example: "true" }),
   }),
   response: {
     200: z.object({
@@ -47,6 +48,7 @@ export const listAllProductsDoc = {
         price: z.string(),
         stock: z.number(),
         image_url: z.string().nullable(),
+        active: z.boolean(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
       })),
@@ -55,6 +57,14 @@ export const listAllProductsDoc = {
     }).describe("Products successfully fetched."),
 
     400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+
+    401: z.object({
+      error: z.string(),
+    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+
+    403: z.object({
+      error: z.string()
+    }).describe("Forbidden — The authenticated user's role is not allowed to list all products."),
 
     404: z.object({
       error: z.string(),

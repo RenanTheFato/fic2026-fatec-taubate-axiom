@@ -22,8 +22,9 @@ export class ListAllProductsController {
         .min(1, { error: "The search doesn't meet the minimum number of characters (1)" })
         .max(128, { error: "The search has exceeded the character limit (128)" })
         .optional(),
-      active: z.boolean()
+      active: z.enum(["true", "false"], { error: "The active filter must be 'true' or 'false'" })
         .optional()
+        .transform((active) => active === undefined ? undefined : active === "true"),
     })
 
     const parsedProductQuery = productQuery.safeParse(req.query)

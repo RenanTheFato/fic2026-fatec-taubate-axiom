@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 const validationErrorSchema = z.object({
-  message: z.string(),
+  error: z.string(),
   errors: z.array(z.object({
     code: z.string(),
     message: z.string(),
@@ -10,7 +10,7 @@ const validationErrorSchema = z.object({
 }).describe("Input validation failed due to incorrect or missing data.")
 
 export const getProductByIdDoc = {
-  tags: ["products"],
+  tags: ["product"],
   summary: "Get Product By Id",
   description: "Fetch one product information by id",
   params: z.object({

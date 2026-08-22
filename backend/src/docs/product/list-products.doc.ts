@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 const validationErrorSchema = z.object({
-  message: z.string(),
+  error: z.string(),
   errors: z.array(z.object({
     code: z.string(),
     message: z.string(),
@@ -10,7 +10,7 @@ const validationErrorSchema = z.object({
 }).describe("Input validation failed due to incorrect or missing data.")
 
 export const listProductsDoc = {
-  tags: ["products"],
+  tags: ["product"],
   summary: "View all products",
   description: "Fetches the products",
   query: z.object({
@@ -24,7 +24,7 @@ export const listProductsDoc = {
       .meta({ example: 20 }),
     search: z.string()
       .optional()
-      .describe("Free text matched against the name")
+      .describe("Free text matched against the name or SKU")
       .meta({ example: "bottle" }),
   }),
   response: {
