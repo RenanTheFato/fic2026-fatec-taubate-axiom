@@ -21,7 +21,7 @@ describe("Campaign creation guarded by role (real admin journey)", () => {
   })
 
   it("lets an admin through the role guard and creates the campaign as a draft", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+    const guard = RoleMiddleware("admin", "communication")
 
     const guardReq = mockRequest({ user: { id: "user-123", role: "admin" } })
     const guardRes = mockResponse()
@@ -58,7 +58,7 @@ describe("Campaign creation guarded by role (real admin journey)", () => {
   })
 
   it("never reaches the controller when the authenticated user is a volunteer", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+    const guard = RoleMiddleware("admin", "communication")
 
     const guardReq = mockRequest({ user: { id: "user-456", role: "volunteer" } })
     const guardRes = mockResponse()
@@ -71,10 +71,10 @@ describe("Campaign creation guarded by role (real admin journey)", () => {
     expect(MockedCreateCampaignService.prototype.execute).not.toHaveBeenCalled()
   })
 
-  it("blocks a staff user from the admin-only guard used by cancel and delete", async () => {
+  it("blocks a communication user from the admin-only guard used by cancel and delete", async () => {
     const adminOnlyGuard = RoleMiddleware("admin")
 
-    const guardReq = mockRequest({ user: { id: "user-789", role: "staff" } })
+    const guardReq = mockRequest({ user: { id: "user-789", role: "communication" } })
     const guardRes = mockResponse()
     const next = jest.fn()
 
@@ -85,7 +85,7 @@ describe("Campaign creation guarded by role (real admin journey)", () => {
   })
 
   it("answers 401, not 403, when no authenticated user reached the guard", () => {
-    const guard = RoleMiddleware("admin", "staff")
+    const guard = RoleMiddleware("admin", "communication")
 
     const guardRes = mockResponse()
     const next = jest.fn()

@@ -14,7 +14,7 @@ import { GetProductByIdController } from "../controllers/product/get-product-by-
 import { DeleteProductController } from "../controllers/product/delete-product-controller.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 
-describe("Product creation guarded by role (real staff journey)", () => {
+describe("Product creation guarded by role (real communication journey)", () => {
   const payload = {
     name: "Camiseta Somos do Bem",
     sku: "cam-01-m",
@@ -29,10 +29,10 @@ describe("Product creation guarded by role (real staff journey)", () => {
     jest.restoreAllMocks()
   })
 
-  it("lets a staff user through the guard and creates the product inactive", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+  it("lets a communication user through the guard and creates the product inactive", async () => {
+    const guard = RoleMiddleware("admin", "communication")
 
-    const guardReq = mockRequest({ user: { id: "user-123", role: "staff" } })
+    const guardReq = mockRequest({ user: { id: "user-123", role: "communication" } })
     const guardRes = mockResponse()
     const next = jest.fn()
 
@@ -46,7 +46,7 @@ describe("Product creation guarded by role (real staff journey)", () => {
       get: () => ({ id: "product-123", name: payload.name, sku: "CAM-01-M", active: false }),
     } as any)
 
-    const createReq = mockRequest({ body: payload, user: { id: "user-123", role: "staff" } })
+    const createReq = mockRequest({ body: payload, user: { id: "user-123", role: "communication" } })
     const createRes = mockResponse()
 
     await new CreateProductController().handle(createReq, createRes)
@@ -61,7 +61,7 @@ describe("Product creation guarded by role (real staff journey)", () => {
   })
 
   it("never reaches the controller when the authenticated user is a volunteer", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+    const guard = RoleMiddleware("admin", "communication")
 
     const guardReq = mockRequest({ user: { id: "user-456", role: "volunteer" } })
     const guardRes = mockResponse()

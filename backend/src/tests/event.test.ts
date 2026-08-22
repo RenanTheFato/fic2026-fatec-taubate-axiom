@@ -4,7 +4,7 @@ import { Campaign } from "../models/campaign-model.js";
 import { Event } from "../models/event-model.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 
-describe("Event creation guarded by role (real staff journey)", () => {
+describe("Event creation guarded by role (real communication journey)", () => {
   const payload = {
     campaign_id: "9f1d4c2e-6b7a-4d3f-8c21-0a5e7b9d1c34",
     title: "Jantar Beneficente Somos do Bem",
@@ -21,10 +21,10 @@ describe("Event creation guarded by role (real staff journey)", () => {
     jest.restoreAllMocks()
   })
 
-  it("lets a staff user through the guard and creates the event as a draft", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+  it("lets a communication user through the guard and creates the event as a draft", async () => {
+    const guard = RoleMiddleware("admin", "communication")
 
-    const guardReq = mockRequest({ user: { id: "user-123", role: "staff" } })
+    const guardReq = mockRequest({ user: { id: "user-123", role: "communication" } })
     const guardRes = mockResponse()
     const next = jest.fn()
 
@@ -39,7 +39,7 @@ describe("Event creation guarded by role (real staff journey)", () => {
       get: () => ({ id: "event-123", title: payload.title, slug: "jantar-beneficente-somos-do-bem", status: "draft", taken_seats: 0 }),
     } as any)
 
-    const createReq = mockRequest({ body: payload, user: { id: "user-123", role: "staff" } })
+    const createReq = mockRequest({ body: payload, user: { id: "user-123", role: "communication" } })
     const createRes = mockResponse()
 
     await new CreateEventController().handle(createReq, createRes)
@@ -58,7 +58,7 @@ describe("Event creation guarded by role (real staff journey)", () => {
     jest.spyOn(Campaign, "findByPk").mockResolvedValue({ id: payload.campaign_id, status: "cancelled" } as any)
     const create = jest.spyOn(Event, "create")
 
-    const req = mockRequest({ body: payload, user: { id: "user-123", role: "staff" } })
+    const req = mockRequest({ body: payload, user: { id: "user-123", role: "communication" } })
     const res = mockResponse()
 
     await new CreateEventController().handle(req, res)
@@ -68,7 +68,7 @@ describe("Event creation guarded by role (real staff journey)", () => {
   })
 
   it("never reaches the controller when the authenticated user is a volunteer", async () => {
-    const guard = RoleMiddleware("admin", "staff")
+    const guard = RoleMiddleware("admin", "communication")
 
     const guardReq = mockRequest({ user: { id: "user-456", role: "volunteer" } })
     const guardRes = mockResponse()
