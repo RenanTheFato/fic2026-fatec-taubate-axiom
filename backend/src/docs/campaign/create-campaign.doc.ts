@@ -20,7 +20,7 @@ const internalErrorSchema = z.object({
 export const createCampaignDoc = {
   tags: ["campaign"],
   summary: "Create a new fundraising campaign",
-  description: "Registers a new campaign, generating its public slug from the title and starting it as a draft. Restricted to users with the admin or staff role.",
+  description: "Registers a new campaign, generating its public slug from the title and starting it as a draft. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],
