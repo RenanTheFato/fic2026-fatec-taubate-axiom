@@ -19,6 +19,7 @@ export class UpdateCampaignController {
         .positive({ error: "The goal amount must be greater than zero." })
         .multipleOf(0.01, { error: "The goal amount must have at most two decimal places." })
         .max(9999999999.99, { error: "The goal amount has exceeded the allowed limit (9999999999.99)." })
+        .transform((goal_amount) => goal_amount.toFixed(2))
         .optional(),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }).optional(),
       ends_at: z.coerce.date({ error: "The end date isn't a valid date." }).nullish(),
@@ -46,7 +47,7 @@ export class UpdateCampaignController {
         campaign_id,
         title,
         description,
-        goal_amount: goal_amount !== undefined ? goal_amount.toFixed(2) : undefined,
+        goal_amount,
         starts_at,
         ends_at
       })

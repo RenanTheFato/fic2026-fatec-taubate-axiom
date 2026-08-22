@@ -14,11 +14,13 @@ export class CreateDonorController {
       document: z.string()
         .min(11, { error: "The document doesn't meet the minimum number of characters (11)." })
         .max(18, { error: "The document has exceeded the character limit (18)." })
-        .nullish(),
+        .nullish()
+        .default(null),
       phone: z.string()
         .min(8, { error: "The phone doesn't meet the minimum number of characters (8)." })
         .max(20, { error: "The phone has exceeded the character limit (20)." })
-        .nullish(),
+        .nullish()
+        .default(null),
     })
 
     const parsedDonor = donorValidate.safeParse(req.body)
@@ -37,12 +39,7 @@ export class CreateDonorController {
 
     try {
       const createDonorService = new CreateDonorService()
-      const { donor, created } = await createDonorService.execute({
-        name,
-        email,
-        document: document ?? null,
-        phone: phone ?? null
-      })
+      const { donor, created } = await createDonorService.execute({ name, email, document, phone })
 
       return res.status(created ? 201 : 200).json({
         message: created ? "Donor Created Successfully" : "Donor Already Registered",

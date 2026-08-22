@@ -11,13 +11,17 @@ export class CreateCampaignController {
         .max(128, { error: "The title has exceeded the character limit (128)." }),
       description: z.string()
         .max(2048, { error: "The description has exceeded the character limit (2048)." })
-        .nullish(),
+        .nullish()
+        .default(null),
       goal_amount: z.number({ error: "The goal amount must be a number." })
         .positive({ error: "The goal amount must be greater than zero." })
         .multipleOf(0.01, { error: "The goal amount must have at most two decimal places." })
-        .max(9999999999.99, { error: "The goal amount has exceeded the allowed limit (9999999999.99)." }),
+        .max(9999999999.99, { error: "The goal amount has exceeded the allowed limit (9999999999.99)." })
+        .transform((goal_amount) => goal_amount.toFixed(2)),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }),
-      ends_at: z.coerce.date({ error: "The end date isn't a valid date." }).nullish(),
+      ends_at: z.coerce.date({ error: "The end date isn't a valid date." })
+        .nullish()
+        .default(null),
     }).refine((campaign) => !campaign.ends_at || campaign.ends_at > campaign.starts_at, {
       error: "The end date must be after the start date.",
       path: ["ends_at"],
@@ -39,7 +43,7 @@ export class CreateCampaignController {
 
     try {
       const createCampaignService = new CreateCampaignService()
-      const campaign = await createCampaignService.execute({ title, description: description ?? null, goal_amount: goal_amount.toFixed(2), starts_at, ends_at: ends_at ?? null })
+      const campaign = await createCampaignService.execute({ title, description, goal_amount, starts_at, ends_at })
       return res.status(201).json({ message: "Campaign Created Successfully", campaign })
     } catch (error: unknown) {
       if (error instanceof BadRequestError) {
