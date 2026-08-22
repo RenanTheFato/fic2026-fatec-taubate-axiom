@@ -3,6 +3,7 @@ import { userRoutes } from "./user-routes.js";
 import { campaignRoutes } from "./campaign-routes.js";
 import { donorRoutes } from "./donor-routes.js";
 import { productRoutes } from "./product-routes.js";
+import { eventRoutes } from "./event-routes.js";
 
 export const routes = Router()
 
@@ -16,3 +17,4 @@ routes.use("/user", userRoutes)
 routes.use("/campaign", campaignRoutes)
 routes.use("/donor", donorRoutes)
 routes.use("/product", productRoutes)
+routes.use("/event", eventRoutes)
