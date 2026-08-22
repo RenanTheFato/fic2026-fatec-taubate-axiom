@@ -11,6 +11,7 @@ import { ActivateProductService } from "../services/product/activate-product-ser
 import { DeactivateProductController } from "../controllers/product/deactivate-product-controller.js";
 import { UpdateProductStockController } from "../controllers/product/update-product-stock-controller.js";
 import { GetProductByIdController } from "../controllers/product/get-product-by-id-controller.js";
+import { DeleteProductController } from "../controllers/product/delete-product-controller.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 
 describe("Product creation guarded by role (real staff journey)", () => {
@@ -288,7 +289,7 @@ describe("Product activation requires a real price", () => {
   })
 
   it("refuses to activate a product priced at zero", async () => {
-    const product = { id: "product-1", price: "0.00", active: false, update: jest.fn() }
+    const product = { id: "product-1", price: "0.00", active: false, activated_at: null, update: jest.fn() }
     jest.spyOn(Product, "findByPk").mockResolvedValue(product as any)
 
     await expect(new ActivateProductService().execute({ id: "product-1" })).rejects.toThrow(
@@ -297,13 +298,61 @@ describe("Product activation requires a real price", () => {
     expect(product.update).not.toHaveBeenCalled()
   })
 
-  it("activates a product that has a positive price", async () => {
-    const product = { id: "product-1", price: "49.90", active: false, update: jest.fn().mockResolvedValue(undefined) }
+  it("stamps activated_at on the first activation, so delete can tell it was never live", async () => {
+    const product = { id: "product-1", price: "49.90", active: false, activated_at: null, update: jest.fn().mockResolvedValue(undefined) }
+    jest.spyOn(Product, "findByPk").mockResolvedValue(product as any)
+
+    await new ActivateProductService().execute({ id: "product-1" })
+
+    expect(product.update).toHaveBeenCalledWith({ active: true, activated_at: expect.any(Date) })
+  })
+
+  it("does not overwrite activated_at on a re-activation", async () => {
+    const firstActivation = new Date("2026-01-01T00:00:00.000Z")
+    const product = { id: "product-1", price: "49.90", active: false, activated_at: firstActivation, update: jest.fn().mockResolvedValue(undefined) }
     jest.spyOn(Product, "findByPk").mockResolvedValue(product as any)
 
     await new ActivateProductService().execute({ id: "product-1" })
 
     expect(product.update).toHaveBeenCalledWith({ active: true })
+  })
+})
+
+describe("Deleting a product only when it never went live", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.restoreAllMocks()
+  })
+
+  it("deletes a product that was never activated", async () => {
+    jest.spyOn(Product, "findByPk").mockResolvedValue({ id: "product-1", activated_at: null } as any)
+    const destroy = jest.spyOn(Product, "destroy").mockResolvedValue(1)
+
+    const res = mockResponse()
+    await new DeleteProductController().handle(mockRequest({ params: { id: "product-1" } }), res)
+
+    expect(destroy).toHaveBeenCalledWith({ where: { id: "product-1" } })
+    expect(res.status).toHaveBeenCalledWith(204)
+  })
+
+  it("refuses to delete a product that has already been activated at some point", async () => {
+    jest.spyOn(Product, "findByPk").mockResolvedValue({ id: "product-1", activated_at: new Date() } as any)
+    const destroy = jest.spyOn(Product, "destroy")
+
+    const res = mockResponse()
+    await new DeleteProductController().handle(mockRequest({ params: { id: "product-1" } }), res)
+
+    expect(destroy).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(400)
+  })
+
+  it("responds 404 for a product that doesn't exist", async () => {
+    jest.spyOn(Product, "findByPk").mockResolvedValue(null)
+    const res = mockResponse()
+
+    await new DeleteProductController().handle(mockRequest({ params: { id: "missing" } }), res)
+
+    expect(res.status).toHaveBeenCalledWith(404)
   })
 })
 
