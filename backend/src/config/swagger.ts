@@ -23,6 +23,7 @@ import { createProductDoc } from "../docs/product/create-product.doc.js";
 import { listProductsDoc } from "../docs/product/list-products.doc.js";
 import { listAllProductsDoc } from "../docs/product/list-all-products.doc.js";
 import { getProductByIdDoc } from "../docs/product/get-product-by-id.doc.js";
+import { updateProductDoc } from "../docs/product/update-product.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -89,5 +90,6 @@ export const openApiDocument = createDocument({
     "/product/list": { get: toOperation(listProductsDoc) },
     "/product/list-all": { get: toOperation(listAllProductsDoc) },
     "/product/{id}": { get: toOperation(getProductByIdDoc) },
+    "/product/update/{id}": { put: toOperation(updateProductDoc) },
   },
 })
