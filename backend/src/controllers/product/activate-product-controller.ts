@@ -7,10 +7,6 @@ export class ActivateProductController {
   async handle(req: Request, res: Response) {
     const { id } = req.params as Pick<ProductInterface, 'id'>
 
-    if (!id) {
-      return res.status(400).json({ error: "The product id is required" })
-    }
-
     try {
       const activateProductService = new ActivateProductService()
       await activateProductService.execute({ id })
