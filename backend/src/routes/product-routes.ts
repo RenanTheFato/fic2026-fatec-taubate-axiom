@@ -13,7 +13,7 @@ import { DeleteProductController } from "../controllers/product/delete-product-c
 
 export const productRoutes = Router()
 
-productRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+productRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new CreateProductController().handle(req, res)
 })
 
@@ -21,7 +21,7 @@ productRoutes.get("/list", async(req: Request, res: Response) => {
   return new ListProductsController().handle(req, res)
 })
 
-productRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+productRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "communication"), async(req: Request, res: Response) => {
   return new ListAllProductsController().handle(req, res)
 })
 
@@ -29,19 +29,19 @@ productRoutes.get("/:id", async(req: Request, res: Response) => {
   return new GetProductByIdController().handle(req, res)
 })
 
-productRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+productRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async(req: Request, res: Response) => {
   return new UpdateProductController().handle(req, res)
 })
 
-productRoutes.patch("/activate/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+productRoutes.patch("/activate/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async(req: Request, res: Response) => {
   return new ActivateProductController().handle(req, res)
 })
 
-productRoutes.patch("/deactivate/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+productRoutes.patch("/deactivate/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async(req: Request, res: Response) => {
   return new DeactivateProductController().handle(req, res)
 })
 
-productRoutes.patch("/stock/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+productRoutes.patch("/stock/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async(req: Request, res: Response) => {
   return new UpdateProductStockController().handle(req, res)
 })
 

@@ -13,7 +13,7 @@ import { UpdateCampaignController } from "../controllers/campaign/update-campaig
 
 export const campaignRoutes = Router()
 
-campaignRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+campaignRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new CreateCampaignController().handle(req, res)
 })
 
@@ -21,7 +21,7 @@ campaignRoutes.get("/list", async (req: Request, res: Response) => {
   return new ListCampaignsController().handle(req, res)
 })
 
-campaignRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+campaignRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new ListAllCampaignsController().handle(req, res)
 })
 
@@ -29,22 +29,22 @@ campaignRoutes.get("/:slug", async (req: Request, res: Response) => {
   return new GetCampaignBySlugController().handle(req, res)
 })
 
-campaignRoutes.patch("/publish/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+campaignRoutes.patch("/publish/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new PublishCampaignController().handle(req, res)
 })
 
-campaignRoutes.patch("/finish/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+campaignRoutes.patch("/finish/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new FinishCampaignController().handle(req, res)
 })
 
-campaignRoutes.patch("/cancel/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+campaignRoutes.patch("/cancel/:id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new CancelCampaignController().handle(req, res)
 })
 
-campaignRoutes.delete("/delete/:campaign_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+campaignRoutes.delete("/delete/:id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new DeleteCampaignController().handle(req, res)
 })
 
-campaignRoutes.put("/update/:campaign_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+campaignRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new UpdateCampaignController().handle(req, res)
 })

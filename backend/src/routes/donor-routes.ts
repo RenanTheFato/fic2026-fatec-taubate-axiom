@@ -10,11 +10,11 @@ import { AnonymizeDonorController } from "../controllers/donor/anonymize-donor-c
 
 export const donorRoutes = Router()
 
-donorRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+donorRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "finance"), async (req: Request, res: Response) => {
   return new CreateDonorController().handle(req, res)
 })
 
-donorRoutes.get("/list", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+donorRoutes.get("/list", AuthMiddleware, RoleMiddleware("admin", "finance"), async(req: Request, res: Response) => {
   return new ListDonorsController().handle(req, res)
 })
 
@@ -23,11 +23,11 @@ donorRoutes.get("/profile", AuthMiddleware, async(req: Request, res: Response) =
   return new GetDonorProfileController().handle(req, res)
 })
 
-donorRoutes.get("/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+donorRoutes.get("/:id", AuthMiddleware, RoleMiddleware("admin", "finance"), async(req: Request, res: Response) => {
   return new GetDonorController().handle(req, res)
 })
 
-donorRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
+donorRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "finance"), async(req: Request, res: Response) => {
   return new UpdateDonorController().handle(req, res)
 })
 

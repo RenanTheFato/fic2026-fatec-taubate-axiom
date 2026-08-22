@@ -14,7 +14,7 @@ import { DeleteEventController } from "../controllers/event/delete-event-control
 
 export const eventRoutes = Router()
 
-eventRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.post("/create", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new CreateEventController().handle(req, res)
 })
 
@@ -22,7 +22,7 @@ eventRoutes.get("/list", async (req: Request, res: Response) => {
   return new ListEventsController().handle(req, res)
 })
 
-eventRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.get("/list-all", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new ListAllEventsController().handle(req, res)
 })
 
@@ -30,26 +30,26 @@ eventRoutes.get("/:slug", async (req: Request, res: Response) => {
   return new GetEventBySlugController().handle(req, res)
 })
 
-eventRoutes.patch("/publish/:event_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.patch("/publish/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new PublishEventController().handle(req, res)
 })
 
-eventRoutes.put("/update/:event_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.put("/update/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new UpdateEventController().handle(req, res)
 })
 
-eventRoutes.patch("/capacity/:event_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.patch("/capacity/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new UpdateEventCapacityController().handle(req, res)
 })
 
-eventRoutes.patch("/finish/:event_id", AuthMiddleware, RoleMiddleware("admin", "staff"), async (req: Request, res: Response) => {
+eventRoutes.patch("/finish/:id", AuthMiddleware, RoleMiddleware("admin", "communication"), async (req: Request, res: Response) => {
   return new FinishEventController().handle(req, res)
 })
 
-eventRoutes.patch("/cancel/:event_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+eventRoutes.patch("/cancel/:id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new CancelEventController().handle(req, res)
 })
 
-eventRoutes.delete("/delete/:event_id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
+eventRoutes.delete("/delete/:id", AuthMiddleware, RoleMiddleware("admin"), async (req: Request, res: Response) => {
   return new DeleteEventController().handle(req, res)
 })
