@@ -32,6 +32,12 @@ import { createEventDoc } from "../docs/event/create-event.doc.js";
 import { listEventsDoc } from "../docs/event/list-events.doc.js";
 import { listAllEventsDoc } from "../docs/event/list-all-events.doc.js";
 import { getEventBySlugDoc } from "../docs/event/get-event-by-slug.doc.js";
+import { publishEventDoc } from "../docs/event/publish-event.doc.js";
+import { updateEventDoc } from "../docs/event/update-event.doc.js";
+import { updateEventCapacityDoc } from "../docs/event/update-event-capacity.doc.js";
+import { finishEventDoc } from "../docs/event/finish-event.doc.js";
+import { cancelEventDoc } from "../docs/event/cancel-event.doc.js";
+import { deleteEventDoc } from "../docs/event/delete-event.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -108,5 +114,11 @@ export const openApiDocument = createDocument({
     "/event/list": { get: toOperation(listEventsDoc) },
     "/event/list-all": { get: toOperation(listAllEventsDoc) },
     "/event/{slug}": { get: toOperation(getEventBySlugDoc) },
+    "/event/publish/{event_id}": { patch: toOperation(publishEventDoc) },
+    "/event/update/{event_id}": { put: toOperation(updateEventDoc) },
+    "/event/capacity/{event_id}": { patch: toOperation(updateEventCapacityDoc) },
+    "/event/finish/{event_id}": { patch: toOperation(finishEventDoc) },
+    "/event/cancel/{event_id}": { patch: toOperation(cancelEventDoc) },
+    "/event/delete/{event_id}": { delete: toOperation(deleteEventDoc) },
   },
 })
