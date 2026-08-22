@@ -12,7 +12,7 @@ const validationErrorSchema = z.object({
 export const updateProductStockDoc = {
   tags: ["product"],
   summary: "Adjust a product's stock",
-  description: "Sets the product's stock to the given absolute quantity, as counted on the shelf during an inventory check. This is not a delta — sending the same value twice does not change the stock twice. Restricted to users with the admin or staff role.",
+  description: "Sets the product's stock to the given absolute quantity, as counted on the shelf during an inventory check. This is not a delta — sending the same value twice does not change the stock twice. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],

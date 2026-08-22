@@ -20,7 +20,7 @@ const internalErrorSchema = z.object({
 export const createProductDoc = {
   tags: ["product"],
   summary: "Create a new store product",
-  description: "Registers a new product in the store catalog. The product is created inactive and stays out of the public listing until it is activated. Restricted to users with the admin or staff role.",
+  description: "Registers a new product in the store catalog. The product is created inactive and stays out of the public listing until it is activated. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],

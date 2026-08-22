@@ -20,7 +20,7 @@ const internalErrorSchema = z.object({
 export const createEventDoc = {
   tags: ["event"],
   summary: "Create a new event",
-  description: "Registers a new event as a draft. The event stays out of the public listing until it is published, and its seats are only taken when a ticket payment is confirmed. Restricted to users with the admin or staff role.",
+  description: "Registers a new event as a draft. The event stays out of the public listing until it is published, and its seats are only taken when a ticket payment is confirmed. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],

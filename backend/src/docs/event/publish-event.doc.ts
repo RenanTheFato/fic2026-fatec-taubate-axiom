@@ -3,14 +3,14 @@ import { z } from "zod/v4";
 export const publishEventDoc = {
   tags: ["event"],
   summary: "Publish an event",
-  description: "Turns a draft event into published and visible in the public agenda. Requires the event to still be a draft and its start date to be in the future. Restricted to users with the admin or staff role.",
+  description: "Turns a draft event into published and visible in the public agenda. Requires the event to still be a draft and its start date to be in the future. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],
     },
   ],
   params: z.object({
-    event_id: z.uuid()
+    id: z.uuid()
       .describe("Identifier of the event.")
       .meta({ example: "3c6b1f9e-2a4d-4e7b-8f10-5d9c2a7b3e61" }),
   }),

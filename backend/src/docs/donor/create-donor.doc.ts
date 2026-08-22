@@ -29,7 +29,7 @@ const donorSchema = z.object({
 export const createDonorDoc = {
   tags: ["donor"],
   summary: "Register a donor",
-  description: "Registers a donor for the negotiated donation flow, deriving the document type from the document itself. If a donor with the same document (or the same email, when no document is given) already exists, the existing record is returned instead of a duplicate. Restricted to users with the admin or staff role.",
+  description: "Registers a donor for the negotiated donation flow, deriving the document type from the document itself. If a donor with the same document (or the same email, when no document is given) already exists, the existing record is returned instead of a duplicate. Restricted to users with the admin or finance role.",
   security: [
     {
       bearerAuth: [],

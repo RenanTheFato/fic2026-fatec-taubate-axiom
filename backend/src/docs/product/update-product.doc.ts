@@ -16,7 +16,7 @@ const serviceErrorSchema = z.object({
 export const updateProductDoc = {
   tags: ["product"],
   summary: "Update an existing product",
-  description: "Updates the editable fields of a product. Stock and the active flag are never changed here. At least one field must be provided. Restricted to users with the admin or staff role.",
+  description: "Updates the editable fields of a product. Stock and the active flag are never changed here. At least one field must be provided. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],

@@ -12,14 +12,14 @@ const validationErrorSchema = z.object({
 export const updateEventCapacityDoc = {
   tags: ["event"],
   summary: "Adjust an event's seat capacity",
-  description: "Sets the event's capacity to the given absolute number of seats. Null means unlimited. Recuses a capacity lower than the seats already taken. Restricted to users with the admin or staff role.",
+  description: "Sets the event's capacity to the given absolute number of seats. Null means unlimited. Recuses a capacity lower than the seats already taken. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],
     },
   ],
   params: z.object({
-    event_id: z.uuid()
+    id: z.uuid()
       .describe("Identifier of the event.")
       .meta({ example: "3c6b1f9e-2a4d-4e7b-8f10-5d9c2a7b3e61" }),
   }),
