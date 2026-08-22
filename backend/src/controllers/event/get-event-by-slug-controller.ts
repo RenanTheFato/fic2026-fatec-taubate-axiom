@@ -25,9 +25,9 @@ export class GetEventBySlugController {
 
     try {
       const getEventBySlugService = new GetEventBySlugService()
-      const campaign = await getEventBySlugService.execute({ slug })
+      const event = await getEventBySlugService.execute({ slug })
 
-      return res.status(200).json({ message: "Event Founded", campaign })
+      return res.status(200).json({ message: "Event Founded", event })
     } catch (error: unknown) {
       if (error instanceof NotFoundError) {
         return res.status(404).json({ error: error.message})
