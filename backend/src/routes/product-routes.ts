@@ -9,6 +9,7 @@ import { UpdateProductController } from "../controllers/product/update-product-c
 import { ActivateProductController } from "../controllers/product/activate-product-controller.js";
 import { DeactivateProductController } from "../controllers/product/deactivate-product-controller.js";
 import { UpdateProductStockController } from "../controllers/product/update-product-stock-controller.js";
+import { DeleteProductController } from "../controllers/product/delete-product-controller.js";
 
 export const productRoutes = Router()
 
@@ -42,4 +43,8 @@ productRoutes.patch("/deactivate/:id", AuthMiddleware, RoleMiddleware("admin", "
 
 productRoutes.patch("/stock/:id", AuthMiddleware, RoleMiddleware("admin", "staff"), async(req: Request, res: Response) => {
   return new UpdateProductStockController().handle(req, res)
+})
+
+productRoutes.delete("/delete/:id", AuthMiddleware, RoleMiddleware("admin"), async(req: Request, res: Response) => {
+  return new DeleteProductController().handle(req, res)
 })
