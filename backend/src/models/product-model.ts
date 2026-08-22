@@ -10,6 +10,7 @@ export class Product extends Model<InferAttributes<Product>, InferCreationAttrib
   declare stock: CreationOptional<number>
   declare image_url: CreationOptional<string | null>
   declare active: CreationOptional<boolean>
+  declare activated_at: CreationOptional<Date | null>
   declare readonly created_at: CreationOptional<Date>
   declare readonly updated_at: CreationOptional<Date>
 }
@@ -51,6 +52,10 @@ Product.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    activated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE,
