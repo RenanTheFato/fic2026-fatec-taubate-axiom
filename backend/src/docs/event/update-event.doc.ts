@@ -23,7 +23,7 @@ export const updateEventDoc = {
     },
   ],
   params: z.object({
-    event_id: z.uuid()
+    id: z.uuid()
       .describe("Identifier of the event.")
       .meta({ example: "3c6b1f9e-2a4d-4e7b-8f10-5d9c2a7b3e61" }),
   }),
