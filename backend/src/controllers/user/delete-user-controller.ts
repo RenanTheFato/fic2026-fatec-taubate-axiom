@@ -7,10 +7,6 @@ export class DeleteUserController {
   async handle(req: Request, res: Response) {
     const { id } = req.user as Pick<UserInterface, 'id'>
 
-    if (!id) {
-      return res.status(400).json({ error: "The id is missing" })
-    }
-
     try {
       const deleteUserService = new DeleteUserService()
       await deleteUserService.execute({ id })
