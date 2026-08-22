@@ -7,15 +7,11 @@ export class DeactivateProductController {
   async handle(req: Request, res: Response) {
     const { id } = req.params as Pick<ProductInterface, 'id'>
 
-    if (!id) {
-      return res.status(400).json({ error: "The product id is required" })
-    }
-
     try {
       const deactivateProductService = new DeactivateProductService()
       await deactivateProductService.execute({ id })
 
-      return res.status(200).json({ message: "Product is now deactivate" })
+      return res.status(200).json({ message: "Product is now deactivated" })
     } catch (error: unknown) {
       if (error instanceof NotFoundError) {
         return res.status(404).json({ error: error.message })
