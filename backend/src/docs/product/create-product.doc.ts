@@ -62,6 +62,7 @@ export const createProductDoc = {
         stock: z.number(),
         image_url: z.string().nullable(),
         active: z.boolean(),
+        activated_at: z.iso.datetime().nullable(),
         created_at: z.iso.datetime(),
         updated_at: z.iso.datetime(),
       }),
