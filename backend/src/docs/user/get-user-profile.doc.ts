@@ -29,18 +29,14 @@ export const getUserProfileDoc = {
             example: "johndoe"
           }),
         role: z.string()
-          .describe("User's role (e.g. admin | staff | volunteer)")
+          .describe("User's role (e.g. admin | finance | communication | volunteer)")
           .meta({
-            example: "admin, staff or volunteer example"
+            example: "admin, finance, communication or volunteer example"
           }),
         created_at: z.date().describe("Account creation timestamp."),
         updated_at: z.date().describe("Last update timestamp."),
       }),
     }).describe("User data successfully fetched."),
-
-    400: z.object({
-      error: z.string(),
-    }).describe("Missing user ID or user does not exist."),
 
     401: z.object({
       error: z.string(),
