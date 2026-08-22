@@ -19,7 +19,7 @@ export class GetEventBySlugService {
       throw new NotFoundError("Event Not Found")
     }
 
-    return event.get({ plain: true })
+    return event
 
   }
 }
