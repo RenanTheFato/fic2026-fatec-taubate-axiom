@@ -1,7 +1,7 @@
 import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
 import { sequelize } from "../config/sequelize.js";
 
-export const USER_ROLES = ["admin", "staff", "volunteer"] as const
+export const USER_ROLES = ["admin", "finance", "communication", "volunteer"] as const
 
 export type UserRole = typeof USER_ROLES[number]
 
