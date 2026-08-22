@@ -1,3 +1,5 @@
+import { EventStatus } from "../models/event-model.js";
+
 export interface EventInterface{
   id: string,
   campaign_id: string | null,
@@ -10,7 +12,7 @@ export interface EventInterface{
   ticket_price: string,
   capacity: number | null,
   taken_seats: number,
-  status: string,
+  status: EventStatus,
   created_at: Date,
   updated_at: Date
 }

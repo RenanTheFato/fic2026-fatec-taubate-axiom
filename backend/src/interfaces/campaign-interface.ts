@@ -1,3 +1,5 @@
+import { CampaignStatus } from "../models/campaign-model.js";
+
 export interface CampaignInterface{
   id: string,
   title: string,
@@ -7,7 +9,7 @@ export interface CampaignInterface{
   raised_amount: string,
   starts_at: Date,
   ends_at: Date | null,
-  status: string,
+  status: CampaignStatus,
   created_at: Date,
   updated_at: Date
 }
