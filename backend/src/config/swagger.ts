@@ -28,6 +28,7 @@ import { activateProductDoc } from "../docs/product/activate-product.doc.js";
 import { deactivateProductDoc } from "../docs/product/deactivate-product.doc.js";
 import { updateProductStockDoc } from "../docs/product/update-product-stock.doc.js";
 import { deleteProductDoc } from "../docs/product/delete-product.doc.js";
+import { createEventDoc } from "../docs/event/create-event.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -99,5 +100,7 @@ export const openApiDocument = createDocument({
     "/product/deactivate/{id}": { patch: toOperation(deactivateProductDoc) },
     "/product/stock/{id}": { patch: toOperation(updateProductStockDoc) },
     "/product/delete/{id}": { delete: toOperation(deleteProductDoc) },
+
+    "/event/create": { post: toOperation(createEventDoc) },
   },
 })
