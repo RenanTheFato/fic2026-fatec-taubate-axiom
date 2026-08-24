@@ -49,11 +49,13 @@ async function start() {
 
   app.use(cors({
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
   )
 
   // body parser
+  // O webhook do Stripe precisa do corpo cru, a assinatura é um HMAC sobre os bytes exatos da requisição
+  app.use("/api/v1/transaction/webhook", express.raw({ type: "application/json" }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
