@@ -1,6 +1,8 @@
 import { BadRequestError, NotFoundError } from "../config/errors.js";
 import { StripeGateway } from "../config/stripe.js";
 import { Campaign } from "../models/campaign-model.js";
+import { Donor } from "../models/donor-model.js";
+import { Receipt } from "../models/receipt-model.js";
 import { Event } from "../models/event-model.js";
 import { Transaction } from "../models/transaction-model.js";
 import { TransactionAuditLog } from "../models/transaction-audit-log-model.js";
@@ -43,6 +45,14 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
     jest.spyOn(Campaign, "decrement").mockResolvedValue({} as never)
     jest.spyOn(Event, "update").mockResolvedValue([1] as never)
     jest.spyOn(StripeGateway.prototype, "refundPayment").mockResolvedValue(undefined)
+
+    // A confirmação emite o recibo dentro da mesma transação de banco, então o ciclo de vida
+    // também precisa da ponta do recibo de mentira.
+    jest.spyOn(Donor, "findByPk").mockResolvedValue({ id: "donor-123", name: "Maria Oliveira", document: null } as never)
+    jest.spyOn(Receipt, "findOne").mockResolvedValue(null)
+    jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
+      get: () => values,
+    })) as never)
   })
 
   it("confirms a pending donation, raises the campaign total and writes the audit record", async () => {
