@@ -5,6 +5,7 @@ import { donorRoutes } from "./donor-routes.js";
 import { productRoutes } from "./product-routes.js";
 import { eventRoutes } from "./event-routes.js";
 import { transactionRoutes } from "./transaction-routes.js";
+import { receiptRoutes } from "./receipt-routes.js";
 
 export const routes = Router()
 
@@ -20,3 +21,4 @@ routes.use("/donor", donorRoutes)
 routes.use("/product", productRoutes)
 routes.use("/event", eventRoutes)
 routes.use("/transaction", transactionRoutes)
+routes.use("/receipt", receiptRoutes)
