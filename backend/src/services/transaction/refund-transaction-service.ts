@@ -8,6 +8,7 @@ import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
+import { CancelReceiptService } from "../receipt/cancel-receipt-service.js";
 
 interface RefundTransactionProps {
   transaction_id: TransactionInterface['id'],
@@ -69,6 +70,14 @@ export class RefundTransactionService {
         refunded_at: new Date(),
       }, { transaction: t })
 
+      // recibo é cancelado, nunca apagado, a linha continua na cadeia de hashes, senão o elo do
+      // recibo seguinte apontaria para um registro inexistente e a verificação acusaria adulteração
+      // onde houve apenas um estorno legítimo
+      const receipt = await new CancelReceiptService().execute({
+        transaction_id,
+        database_transaction: t,
+      })
+
       await TransactionAuditLog.create({
         transaction_id,
         previous_status: "confirmed",
@@ -78,7 +87,7 @@ export class RefundTransactionService {
         reason,
       }, { transaction: t })
 
-      return locked.get({ plain: true })
+      return { ...locked.get({ plain: true }), receipt }
     })
   }
 }
