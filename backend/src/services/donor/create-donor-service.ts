@@ -1,3 +1,4 @@
+import { UniqueConstraintError } from "sequelize";
 import { BadRequestError } from "../../config/errors.js";
 import { DonorInterface } from "../../interfaces/donor-interface.js";
 import { Donor, DocumentType } from "../../models/donor-model.js";
@@ -29,14 +30,31 @@ export class CreateDonorService {
       return { donor: existingDonor.get({ plain: true }), created: false }
     }
 
-    const donor = await Donor.create({
-      name,
-      email,
-      document: normalizedDocument,
-      document_type: documentType,
-      phone
-    })
+    // Duas doações simultâneas do mesmo CPF passam as duas pela busca acima sem encontrar nada e
+    // chegam juntas no create: a segunda bate no índice único. Isso não é erro do doador, é a
+    // corrida — quem perde relê o cadastro que a outra acabou de gravar e segue com ele.
+    try {
+      const donor = await Donor.create({
+        name,
+        email,
+        document: normalizedDocument,
+        document_type: documentType,
+        phone
+      })
 
-    return { donor: donor.get({ plain: true }), created: true }
+      return { donor: donor.get({ plain: true }), created: true }
+    } catch (error: unknown) {
+      if (error instanceof UniqueConstraintError) {
+        const concurrentDonor = await Donor.findOne({
+          where: normalizedDocument ? { document: normalizedDocument } : { email }
+        })
+
+        if (concurrentDonor) {
+          return { donor: concurrentDonor.get({ plain: true }), created: false }
+        }
+      }
+
+      throw error
+    }
   }
 }
