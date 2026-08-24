@@ -1,0 +1,131 @@
+import Stripe from "stripe";
+import { env } from "./env.js";
+import { PaymentMethod, TransactionStatus } from "../models/transaction-model.js";
+
+const client = new Stripe(env.STRIPE_SECRET_KEY)
+
+// O status do Stripe não é o status da transação: a tradução mora aqui, num lugar só, senão
+// cada service inventa a própria e dois caminhos discordam sobre o mesmo pagamento.
+const STATUS_BY_INTENT_STATUS: Record<string, TransactionStatus> = {
+  requires_payment_method: "pending",
+  requires_confirmation: "pending",
+  requires_action: "pending",
+  processing: "awaiting_confirmation",
+  requires_capture: "awaiting_confirmation",
+  succeeded: "confirmed",
+  canceled: "cancelled",
+}
+
+const METHOD_BY_GATEWAY_TYPE: Record<string, PaymentMethod> = {
+  pix: "pix",
+  boleto: "boleto",
+  card: "credit_card",
+}
+
+export interface GatewayPayment {
+  gateway_payment_id: string,
+  status: TransactionStatus,
+  payment_method: PaymentMethod | null,
+  amount: number | null,
+  transaction_id: string | null,
+}
+
+export interface CreateCheckoutSessionParams {
+  transaction_id: string,
+  title: string,
+  amount: string,
+  payer_name: string,
+  payer_email: string,
+}
+
+// O cartão só se revela crédito ou débito no charge, e não no tipo do método: sem olhar o
+// funding toda compra no cartão viraria credit_card no painel financeiro.
+function methodFromCharge(charge: Stripe.Charge | null) {
+  const details = charge?.payment_method_details
+
+  if (!details) {
+    return null
+  }
+
+  if (details.type === "card") {
+    return details.card?.funding === "debit" ? "debit_card" : "credit_card"
+  }
+
+  return METHOD_BY_GATEWAY_TYPE[details.type] ?? null
+}
+
+export class StripeGateway {
+  async createCheckoutSession({ transaction_id, title, amount, payer_name, payer_email }: CreateCheckoutSessionParams) {
+    const session = await client.checkout.sessions.create({
+      mode: "payment",
+      // O client_reference_id é o que amarra a sessão de volta à nossa transação quando o
+      // webhook chega sem nenhum outro contexto. O metadata repete o vínculo no PaymentIntent,
+      // porque os eventos de charge e de estorno não carregam a sessão.
+      client_reference_id: transaction_id,
+      customer_email: payer_email,
+      line_items: [
+        {
+          price_data: {
+            currency: "brl",
+            product_data: { name: title },
+            // O Stripe cobra em centavos inteiros: é o único ponto em que o valor vira número
+            // em JS, e o arredondamento existe porque 19.99 * 100 não é exato em ponto flutuante.
+            unit_amount: Math.round(Number(amount) * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: { transaction_id, donor_name: payer_name },
+      payment_intent_data: {
+        metadata: { transaction_id },
+      },
+      success_url: `${env.APP_URL}/transaction/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${env.APP_URL}/transaction/failure`,
+    })
+
+    return {
+      gateway_checkout_id: session.id,
+      checkout_url: session.url,
+    }
+  }
+
+  // Regra 3.1: o efeito financeiro nunca é aplicado a partir do que veio escrito na notificação.
+  // A assinatura do Stripe garante a origem do corpo, mas não que ele ainda esteja atual — uma
+  // reentrega antiga descreve um pagamento que já mudou de estado desde então.
+  async getPayment(payment_intent_id: string): Promise<GatewayPayment> {
+    const intent = await client.paymentIntents.retrieve(payment_intent_id, { expand: ["latest_charge"] })
+
+    const charge = (intent.latest_charge ?? null) as Stripe.Charge | null
+
+    // Um pagamento estornado continua succeeded no PaymentIntent: o estorno só aparece no charge.
+    const isRefunded = charge?.refunded === true || (charge?.amount_refunded ?? 0) > 0
+
+    return {
+      gateway_payment_id: intent.id,
+      status: isRefunded ? "refunded" : STATUS_BY_INTENT_STATUS[intent.status] ?? "pending",
+      payment_method: methodFromCharge(charge),
+      amount: intent.amount / 100,
+      transaction_id: intent.metadata?.transaction_id ?? null,
+    }
+  }
+
+  async refundPayment(payment_intent_id: string) {
+    await client.refunds.create({ payment_intent: payment_intent_id })
+  }
+}
+
+// Assinatura do webhook: o Stripe assina o corpo cru com HMAC-SHA256 e um timestamp, e o SDK
+// recusa tanto a assinatura errada quanto a notificação velha demais. Sem essa checagem qualquer
+// um que descubra a URL consegue confirmar transação. Precisa do Buffer original — o corpo já
+// convertido em objeto não bate mais com o que foi assinado.
+export function constructWebhookEvent(payload: Buffer, signature: string | undefined) {
+  if (!signature) {
+    return null
+  }
+
+  try {
+    return client.webhooks.constructEvent(payload, signature, env.STRIPE_WEBHOOK_SECRET)
+  } catch {
+    return null
+  }
+}
