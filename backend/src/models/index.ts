@@ -6,6 +6,7 @@ import { Product } from "./product-model.js";
 import { Event } from "./event-model.js";
 import { Transaction } from "./transaction-model.js";
 import { TransactionAuditLog } from "./transaction-audit-log-model.js";
+import { Receipt } from "./receipt-model.js";
 
 // Identity
 
@@ -30,10 +31,15 @@ Transaction.belongsTo(Donor, { foreignKey: "donor_id", as: "donor" })
 Event.hasMany(Transaction, { foreignKey: "event_id", as: "transactions" })
 Transaction.belongsTo(Event, { foreignKey: "event_id", as: "event" })
 
+// Receipt
+
+Transaction.hasOne(Receipt, { foreignKey: "transaction_id", as: "receipt" })
+Receipt.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
+
 // Transaction audit
 
 Transaction.hasMany(TransactionAuditLog, { foreignKey: "transaction_id", as: "audit_logs" })
 TransactionAuditLog.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
 TransactionAuditLog.belongsTo(User, { foreignKey: "performed_by", as: "author" })
 
-export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog }
+export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt }
