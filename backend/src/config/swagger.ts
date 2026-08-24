@@ -46,6 +46,11 @@ import { confirmTransactionDoc } from "../docs/transaction/confirm-transaction.d
 import { refuseTransactionDoc } from "../docs/transaction/refuse-transaction.doc.js";
 import { cancelTransactionDoc } from "../docs/transaction/cancel-transaction.doc.js";
 import { refundTransactionDoc } from "../docs/transaction/refund-transaction.doc.js";
+import { listReceiptsDoc } from "../docs/receipt/list-receipts.doc.js";
+import { verifyReceiptDoc } from "../docs/receipt/verify-receipt.doc.js";
+import { downloadReceiptDoc } from "../docs/receipt/download-receipt.doc.js";
+import { downloadReceiptCertificateDoc } from "../docs/receipt/download-receipt-certificate.doc.js";
+import { getReceiptDoc } from "../docs/receipt/get-receipt.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -65,7 +70,9 @@ function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
         status,
         {
           description: schema.description ?? "No description provided.",
-          content: { "application/json": { schema } },
+          content: {
+            [Number(status) < 300 ? doc.contentType ?? "application/json" : "application/json"]: { schema },
+          },
         },
       ])
     ),
@@ -137,5 +144,11 @@ export const openApiDocument = createDocument({
     "/transaction/refuse/{id}": { patch: toOperation(refuseTransactionDoc) },
     "/transaction/cancel/{id}": { patch: toOperation(cancelTransactionDoc) },
     "/transaction/refund/{id}": { patch: toOperation(refundTransactionDoc) },
+
+    "/receipt/list": { get: toOperation(listReceiptsDoc) },
+    "/receipt/verify/{hash}": { get: toOperation(verifyReceiptDoc) },
+    "/receipt/download/{hash}": { get: toOperation(downloadReceiptDoc) },
+    "/receipt/certificate/{hash}": { get: toOperation(downloadReceiptCertificateDoc) },
+    "/receipt/{id}": { get: toOperation(getReceiptDoc) },
   },
 })
