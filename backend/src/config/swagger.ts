@@ -38,6 +38,14 @@ import { updateEventCapacityDoc } from "../docs/event/update-event-capacity.doc.
 import { finishEventDoc } from "../docs/event/finish-event.doc.js";
 import { cancelEventDoc } from "../docs/event/cancel-event.doc.js";
 import { deleteEventDoc } from "../docs/event/delete-event.doc.js";
+import { createTransactionDoc } from "../docs/transaction/create-transaction.doc.js";
+import { transactionWebhookDoc } from "../docs/transaction/transaction-webhook.doc.js";
+import { listTransactionsDoc } from "../docs/transaction/list-transactions.doc.js";
+import { getTransactionDoc } from "../docs/transaction/get-transaction.doc.js";
+import { confirmTransactionDoc } from "../docs/transaction/confirm-transaction.doc.js";
+import { refuseTransactionDoc } from "../docs/transaction/refuse-transaction.doc.js";
+import { cancelTransactionDoc } from "../docs/transaction/cancel-transaction.doc.js";
+import { refundTransactionDoc } from "../docs/transaction/refund-transaction.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -87,11 +95,11 @@ export const openApiDocument = createDocument({
     "/campaign/list": { get: toOperation(listCampaignsDoc) },
     "/campaign/list-all": { get: toOperation(listAllCampaignsDoc) },
     "/campaign/{slug}": { get: toOperation(getCampaignBySlugDoc) },
-    "/campaign/publish/{campaign_id}": { patch: toOperation(publishCampaignDoc) },
-    "/campaign/finish/{campaign_id}": { patch: toOperation(finishCampaignDoc) },
-    "/campaign/cancel/{campaign_id}": { patch: toOperation(cancelCampaignDoc) },
-    "/campaign/update/{campaign_id}": { put: toOperation(updateCampaignDoc) },
-    "/campaign/delete/{campaign_id}": { delete: toOperation(deleteCampaignDoc) },
+    "/campaign/publish/{id}": { patch: toOperation(publishCampaignDoc) },
+    "/campaign/finish/{id}": { patch: toOperation(finishCampaignDoc) },
+    "/campaign/cancel/{id}": { patch: toOperation(cancelCampaignDoc) },
+    "/campaign/update/{id}": { put: toOperation(updateCampaignDoc) },
+    "/campaign/delete/{id}": { delete: toOperation(deleteCampaignDoc) },
 
     "/donor/create": { post: toOperation(createDonorDoc) },
     "/donor/list": { get: toOperation(listDonorsDoc) },
@@ -114,11 +122,20 @@ export const openApiDocument = createDocument({
     "/event/list": { get: toOperation(listEventsDoc) },
     "/event/list-all": { get: toOperation(listAllEventsDoc) },
     "/event/{slug}": { get: toOperation(getEventBySlugDoc) },
-    "/event/publish/{event_id}": { patch: toOperation(publishEventDoc) },
-    "/event/update/{event_id}": { put: toOperation(updateEventDoc) },
-    "/event/capacity/{event_id}": { patch: toOperation(updateEventCapacityDoc) },
-    "/event/finish/{event_id}": { patch: toOperation(finishEventDoc) },
-    "/event/cancel/{event_id}": { patch: toOperation(cancelEventDoc) },
-    "/event/delete/{event_id}": { delete: toOperation(deleteEventDoc) },
+    "/event/publish/{id}": { patch: toOperation(publishEventDoc) },
+    "/event/update/{id}": { put: toOperation(updateEventDoc) },
+    "/event/capacity/{id}": { patch: toOperation(updateEventCapacityDoc) },
+    "/event/finish/{id}": { patch: toOperation(finishEventDoc) },
+    "/event/cancel/{id}": { patch: toOperation(cancelEventDoc) },
+    "/event/delete/{id}": { delete: toOperation(deleteEventDoc) },
+
+    "/transaction/create": { post: toOperation(createTransactionDoc) },
+    "/transaction/webhook": { post: toOperation(transactionWebhookDoc) },
+    "/transaction/list": { get: toOperation(listTransactionsDoc) },
+    "/transaction/{id}": { get: toOperation(getTransactionDoc) },
+    "/transaction/confirm/{id}": { patch: toOperation(confirmTransactionDoc) },
+    "/transaction/refuse/{id}": { patch: toOperation(refuseTransactionDoc) },
+    "/transaction/cancel/{id}": { patch: toOperation(cancelTransactionDoc) },
+    "/transaction/refund/{id}": { patch: toOperation(refundTransactionDoc) },
   },
 })
