@@ -7,6 +7,7 @@ import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
+import { IssueReceiptService } from "../receipt/issue-receipt-service.js";
 
 interface ConfirmTransactionProps {
   transaction_id: TransactionInterface['id'],
@@ -43,8 +44,7 @@ export class ConfirmTransactionService {
 
       const previousStatus = transaction.status
 
-      // Dinheiro é somado no SQL, nunca lido-e-escrito no Node: duas confirmações simultâneas
-      // na mesma campanha perderiam uma das somas.
+      // Dinheiro é somado no SQL
       if (transaction.campaign_id) {
         await Campaign.increment(
           { raised_amount: Number(transaction.amount) },
@@ -53,7 +53,7 @@ export class ConfirmTransactionService {
       }
 
       // A vaga é debitada aqui e só aqui. O UPDATE condicional resolve a corrida
-      // do último convite: quem confirma primeiro leva, e o segundo vê zero linhas afetadas.
+      // do último convite, quem confirma primeiro leva, e o segundo vê zero linhas afetadas
       if (transaction.type === "ticket" && transaction.event_id) {
         const [takenSeats] = await Event.update(
           { taken_seats: literal("taken_seats + 1") },
@@ -81,6 +81,14 @@ export class ConfirmTransactionService {
         ...(gateway_payment_id !== undefined ? { gateway_payment_id } : {}),
       }, { transaction: t })
 
+      // o recibo é emitido aqui dentro, não depois, lista a emissão entre os efeitos
+      // da confirmação, e um recibo gravado fora desta transação poderia sobreviver a um rollback
+      // que desfez a confirmação, documento válido para pagamento que nunca foi confirmado
+      const receipt = await new IssueReceiptService().execute({
+        transaction,
+        database_transaction: t,
+      })
+
       await TransactionAuditLog.create({
         transaction_id,
         previous_status: previousStatus,
@@ -90,7 +98,7 @@ export class ConfirmTransactionService {
         reason,
       }, { transaction: t })
 
-      return transaction.get({ plain: true })
+      return { ...transaction.get({ plain: true }), receipt }
     })
   }
 }
