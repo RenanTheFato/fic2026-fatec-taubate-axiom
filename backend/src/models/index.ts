@@ -7,6 +7,8 @@ import { Event } from "./event-model.js";
 import { Transaction } from "./transaction-model.js";
 import { TransactionAuditLog } from "./transaction-audit-log-model.js";
 import { Receipt } from "./receipt-model.js";
+import { ReceiptSequence } from "./receipt-sequence-model.js";
+import { TransactionItem } from "./transaction-item-model.js";
 
 // Identity
 
@@ -31,6 +33,14 @@ Transaction.belongsTo(Donor, { foreignKey: "donor_id", as: "donor" })
 Event.hasMany(Transaction, { foreignKey: "event_id", as: "transactions" })
 Transaction.belongsTo(Event, { foreignKey: "event_id", as: "event" })
 
+// Transaction items
+
+Transaction.hasMany(TransactionItem, { foreignKey: "transaction_id", as: "items" })
+TransactionItem.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
+
+Product.hasMany(TransactionItem, { foreignKey: "product_id", as: "transaction_items" })
+TransactionItem.belongsTo(Product, { foreignKey: "product_id", as: "product" })
+
 // Receipt
 
 Transaction.hasOne(Receipt, { foreignKey: "transaction_id", as: "receipt" })
@@ -42,4 +52,5 @@ Transaction.hasMany(TransactionAuditLog, { foreignKey: "transaction_id", as: "au
 TransactionAuditLog.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
 TransactionAuditLog.belongsTo(User, { foreignKey: "performed_by", as: "author" })
 
-export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt }
+// ReceiptSequence não tem associação: é a linha única que serializa a emissão da corrente.
+export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem }
