@@ -51,6 +51,8 @@ import { verifyReceiptDoc } from "../docs/receipt/verify-receipt.doc.js";
 import { downloadReceiptDoc } from "../docs/receipt/download-receipt.doc.js";
 import { downloadReceiptCertificateDoc } from "../docs/receipt/download-receipt-certificate.doc.js";
 import { getReceiptDoc } from "../docs/receipt/get-receipt.doc.js";
+import { listTransactionItemsDoc } from "../docs/transaction-item/list-transaction-items.doc.js";
+import { summarizeTransactionItemsDoc } from "../docs/transaction-item/summarize-transaction-items.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -150,5 +152,8 @@ export const openApiDocument = createDocument({
     "/receipt/download/{hash}": { get: toOperation(downloadReceiptDoc) },
     "/receipt/certificate/{hash}": { get: toOperation(downloadReceiptCertificateDoc) },
     "/receipt/{id}": { get: toOperation(getReceiptDoc) },
+
+    "/transaction-item/list": { get: toOperation(listTransactionItemsDoc) },
+    "/transaction-item/summary": { get: toOperation(summarizeTransactionItemsDoc) },
   },
 })
