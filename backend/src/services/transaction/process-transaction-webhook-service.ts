@@ -5,6 +5,7 @@ import { StripeGateway } from "../../config/stripe.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
 import { TransactionStatus } from "../../models/transaction-model.js";
+import { fromCents, toCents } from "../../utils/money.js";
 import { CancelTransactionService } from "./cancel-transaction-service.js";
 import { ConfirmTransactionService } from "./confirm-transaction-service.js";
 import { RefundTransactionService } from "./refund-transaction-service.js";
@@ -56,10 +57,27 @@ export class ProcessTransactionWebhookService {
 
     const status = payment && !outcome.status_comes_from_event ? payment.status : outcome.status
 
+    // Devolução parcial não tem reversão automática: decrementar a arrecadação inteira, cancelar
+    // o recibo e devolver todo o estoque por causa de dez reais devolvidos numa compra de cem
+    // deixaria o caixa errado nos dois lados. Fica registrado para a equipe decidir.
+    if (payment?.partially_refunded) {
+      return { processed: false, reason: "Partial refund requires manual reconciliation" }
+    }
+
     // O Stripe reenvia o mesmo evento várias vezes. Chegar num status que a transação já tem
     // não é erro, é a reentrega — e reprocessar somaria arrecadação duas vezes.
     if (transaction.status === status) {
       return { processed: false, reason: "Transaction is already in this status" }
+    }
+
+    // O efeito financeiro não é aplicado sem conferir que o valor pago é o valor registrado.
+    // O recibo é encadeado por hash e imutável: emitir um para um valor que não foi pago cria um
+    // documento falso que toda a corrente passa a sustentar, e que não dá para reescrever depois.
+    if (status === "confirmed" && payment && payment.amount_cents !== toCents(transaction.amount)) {
+      return {
+        processed: false,
+        reason: `The paid amount (${fromCents(payment.amount_cents)}) does not match the transaction amount (${transaction.amount})`,
+      }
     }
 
     const common = {
@@ -91,8 +109,13 @@ export class ProcessTransactionWebhookService {
         await new RefundTransactionService().execute({ ...common, refund_on_gateway: false })
         break
 
-      default:
-        await this.recordPendingStatus(transaction, status, payment?.payment_method ?? undefined, outcome.payment_intent_id ?? undefined, common.reason)
+      default: {
+        const recorded = await this.recordPendingStatus(transaction, status, payment?.payment_method ?? undefined, outcome.payment_intent_id ?? undefined, common.reason)
+
+        if (!recorded) {
+          return { processed: false, reason: "The transaction has already moved past this status" }
+        }
+      }
     }
 
     return { processed: true, status }
@@ -175,6 +198,9 @@ export class ProcessTransactionWebhookService {
   }
 
   // pending e awaiting_confirmation não têm efeito financeiro: só carimbam o status e o log.
+  // A releitura com trava não é zelo: o Stripe reentrega evento fora de ordem, e sem ela um
+  // "processando" atrasado rebaixaria uma transação já confirmada, com recibo emitido e
+  // arrecadação somada. Status só anda para frente.
   private async recordPendingStatus(
     transaction: Transaction,
     status: TransactionStatus,
@@ -182,23 +208,38 @@ export class ProcessTransactionWebhookService {
     gateway_payment_id: string | undefined,
     reason: string
   ) {
-    await sequelize.transaction(async (t) => {
-      const previousStatus = transaction.status
+    return await sequelize.transaction(async (t) => {
+      const locked = await Transaction.findByPk(transaction.id, {
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      })
 
-      await transaction.update({
+      if (!locked || (locked.status !== "pending" && locked.status !== "awaiting_confirmation")) {
+        return false
+      }
+
+      if (locked.status === status) {
+        return false
+      }
+
+      const previousStatus = locked.status
+
+      await locked.update({
         status,
         ...(payment_method !== undefined ? { payment_method } : {}),
         ...(gateway_payment_id !== undefined ? { gateway_payment_id } : {}),
       }, { transaction: t })
 
       await TransactionAuditLog.create({
-        transaction_id: transaction.id,
+        transaction_id: locked.id,
         previous_status: previousStatus,
         new_status: status,
         source: "webhook",
         performed_by: null,
         reason,
       }, { transaction: t })
+
+      return true
     })
   }
 }

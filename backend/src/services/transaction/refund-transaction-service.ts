@@ -6,8 +6,10 @@ import { TransactionInterface } from "../../interfaces/transaction-interface.js"
 import { TransactionAuditLogInterface } from "../../interfaces/transaction-audit-log-interface.js";
 import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
+import { Product } from "../../models/product-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
+import { TransactionItem } from "../../models/transaction-item-model.js";
 import { CancelReceiptService } from "../receipt/cancel-receipt-service.js";
 
 interface RefundTransactionProps {
@@ -62,6 +64,28 @@ export class RefundTransactionService {
         await Event.update(
           { taken_seats: literal("GREATEST(taken_seats - 1, 0)") },
           { where: { id: locked.event_id }, transaction: t }
+        )
+      }
+
+      // O estoque volta para o catálogo. Aqui não há UPDATE condicional nem GREATEST: somar
+      // nunca leva um UNSIGNED a negativo, e devolver estoque não disputa recurso com ninguém.
+      // A ordem por product_id é a mesma da confirmação, pelo mesmo motivo de deadlock.
+      const items = await TransactionItem.findAll({
+        where: { transaction_id },
+        order: [["product_id", "ASC"]],
+        transaction: t,
+      })
+
+      for (const item of items) {
+        if (!item.product_id) {
+          continue
+        }
+
+        const quantity = Math.trunc(Number(item.quantity))
+
+        await Product.update(
+          { stock: literal(`stock + ${quantity}`) },
+          { where: { id: item.product_id }, transaction: t }
         )
       }
 

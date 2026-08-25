@@ -5,8 +5,10 @@ import { TransactionInterface } from "../../interfaces/transaction-interface.js"
 import { TransactionAuditLogInterface } from "../../interfaces/transaction-audit-log-interface.js";
 import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
+import { Product } from "../../models/product-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
+import { TransactionItem } from "../../models/transaction-item-model.js";
 import { IssueReceiptService } from "../receipt/issue-receipt-service.js";
 
 interface ConfirmTransactionProps {
@@ -71,6 +73,43 @@ export class ConfirmTransactionService {
 
         if (takenSeats === 0) {
           throw new BadRequestError("The event has no seats left")
+        }
+      }
+
+      // O estoque é debitado aqui e só aqui, pela mesma razão que a vaga: na criação ainda não
+      // há dinheiro. O UPDATE é condicional e a decisão é do banco — ler o estoque, decidir em
+      // JavaScript e escrever depois é a corrida que vende a última camiseta duas vezes.
+      // A ordem por product_id não é estética: duas confirmações simultâneas que travem os
+      // mesmos produtos em ordens opostas se bloqueiam em deadlock. Travar sempre na mesma
+      // ordem faz uma esperar a outra em vez de as duas morrerem.
+      const items = await TransactionItem.findAll({
+        where: { transaction_id },
+        order: [["product_id", "ASC"]],
+        transaction: t,
+      })
+
+      for (const item of items) {
+        if (!item.product_id) {
+          continue
+        }
+
+        // A quantidade vem de uma coluna INTEGER e é reconvertida antes de entrar no SQL:
+        // literal não é parametrizado, então nada que não seja dígito pode chegar até aqui.
+        const quantity = Math.trunc(Number(item.quantity))
+
+        const [updatedProducts] = await Product.update(
+          { stock: literal(`stock - ${quantity}`) },
+          {
+            where: {
+              id: item.product_id,
+              stock: { [Op.gte]: quantity },
+            },
+            transaction: t,
+          }
+        )
+
+        if (updatedProducts === 0) {
+          throw new BadRequestError(`The product "${item.description}" has no stock left`)
         }
       }
 
