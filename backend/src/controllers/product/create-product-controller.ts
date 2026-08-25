@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { CreateProductService } from "../../services/product/create-product-service.js";
+import { hasAtMostTwoDecimals } from "../../utils/money.js";
 
 export class CreateProductController {
   async handle(req: Request, res: Response) {
@@ -22,6 +23,7 @@ export class CreateProductController {
         .positive({ error: "The price must be greater than zero." })
         .multipleOf(0.01, { error: "The price must have at most two decimal places." })
         .max(99999999.99, { error: "The price has exceeded the allowed limit (99999999.99)." })
+        .refine(hasAtMostTwoDecimals, { error: "The price must have at most two decimal places." })
         .transform((price) => price.toFixed(2)),
       stock: z.number({ error: "The stock must be a number." })
         .int({ error: "The stock must be an integer." })

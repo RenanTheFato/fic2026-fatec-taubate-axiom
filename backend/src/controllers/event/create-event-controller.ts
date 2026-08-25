@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { CreateEventService } from "../../services/event/create-event-service.js";
+import { hasAtMostTwoDecimals } from "../../utils/money.js";
 
 export class CreateEventController {
   async handle(req: Request, res: Response) {
@@ -30,6 +31,7 @@ export class CreateEventController {
         .max(99999999.99, { error: "The ticket price has exceeded the allowed limit (99999999.99)." })
         .optional()
         .default(0)
+        .refine(hasAtMostTwoDecimals, { error: "The ticket price must have at most two decimal places." })
         .transform((ticket_price) => ticket_price.toFixed(2)),
       capacity: z.number({ error: "The capacity must be a number." })
         .int({ error: "The capacity must be an integer." })

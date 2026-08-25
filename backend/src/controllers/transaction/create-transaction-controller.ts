@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { TRANSACTION_TYPES } from "../../models/transaction-model.js";
+import { hasAtMostTwoDecimals } from "../../utils/money.js";
 import { CreateTransactionService } from "../../services/transaction/create-transaction-service.js";
 
 export class CreateTransactionController {
@@ -12,8 +13,21 @@ export class CreateTransactionController {
       amount: z.number({ error: "The amount must be a number" })
         .positive({ error: "The amount must be greater than zero" })
         .max(99999999.99, { error: "The amount has exceeded the maximum allowed value" })
-        .refine((amount) => Number.isInteger(amount * 100), { error: "The amount must have at most two decimal places" })
-        .transform((amount) => amount.toFixed(2)),
+        .refine(hasAtMostTwoDecimals, { error: "The amount must have at most two decimal places" })
+        .transform((amount) => amount.toFixed(2))
+        .optional(),
+      items: z.array(z.object({
+        product_id: z.uuid({ error: "The product id must be a valid uuid" }),
+        quantity: z.number({ error: "The quantity must be a number" })
+          .int({ error: "The quantity must be an integer" })
+          .positive({ error: "The quantity must be greater than zero" })
+          .max(1000, { error: "The quantity has exceeded the maximum allowed value (1000)" })
+          .optional()
+          .default(1),
+      }), { error: "The items must be a list" })
+        .max(50, { error: "The items have exceeded the maximum allowed length (50)" })
+        .optional()
+        .default([]),
       campaign_id: z.uuid({ error: "The campaign id must be a valid uuid" })
         .nullish()
         .default(null),
@@ -41,6 +55,43 @@ export class CreateTransactionController {
         .max(20, { error: "The donor phone has exceeded the maximum length (20)" })
         .nullish()
         .default(null),
+    }).superRefine((transaction, ctx) => {
+      // Produto e convite têm preço de tabela; doação e patrocínio têm valor livre. Quem manda
+      // preço numa compra está tentando escolher quanto pagar, e isso é 400, não um valor ignorado
+      // em silêncio — o cliente precisa saber que o valor cobrado não é o que ele mandou.
+      const pricedByCatalogue = transaction.type === "product" || transaction.type === "ticket"
+
+      if (pricedByCatalogue && transaction.amount !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["amount"],
+          message: "The amount of a product or ticket transaction comes from the catalogue and must not be sent",
+        })
+      }
+
+      if (!pricedByCatalogue && transaction.amount === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["amount"],
+          message: "The amount is required for a donation or a sponsorship",
+        })
+      }
+
+      if (transaction.type === "product" && transaction.items.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["items"],
+          message: "A product transaction requires at least one item",
+        })
+      }
+
+      if (transaction.type !== "product" && transaction.items.length > 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["items"],
+          message: "Only a product transaction carries items",
+        })
+      }
     })
 
     const parsedTransaction = transactionSchema.safeParse(req.body)
@@ -55,13 +106,14 @@ export class CreateTransactionController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { type, amount, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone } = parsedTransaction.data
+    const { type, amount, items, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone } = parsedTransaction.data
 
     try {
       const createTransactionService = new CreateTransactionService()
       const transaction = await createTransactionService.execute({
         type,
         amount,
+        items,
         campaign_id,
         event_id,
         notes,

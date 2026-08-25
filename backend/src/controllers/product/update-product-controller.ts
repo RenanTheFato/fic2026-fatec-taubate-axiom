@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { ProductInterface } from "../../interfaces/product-interface.js";
 import { UpdateProductService } from "../../services/product/update-product-service.js";
 import { BadRequestError, NotFoundError } from "../../config/errors.js";
+import { hasAtMostTwoDecimals } from "../../utils/money.js";
 
 export class UpdateProductController {
   async handle(req: Request, res: Response) {
@@ -24,6 +25,7 @@ export class UpdateProductController {
         .positive({ error: "The price must be greater than zero." })
         .multipleOf(0.01, { error: "The price must have at most two decimal places." })
         .max(99999999.99, { error: "The price has exceeded the allowed limit (99999999.99)." })
+        .refine(hasAtMostTwoDecimals, { error: "The price must have at most two decimal places." })
         .transform((price) => price.toFixed(2))
         .optional(),
       image_url: z.url({ error: "The image url isn't a valid url." })

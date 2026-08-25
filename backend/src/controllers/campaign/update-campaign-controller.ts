@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { BadRequestError, NotFoundError } from "../../config/errors.js";
 import { UpdateCampaignService } from "../../services/campaign/update-campaign-service.js";
+import { hasAtMostTwoDecimals } from "../../utils/money.js";
 
 export class UpdateCampaignController {
   async handle(req: Request, res: Response) {
@@ -19,6 +20,7 @@ export class UpdateCampaignController {
         .positive({ error: "The goal amount must be greater than zero." })
         .multipleOf(0.01, { error: "The goal amount must have at most two decimal places." })
         .max(9999999999.99, { error: "The goal amount has exceeded the allowed limit (9999999999.99)." })
+        .refine(hasAtMostTwoDecimals, { error: "The goal amount must have at most two decimal places." })
         .transform((goal_amount) => goal_amount.toFixed(2))
         .optional(),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }).optional(),
