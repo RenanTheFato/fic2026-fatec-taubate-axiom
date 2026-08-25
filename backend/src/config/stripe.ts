@@ -26,7 +26,13 @@ export interface GatewayPayment {
   gateway_payment_id: string,
   status: TransactionStatus,
   payment_method: PaymentMethod | null,
-  amount: number | null,
+  // Em centavos inteiros, como o Stripe entrega. Dividir por 100 aqui só criaria um float para
+  // ser comparado com um DECIMAL depois — a conferência de valor é feita em centavo contra centavo.
+  amount_cents: number,
+  refunded_cents: number,
+  // Estorno parcial não é estorno: reverter tudo por causa dele devolveria à campanha um valor
+  // que não voltou ao doador. Fica sinalizado para a reconciliação decidir.
+  partially_refunded: boolean,
   transaction_id: string | null,
 }
 
@@ -98,19 +104,33 @@ export class StripeGateway {
     const charge = (intent.latest_charge ?? null) as Stripe.Charge | null
 
     // Um pagamento estornado continua succeeded no PaymentIntent: o estorno só aparece no charge.
-    const isRefunded = charge?.refunded === true || (charge?.amount_refunded ?? 0) > 0
+    const amount_cents = charge?.amount ?? intent.amount
+    const refunded_cents = charge?.amount_refunded ?? 0
+
+    // Só o estorno integral vira status "refunded". Tratar qualquer devolução parcial como total
+    // faria o sistema decrementar a arrecadação inteira, cancelar o recibo e devolver todo o
+    // estoque por causa de uma devolução de dez reais numa compra de cem.
+    const fullyRefunded = refunded_cents >= amount_cents && amount_cents > 0
 
     return {
       gateway_payment_id: intent.id,
-      status: isRefunded ? "refunded" : STATUS_BY_INTENT_STATUS[intent.status] ?? "pending",
+      status: fullyRefunded ? "refunded" : STATUS_BY_INTENT_STATUS[intent.status] ?? "pending",
       payment_method: methodFromCharge(charge),
-      amount: intent.amount / 100,
+      amount_cents,
+      refunded_cents,
+      partially_refunded: refunded_cents > 0 && !fullyRefunded,
       transaction_id: intent.metadata?.transaction_id ?? null,
     }
   }
 
+  // A chave de idempotência é o que impede o estorno em dobro. Dois pedidos simultâneos passam
+  // pela conferência de status antes de qualquer trava — o segundo devolveria dinheiro de novo.
+  // Com a chave, o Stripe reconhece o pedido repetido e responde o mesmo estorno, sem criar outro.
   async refundPayment(payment_intent_id: string) {
-    await client.refunds.create({ payment_intent: payment_intent_id })
+    await client.refunds.create(
+      { payment_intent: payment_intent_id },
+      { idempotencyKey: `refund-${payment_intent_id}` }
+    )
   }
 }
 
