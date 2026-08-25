@@ -11,6 +11,9 @@ import { RefundTransactionService } from "../services/transaction/refund-transac
 import { buildReceiptHash } from "../utils/receipt-hash.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 import { mockSequelizeTransaction } from "./utils/mock-sequelize.js";
+import { TransactionItem } from "../models/transaction-item-model.js";
+import { Product } from "../models/product-model.js";
+import { ReceiptSequence } from "../models/receipt-sequence-model.js";
 
 const financeUserId = "user-finance-1"
 const donorId = "donor-1"
@@ -70,6 +73,9 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
 
     jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
     jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    // Confirmação e estorno agora leem os itens para debitar e devolver estoque.
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
     jest.spyOn(Donor, "findByPk").mockResolvedValue({
       id: donorId,
       name: "Maria Oliveira",
@@ -80,6 +86,11 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
   it("issues the first receipt of the chain when a transaction is confirmed", async () => {
     const transaction = confirmableTransaction()
     jest.spyOn(Transaction, "findByPk").mockResolvedValue(transaction as never)
+    // A emissão trava a linha única do alocador antes de calcular a sequência.
+    jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
+      last_sequence: 0,
+      update: jest.fn().mockResolvedValue(undefined),
+    } as never)
     jest.spyOn(Receipt, "findOne").mockResolvedValue(null)
     jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
       get: () => values,
@@ -112,7 +123,12 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
     const transaction = confirmableTransaction()
 
     jest.spyOn(Transaction, "findByPk").mockResolvedValue(transaction as never)
-    jest.spyOn(Receipt, "findOne").mockResolvedValue({ sequence: 7, hash: previousHash } as never)
+    // A sequência vem do alocador travado, não da leitura do recibo anterior.
+    jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
+      last_sequence: 7,
+      update: jest.fn().mockResolvedValue(undefined),
+    } as never)
+    const findPrevious = jest.spyOn(Receipt, "findOne").mockResolvedValue({ sequence: 7, hash: previousHash } as never)
     jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
       get: () => values,
     })) as never)
@@ -131,6 +147,13 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
     expect(issued.sequence).toBe(8)
     expect(issued.previous_hash).toBe(previousHash)
     expect(issued.number).toBe(`${new Date().getUTCFullYear()}/000008`)
+
+    // O elo anterior é buscado pela sequência exata e com trava: um SELECT comum leria o retrato
+    // do início da transação e não enxergaria o recibo emitido logo antes deste, o que faria a
+    // corrente nascer com previous_hash nulo no meio.
+    const [options] = findPrevious.mock.calls[0] as [{ where: Record<string, unknown>, lock: unknown }]
+    expect(options.where).toEqual({ sequence: 7 })
+    expect(options.lock).toBeDefined()
   })
 
   it("confirms an untouched receipt on the public endpoint and masks the document", async () => {
@@ -202,6 +225,11 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
   })
 
   it("answers 404 for a hash that belongs to no receipt", async () => {
+    // A emissão trava a linha única do alocador antes de calcular a sequência.
+    jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
+      last_sequence: 0,
+      update: jest.fn().mockResolvedValue(undefined),
+    } as never)
     jest.spyOn(Receipt, "findOne").mockResolvedValue(null)
 
     const req = mockRequest({ params: { hash: "f".repeat(64) } } as never)

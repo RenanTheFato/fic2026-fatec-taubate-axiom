@@ -10,6 +10,8 @@ import { ProcessTransactionWebhookService } from "../services/transaction/proces
 import { TransactionWebhookController } from "../controllers/transaction/transaction-webhook-controller.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 import { mockSequelizeTransaction } from "./utils/mock-sequelize.js";
+import { TransactionItem } from "../models/transaction-item-model.js";
+import { Product } from "../models/product-model.js";
 
 const transactionId = "transaction-123"
 const paymentIntentId = "pi_3PabcDEfGhIjKlMn"
@@ -43,13 +45,16 @@ function signedRequest(event: object) {
   })
 }
 
-function gatewayPayment(status: string) {
+function gatewayPayment(status: string, overrides: Record<string, unknown> = {}) {
   return jest.spyOn(StripeGateway.prototype, "getPayment").mockResolvedValue({
     gateway_payment_id: paymentIntentId,
     status,
     payment_method: "pix",
-    amount: 150,
+    amount_cents: 15000,
+    refunded_cents: 0,
+    partially_refunded: false,
     transaction_id: transactionId,
+    ...overrides,
   } as never)
 }
 
@@ -77,6 +82,9 @@ describe("Stripe webhook (signature, idempotency and status dispatch)", () => {
     mockSequelizeTransaction()
 
     jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    // A confirmação lê os itens para debitar estoque.
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
     jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
   })
 
@@ -189,5 +197,99 @@ describe("Stripe webhook (signature, idempotency and status dispatch)", () => {
       expect.objectContaining({ status: "cancelled" }),
       expect.anything()
     )
+  })
+})
+
+describe("Webhook money integrity (what the gateway says versus what we recorded)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.restoreAllMocks()
+    mockSequelizeTransaction()
+
+    jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
+    jest.spyOn(Campaign, "decrement").mockResolvedValue({} as never)
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
+  })
+
+  it("refuses to confirm when the paid amount does not match the recorded amount", async () => {
+    foundTransaction({ status: "pending", amount: "150.00" })
+    // O gateway diz que entraram R$ 1,00 numa transação registrada como R$ 150,00.
+    gatewayPayment("confirmed", { amount_cents: 100 })
+
+    const req = signedRequest({
+      id: "evt_1", type: "checkout.session.completed",
+      data: { object: { client_reference_id: transactionId, payment_intent: paymentIntentId, payment_status: "paid" } },
+    })
+    const res = mockResponse()
+
+    await new TransactionWebhookController().handle(req, res)
+
+    // Responde 200 para o Stripe parar de reenviar, mas nada de dinheiro é aplicado.
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(Campaign.increment).not.toHaveBeenCalled()
+
+    const body = (res.json as jest.Mock).mock.calls[0][0]
+    expect(body.processed).toBe(false)
+    expect(body.reason).toContain("does not match")
+  })
+
+  it("does not reverse a whole purchase because of a partial refund", async () => {
+    foundTransaction({ status: "confirmed", amount: "150.00" })
+    // Devolveram R$ 10 de uma compra de R$ 150: não é estorno, é ajuste.
+    gatewayPayment("confirmed", { refunded_cents: 1000, partially_refunded: true })
+
+    const req = signedRequest({
+      id: "evt_2", type: "charge.refunded",
+      data: { object: { payment_intent: paymentIntentId } },
+    })
+    const res = mockResponse()
+
+    await new TransactionWebhookController().handle(req, res)
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    // A arrecadação da campanha não é decrementada pelo valor inteiro.
+    expect(Campaign.decrement).not.toHaveBeenCalled()
+
+    const body = (res.json as jest.Mock).mock.calls[0][0]
+    expect(body.processed).toBe(false)
+    expect(body.reason).toContain("Partial refund")
+  })
+})
+
+describe("Status only moves forward (Stripe redelivers out of order)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.restoreAllMocks()
+    mockSequelizeTransaction()
+
+    jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
+  })
+
+  it("does not downgrade an already confirmed transaction to a pending status", async () => {
+    // O evento antigo chega depois da confirmação: sem reler sob trava, ele rebaixaria uma
+    // transação com recibo já emitido e arrecadação já somada.
+    const transaction = foundTransaction({ status: "confirmed" })
+    gatewayPayment("pending")
+
+    const req = signedRequest({
+      id: "evt_late", type: "checkout.session.completed",
+      data: { object: { client_reference_id: transactionId, payment_intent: paymentIntentId, payment_status: "unpaid" } },
+    })
+    const res = mockResponse()
+
+    await new TransactionWebhookController().handle(req, res)
+
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(transaction.update).not.toHaveBeenCalled()
+    expect(TransactionAuditLog.create).not.toHaveBeenCalled()
+
+    const body = (res.json as jest.Mock).mock.calls[0][0]
+    expect(body.processed).toBe(false)
+    expect(body.reason).toContain("already moved past")
   })
 })

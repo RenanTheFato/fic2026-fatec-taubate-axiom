@@ -11,6 +11,9 @@ import { ConfirmTransactionService } from "../services/transaction/confirm-trans
 import { RefundTransactionService } from "../services/transaction/refund-transaction-service.js";
 import { RefuseTransactionService } from "../services/transaction/refuse-transaction-service.js";
 import { mockSequelizeTransaction } from "./utils/mock-sequelize.js";
+import { TransactionItem } from "../models/transaction-item-model.js";
+import { Product } from "../models/product-model.js";
+import { ReceiptSequence } from "../models/receipt-sequence-model.js";
 
 const transactionId = "transaction-123"
 const userId = "user-123"
@@ -41,6 +44,9 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
     mockSequelizeTransaction()
 
     jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    // Confirmação e estorno agora leem os itens para debitar e devolver estoque.
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
     jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
     jest.spyOn(Campaign, "decrement").mockResolvedValue({} as never)
     jest.spyOn(Event, "update").mockResolvedValue([1] as never)
@@ -49,6 +55,11 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
     // A confirmação emite o recibo dentro da mesma transação de banco, então o ciclo de vida
     // também precisa da ponta do recibo de mentira.
     jest.spyOn(Donor, "findByPk").mockResolvedValue({ id: "donor-123", name: "Maria Oliveira", document: null } as never)
+    // A emissão trava a linha única do alocador antes de calcular a sequência.
+    jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
+      last_sequence: 0,
+      update: jest.fn().mockResolvedValue(undefined),
+    } as never)
     jest.spyOn(Receipt, "findOne").mockResolvedValue(null)
     jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
       get: () => values,
@@ -230,5 +241,108 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
       performed_by: userId,
       reason: null,
     })).rejects.toBeInstanceOf(BadRequestError)
+  })
+})
+
+const productId = "5b8d3a1f-4c2e-4b9d-a710-6f3e8c2d5a91"
+
+function soldLine(overrides: Record<string, unknown> = {}) {
+  return { product_id: productId, description: "Camiseta Somos do Bem", quantity: 2, ...overrides }
+}
+
+describe("Stock as a finite resource (rule 3.3)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.restoreAllMocks()
+    mockSequelizeTransaction()
+
+    jest.spyOn(TransactionAuditLog, "create").mockResolvedValue({} as never)
+    jest.spyOn(Campaign, "increment").mockResolvedValue({} as never)
+    jest.spyOn(Campaign, "decrement").mockResolvedValue({} as never)
+    jest.spyOn(StripeGateway.prototype, "refundPayment").mockResolvedValue(undefined)
+    jest.spyOn(Donor, "findByPk").mockResolvedValue({ id: "donor-123", name: "Maria Oliveira", document: null } as never)
+    // A emissão trava a linha única do alocador antes de calcular a sequência.
+    jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
+      last_sequence: 0,
+      update: jest.fn().mockResolvedValue(undefined),
+    } as never)
+    jest.spyOn(Receipt, "findOne").mockResolvedValue(null)
+    jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
+      get: () => values,
+    })) as never)
+    jest.spyOn(Receipt, "update").mockResolvedValue([1] as never)
+  })
+
+  it("debits the stock on confirmation with a conditional update, never a read-decide-write", async () => {
+    const transaction = foundTransaction({ status: "pending", type: "product", campaign_id: null })
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([soldLine()] as never)
+    const update = jest.spyOn(Product, "update").mockResolvedValue([1] as never)
+
+    await new ConfirmTransactionService().execute({
+      transaction_id: transactionId,
+      source: "webhook",
+      performed_by: null,
+      reason: "Stripe confirmou",
+    })
+
+    // A decisão é do banco: a condição de estoque viaja dentro do próprio UPDATE.
+    const [values, options] = update.mock.calls[0] as unknown as [{ stock: { val: string } }, { where: Record<string, unknown> }]
+    expect(values.stock.val).toBe("stock - 2")
+    expect(options.where).toMatchObject({ id: productId })
+
+    expect(transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "confirmed" }),
+      expect.anything()
+    )
+  })
+
+  it("refuses the confirmation when the conditional update affects no row", async () => {
+    const transaction = foundTransaction({ status: "pending", type: "product", campaign_id: null })
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([soldLine()] as never)
+    // Zero linhas afetadas é a segunda compra do último item chegando: quem confirmou primeiro levou.
+    jest.spyOn(Product, "update").mockResolvedValue([0] as never)
+
+    await expect(new ConfirmTransactionService().execute({
+      transaction_id: transactionId,
+      source: "webhook",
+      performed_by: null,
+      reason: "Stripe confirmou",
+    })).rejects.toBeInstanceOf(BadRequestError)
+
+    // A transação inteira volta atrás: sem confirmação, sem recibo, sem log.
+    expect(transaction.update).not.toHaveBeenCalled()
+    expect(Receipt.create).not.toHaveBeenCalled()
+    expect(TransactionAuditLog.create).not.toHaveBeenCalled()
+  })
+
+  it("gives the stock back when the purchase is refunded", async () => {
+    foundTransaction({ status: "confirmed", type: "product", campaign_id: null, gateway_payment_id: "pi_1" })
+    jest.spyOn(TransactionItem, "findAll").mockResolvedValue([soldLine({ quantity: 3 })] as never)
+    const update = jest.spyOn(Product, "update").mockResolvedValue([1] as never)
+
+    await new RefundTransactionService().execute({
+      transaction_id: transactionId,
+      source: "manual",
+      performed_by: userId,
+      reason: "Cliente desistiu",
+    })
+
+    const [values] = update.mock.calls[0] as unknown as [{ stock: { val: string } }]
+    expect(values.stock.val).toBe("stock + 3")
+  })
+
+  it("locks the products in a stable order so two confirmations cannot deadlock", async () => {
+    foundTransaction({ status: "pending", type: "product", campaign_id: null })
+    const findAll = jest.spyOn(TransactionItem, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Product, "update").mockResolvedValue([1] as never)
+
+    await new ConfirmTransactionService().execute({
+      transaction_id: transactionId,
+      source: "webhook",
+      performed_by: null,
+      reason: "Stripe confirmou",
+    })
+
+    expect(findAll.mock.calls[0][0]).toMatchObject({ order: [["product_id", "ASC"]] })
   })
 })
