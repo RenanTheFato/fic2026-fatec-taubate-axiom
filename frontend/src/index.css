@@ -1,1 +1,86 @@
 @import "tailwindcss";
+
+@theme {
+  /* Ação e doação; Vermelho Amor R241. 4,71:1 sobre branco, passa em AA. */
+  --color-primary: #cd4244;
+  --color-primary-dark: #b83a3c;
+  --color-primary-soft: #fbeced;
+
+  /* Confirmação e voluntariado; Crisântemo Verde P624.
+     O tom claro é só preenchimento (texto ink por cima); texto e botão cheio
+     usam o escuro, porque branco sobre #76BB56 dá 2,33:1 e reprova. */
+  --color-success: #76bb56;
+  --color-success-dark: #43802b;
+  --color-success-soft: #eef7e9;
+
+  /* Urgência; Frevo R135. Preenchimento com texto ink; nunca texto branco. */
+  --color-alert: #f5a336;
+  --color-alert-dark: #8a5a00;
+
+  /* Marca; magenta do símbolo. Identidade do portal do parceiro.
+     4,70:1 sobre branco, então serve como texto e como fundo de botão. */
+  --color-partner: #bb2dd7;
+  --color-partner-dark: #9a1fb3;
+
+  /* Marca; turquesa do símbolo. Institucional e transparência.
+     Preenchimento e traço; em texto, só a variante escura. */
+  --color-institutional: #00dece;
+  --color-institutional-dark: #0a7a73;
+  --color-institutional-soft: #e6fbf9;
+
+  /* Marca; amarelo do símbolo. Badge, marco atingido, destaque no escuro.
+     8,67:1 com texto ink e 8,67:1 sobre o fundo ink. Nunca em texto no branco. */
+  --color-reward: #ffdc00;
+  --color-reward-dark: #7e5200;
+
+  /* Texto; Preto Suvinil PD268, o mesmo tom do preto do logo (#32383A). */
+  --color-ink: #343937;
+  --color-ink-soft: #5c6260;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f7f7;
+  --color-line: #e2e5e4;
+
+  --font-display: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 0.75rem;
+  --radius-tile: 0.5rem;
+  --radius-pill: 999px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
