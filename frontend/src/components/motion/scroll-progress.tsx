@@ -42,7 +42,7 @@ export function ScrollProgress() {
   if (capability === "none") return null
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-1" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-1" aria-hidden="true" data-decorativo>
       <div
         ref={barRef}
         className="h-full origin-left scale-x-0 bg-gradient-to-r from-institutional via-reward to-partner"

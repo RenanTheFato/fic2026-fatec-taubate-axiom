@@ -19,16 +19,17 @@ type Shared = {
 }
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-pill font-display font-bold " +
+  "inline-flex items-center justify-center gap-2 rounded-pill text-center leading-tight " +
+  "font-display font-bold [text-wrap:balance] " +
   "transition-[transform,background-color,color] duration-200 " +
   "hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
 
 // Área de toque mínima confortável (44px) já a partir do tamanho médio: é
 // acessibilidade motora, e é o dedo de quem doa pelo celular.
 const SIZES: Record<ButtonSize, string> = {
-  sm: "min-h-9 px-4 text-sm",
-  md: "min-h-11 px-6 text-base",
-  lg: "min-h-13 px-8 text-lg",
+  sm: "min-h-9 px-4 py-1.5 text-sm",
+  md: "min-h-11 px-6 py-2 text-base",
+  lg: "min-h-13 px-8 py-2.5 text-lg",
 }
 
 const SOLID: Record<ButtonTone, string> = {

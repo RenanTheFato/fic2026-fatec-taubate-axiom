@@ -20,6 +20,11 @@ const OFFSET = {
 
 // O conteúdo está visível no HTML. Só depois, e só se o aparelho puder pagar,
 // ele é escondido e revelado. Com o JavaScript quebrado a página fica inteira.
+//
+// Sempre `opacity`, nunca `autoAlpha`: o `autoAlpha` do GSAP também escreve
+// `visibility: hidden`, e isso tira o elemento da árvore de acessibilidade —
+// leitor de tela e navegação por teclado deixam de enxergá-lo enquanto a
+// animação não termina. Invisível é aceitável; inexistente não é.
 export function Reveal({ children, className, delay = 0, from = "bottom" }: RevealProps) {
   const capability = useMotionCapability()
   const { ref, inView } = useInView<HTMLDivElement>()
@@ -30,12 +35,12 @@ export function Reveal({ children, className, delay = 0, from = "bottom" }: Reve
       if (!element || capability === "none") return
 
       if (!inView) {
-        gsap.set(element, { autoAlpha: 0, ...OFFSET[from] })
+        gsap.set(element, { opacity: 0, ...OFFSET[from] })
         return
       }
 
       gsap.to(element, {
-        autoAlpha: 1,
+        opacity: 1,
         x: 0,
         y: 0,
         duration: 0.7,

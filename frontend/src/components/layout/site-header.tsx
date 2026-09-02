@@ -5,6 +5,7 @@ import { cn } from "../../utils/cn"
 import { ButtonLink } from "../ui/button"
 import { Container } from "../ui/container"
 import { Logo } from "./logo"
+import { ReadingModeToggle } from "./reading-mode-toggle"
 import { MAIN_NAV, UTILITY_NAV } from "./nav-items"
 import type { NavItem, NavLink } from "./nav-items"
 
@@ -149,6 +150,10 @@ function MobileMenu({ open, onClose }: MobileMenuProps) {
           ))}
 
           <li className="mt-2 border-t border-line pt-2">
+            <div className="px-3 py-2">
+              <ReadingModeToggle tone="ink" />
+            </div>
+
             <ul>
               {UTILITY_NAV.map((link) => (
                 <li key={link.to}>
@@ -197,23 +202,29 @@ export function SiteHeader() {
       )}
     >
       <div className="hidden bg-ink text-white lg:block">
-        <Container className="flex items-center justify-between py-2 text-[0.8125rem]">
-          <p className="flex items-center gap-4">
-            <a href="tel:+551938018890" className="inline-flex items-center gap-2 hover:text-reward">
+        {/* Tudo isto somado passa de 1024px, e o que sobrava era o e-mail
+            cortado no meio. O e-mail e a última utilidade só entram a partir de
+            1280px; abaixo disso o rodapé continua tendo os dois. */}
+        <Container className="flex items-center justify-between gap-6 py-2 text-[0.8125rem]">
+          <p className="flex min-w-0 items-center gap-4">
+            <a href="tel:+551938018890" className="inline-flex shrink-0 items-center gap-2 hover:text-reward">
               <Phone className="size-4" aria-hidden="true" />
               (19) 3801-8890
             </a>
-            <a href="mailto:contato@somosdobem.org.br" className="inline-flex items-center gap-2 hover:text-reward">
+            <a
+              href="mailto:contato@somosdobem.org.br"
+              className="hidden shrink-0 items-center gap-2 hover:text-reward xl:inline-flex"
+            >
               <Mail className="size-4" aria-hidden="true" />
               contato@somosdobem.org.br
             </a>
           </p>
 
-          <nav aria-label="Links institucionais">
+          <nav aria-label="Links institucionais" className="shrink-0">
             <ul className="flex items-center gap-5">
-              {UTILITY_NAV.map((link) => (
-                <li key={link.to}>
-                  <RouterNavLink to={link.to} className="hover:text-reward">
+              {UTILITY_NAV.map((link, index) => (
+                <li key={link.to} className={index === UTILITY_NAV.length - 1 ? "hidden xl:block" : undefined}>
+                  <RouterNavLink to={link.to} className="whitespace-nowrap hover:text-reward">
                     {link.label}
                   </RouterNavLink>
                 </li>
@@ -222,6 +233,9 @@ export function SiteHeader() {
                 <RouterNavLink to="/entrar" className="font-bold hover:text-reward">
                   Entrar
                 </RouterNavLink>
+              </li>
+              <li>
+                <ReadingModeToggle compact />
               </li>
             </ul>
           </nav>

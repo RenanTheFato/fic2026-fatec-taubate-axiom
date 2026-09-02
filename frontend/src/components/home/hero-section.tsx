@@ -19,10 +19,10 @@ export function HeroSection() {
 
       const items = gsap.utils.toArray<HTMLElement>(".hero-in")
 
-      gsap.set(items, { autoAlpha: 0, y: 22 })
+      gsap.set(items, { opacity: 0, y: 22 })
 
       gsap.timeline({ defaults: { ease: "power3.out" } })
-        .to(items, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.08 })
+        .to(items, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08 })
         .from(".hero-word", { yPercent: 110, duration: 0.7, stagger: 0.1 }, 0.1)
     },
     { scope: rootRef, dependencies: [capability] },
@@ -32,6 +32,7 @@ export function HeroSection() {
     <section ref={rootRef} className="relative isolate overflow-hidden bg-surface-muted">
       <div
         aria-hidden="true"
+        data-decorativo
         className="absolute inset-0 -z-10 bg-[radial-gradient(58%_68%_at_82%_16%,rgba(0,222,206,0.20),transparent_62%),radial-gradient(46%_58%_at_8%_2%,rgba(187,45,215,0.12),transparent_66%)]"
       />
 
