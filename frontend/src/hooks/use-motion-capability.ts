@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { READING_MODE_EVENT } from "./use-reading-mode"
 
 // Portão único de animação do projeto. Todo componente animado pergunta aqui
 // antes de mover qualquer pixel — o público da ONG usa celular antigo e máquina
@@ -23,6 +24,10 @@ function detect(): MotionCapability {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return "none"
 
   if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return "none"
+
+  // O Modo Leitura Fácil desliga o movimento junto: quem liga esse modo está
+  // pedindo menos coisa acontecendo na tela, não só letra maior.
+  if (document.documentElement.dataset.leituraFacil === "on") return "none"
 
   const hints = navigator as NavigatorWithHints
 
@@ -49,8 +54,12 @@ export function useMotionCapability(): MotionCapability {
     const update = () => setCapability(detect())
 
     query.addEventListener("change", update)
+    window.addEventListener(READING_MODE_EVENT, update)
 
-    return () => query.removeEventListener("change", update)
+    return () => {
+      query.removeEventListener("change", update)
+      window.removeEventListener(READING_MODE_EVENT, update)
+    }
   }, [])
 
   return capability
