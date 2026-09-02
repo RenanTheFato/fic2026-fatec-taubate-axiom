@@ -72,6 +72,30 @@
     border-radius: 4px;
   }
 
+  /* Modo Leitura Fácil: corpo maior, entrelinha folgada, medida mais curta e
+     nada de decoração na tela. O que é `data-decorativo` some — não é conteúdo,
+     e em leitura fácil tudo que não é conteúdo atrapalha. */
+  :root[data-leitura-facil="on"] body {
+    font-size: 1.125rem;
+    line-height: 1.9;
+  }
+
+  :root[data-leitura-facil="on"] p,
+  :root[data-leitura-facil="on"] li {
+    max-width: 52ch;
+    letter-spacing: 0.01em;
+  }
+
+  :root[data-leitura-facil="on"] h1,
+  :root[data-leitura-facil="on"] h2,
+  :root[data-leitura-facil="on"] h3 {
+    line-height: 1.25;
+  }
+
+  :root[data-leitura-facil="on"] [data-decorativo] {
+    display: none !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
