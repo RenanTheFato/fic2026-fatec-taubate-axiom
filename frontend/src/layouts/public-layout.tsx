@@ -1,8 +1,10 @@
+import { Suspense } from "react"
 import { Outlet } from "react-router-dom"
 import { ScrollProgress } from "../components/motion/scroll-progress"
 import { MobileDonateBar } from "../components/layout/mobile-donate-bar"
 import { SiteFooter } from "../components/layout/site-footer"
 import { SiteHeader } from "../components/layout/site-header"
+import { PageFallback } from "../components/layout/page-fallback"
 
 export default function PublicLayout() {
   return (
@@ -18,7 +20,9 @@ export default function PublicLayout() {
       <SiteHeader />
 
       <main id="conteudo" className="flex-1 pb-20 sm:pb-0">
-        <Outlet />
+        <Suspense fallback={<PageFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <SiteFooter />
