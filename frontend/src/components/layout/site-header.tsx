@@ -6,6 +6,8 @@ import { ButtonLink } from "../ui/button"
 import { Container } from "../ui/container"
 import { Logo } from "./logo"
 import { ReadingModeToggle } from "./reading-mode-toggle"
+import { HOME_BY_ROLE } from "../admin/admin-nav"
+import { useSession } from "../../hooks/use-session"
 import { MAIN_NAV, UTILITY_NAV } from "./nav-items"
 import type { NavItem, NavLink } from "./nav-items"
 
@@ -176,6 +178,7 @@ function MobileMenu({ open, onClose }: MobileMenuProps) {
 
 export function SiteHeader() {
   const location = useLocation()
+  const { user } = useSession()
   const [scrolled, setScrolled] = useState(() => window.scrollY > 8)
 
   // O menu guarda em que caminho foi aberto. Assim ele fecha sozinho ao navegar
@@ -230,8 +233,13 @@ export function SiteHeader() {
                 </li>
               ))}
               <li>
-                <RouterNavLink to="/entrar" className="font-bold hover:text-reward">
-                  Entrar
+                {/* Quem já entrou não precisa ver "Entrar" de novo: o atalho
+                    passa a levar direto para onde essa pessoa trabalha. */}
+                <RouterNavLink
+                  to={user ? HOME_BY_ROLE[user.role] : "/entrar"}
+                  className="font-bold hover:text-reward"
+                >
+                  {user ? "Painel" : "Entrar"}
                 </RouterNavLink>
               </li>
               <li>
