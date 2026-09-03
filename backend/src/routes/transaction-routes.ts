@@ -5,6 +5,7 @@ import { CreateTransactionController } from "../controllers/transaction/create-t
 import { TransactionWebhookController } from "../controllers/transaction/transaction-webhook-controller.js";
 import { ListTransactionsController } from "../controllers/transaction/list-transactions-controller.js";
 import { GetTransactionController } from "../controllers/transaction/get-transaction-controller.js";
+import { GetTransactionStatusController } from "../controllers/transaction/get-transaction-status-controller.js";
 import { ConfirmTransactionController } from "../controllers/transaction/confirm-transaction-controller.js";
 import { RefuseTransactionController } from "../controllers/transaction/refuse-transaction-controller.js";
 import { CancelTransactionController } from "../controllers/transaction/cancel-transaction-controller.js";
@@ -24,6 +25,12 @@ transactionRoutes.post("/webhook", async (req: Request, res: Response) => {
 
 transactionRoutes.get("/list", AuthMiddleware, RoleMiddleware("admin", "finance"), async (req: Request, res: Response) => {
   return new ListTransactionsController().handle(req, res)
+})
+
+// Pública porque quem acompanha o pedido é quem acabou de pagar, e essa pessoa não tem conta.
+// A credencial é o próprio id, um UUID que só quem criou a transação recebeu.
+transactionRoutes.get("/status/:id", async (req: Request, res: Response) => {
+  return new GetTransactionStatusController().handle(req, res)
 })
 
 // "/:id" fica depois dos caminhos literais, senão engole "/list" e "/webhook".

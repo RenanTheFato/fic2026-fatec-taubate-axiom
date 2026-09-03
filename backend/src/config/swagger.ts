@@ -42,6 +42,7 @@ import { createTransactionDoc } from "../docs/transaction/create-transaction.doc
 import { transactionWebhookDoc } from "../docs/transaction/transaction-webhook.doc.js";
 import { listTransactionsDoc } from "../docs/transaction/list-transactions.doc.js";
 import { getTransactionDoc } from "../docs/transaction/get-transaction.doc.js";
+import { getTransactionStatusDoc } from "../docs/transaction/get-transaction-status.doc.js";
 import { confirmTransactionDoc } from "../docs/transaction/confirm-transaction.doc.js";
 import { refuseTransactionDoc } from "../docs/transaction/refuse-transaction.doc.js";
 import { cancelTransactionDoc } from "../docs/transaction/cancel-transaction.doc.js";
@@ -141,6 +142,7 @@ export const openApiDocument = createDocument({
     "/transaction/create": { post: toOperation(createTransactionDoc) },
     "/transaction/webhook": { post: toOperation(transactionWebhookDoc) },
     "/transaction/list": { get: toOperation(listTransactionsDoc) },
+    "/transaction/status/{id}": { get: toOperation(getTransactionStatusDoc) },
     "/transaction/{id}": { get: toOperation(getTransactionDoc) },
     "/transaction/confirm/{id}": { patch: toOperation(confirmTransactionDoc) },
     "/transaction/refuse/{id}": { patch: toOperation(refuseTransactionDoc) },
