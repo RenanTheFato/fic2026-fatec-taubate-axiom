@@ -27,7 +27,7 @@ export interface GatewayPayment {
   status: TransactionStatus,
   payment_method: PaymentMethod | null,
   // Em centavos inteiros, como o Stripe entrega. Dividir por 100 aqui só criaria um float para
-  // ser comparado com um DECIMAL depois — a conferência de valor é feita em centavo contra centavo.
+  // ser comparado com um DECIMAL depois: a conferência de valor é feita em centavo contra centavo.
   amount_cents: number,
   refunded_cents: number,
   // Estorno parcial não é estorno: reverter tudo por causa dele devolveria à campanha um valor
@@ -85,8 +85,11 @@ export class StripeGateway {
       payment_intent_data: {
         metadata: { transaction_id },
       },
-      success_url: `${env.APP_URL}/transaction/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${env.APP_URL}/transaction/failure`,
+      // A volta é para o site, não para a API, e leva o id da transação em vez do id da sessão:
+      // a tela de status precisa consultar a nossa transação, e a sessão do gateway não a identifica
+      // sem uma consulta extra. Confirmar continua sendo trabalho do webhook.
+      success_url: `${env.WEB_URL}/pedido/${transaction_id}/status`,
+      cancel_url: `${env.WEB_URL}/pedido/${transaction_id}/status?cancelado=1`,
     })
 
     return {
@@ -96,7 +99,7 @@ export class StripeGateway {
   }
 
   // Regra 3.1: o efeito financeiro nunca é aplicado a partir do que veio escrito na notificação.
-  // A assinatura do Stripe garante a origem do corpo, mas não que ele ainda esteja atual — uma
+  // A assinatura do Stripe garante a origem do corpo, mas não que ele ainda esteja atual: uma
   // reentrega antiga descreve um pagamento que já mudou de estado desde então.
   async getPayment(payment_intent_id: string): Promise<GatewayPayment> {
     const intent = await client.paymentIntents.retrieve(payment_intent_id, { expand: ["latest_charge"] })
@@ -124,7 +127,7 @@ export class StripeGateway {
   }
 
   // A chave de idempotência é o que impede o estorno em dobro. Dois pedidos simultâneos passam
-  // pela conferência de status antes de qualquer trava — o segundo devolveria dinheiro de novo.
+  // pela conferência de status antes de qualquer trava: o segundo devolveria dinheiro de novo.
   // Com a chave, o Stripe reconhece o pedido repetido e responde o mesmo estorno, sem criar outro.
   async refundPayment(payment_intent_id: string) {
     await client.refunds.create(
@@ -136,7 +139,7 @@ export class StripeGateway {
 
 // Assinatura do webhook: o Stripe assina o corpo cru com HMAC-SHA256 e um timestamp, e o SDK
 // recusa tanto a assinatura errada quanto a notificação velha demais. Sem essa checagem qualquer
-// um que descubra a URL consegue confirmar transação. Precisa do Buffer original — o corpo já
+// um que descubra a URL consegue confirmar transação. Precisa do Buffer original: o corpo já
 // convertido em objeto não bate mais com o que foi assinado.
 export function constructWebhookEvent(payload: Buffer, signature: string | undefined) {
   if (!signature) {
