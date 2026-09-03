@@ -1,6 +1,6 @@
 import type { NewsPost } from "../../types/news-types"
 
-// PROVISÓRIO — não existe domínio de blog no backend (ver goals.md). Os três
+// PROVISÓRIO: não existe domínio de blog no backend (ver goals.md). Os três
 // posts abaixo são os que estão publicados no site atual da ONG.
 const PLACEHOLDER: NewsPost[] = [
   {
@@ -11,7 +11,7 @@ const PLACEHOLDER: NewsPost[] = [
       "Na Páscoa deste ano, a solidariedade foi o ingrediente principal da campanha organizada pela associação Somos do Bem.",
     category: "eventos",
     published_at: "2024-12-11T12:00:00.000Z",
-    image: null, // "/imagens/noticias/chocolate-do-bem.jpg"
+    image: "/imagens/noticias/chocolate-do-bem.png",
   },
   {
     id: "2",
@@ -21,7 +21,7 @@ const PLACEHOLDER: NewsPost[] = [
       "Realizada nos dias 23, 24 e 25 de agosto, no Espaço Viber, em Indaiatuba, a edição foi um grande sucesso.",
     category: "eventos",
     published_at: "2024-11-25T12:00:00.000Z",
-    image: null, // "/imagens/noticias/5a-edicao-do-chefs-do-bem.jpg"
+    image: "/imagens/noticias/5a-edicao-do-chefs-do-bem.png",
   },
   {
     id: "3",
@@ -31,7 +31,7 @@ const PLACEHOLDER: NewsPost[] = [
       "A instituição realizou uma coletiva de imprensa para anunciar seu novo nome e sua nova marca: Somos do Bem.",
     category: "inclusao",
     published_at: "2024-11-25T12:00:00.000Z",
-    image: null, // "/imagens/noticias/mudanca-de-nome.jpg"
+    image: "/imagens/noticias/mudanca-de-nome.png",
   },
 ]
 

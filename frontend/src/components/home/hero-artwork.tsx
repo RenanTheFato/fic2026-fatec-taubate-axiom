@@ -64,7 +64,7 @@ export function HeroArtwork() {
   )
 
   // Inclinação seguindo o ponteiro. `quickTo` reaproveita o mesmo tween em vez
-  // de criar um por evento, e só existe em ponteiro fino — no toque, o dedo
+  // de criar um por evento, e só existe em ponteiro fino, porque no toque o dedo
   // cobre justamente o que a inclinação mostraria.
   useGSAP(
     () => {
@@ -106,7 +106,7 @@ export function HeroArtwork() {
     <div ref={ref} className="relative">
       <div ref={frameRef} className="overflow-hidden rounded-card border border-line bg-surface shadow-xl">
         <ImageSlot
-          src={null} // "/imagens/home-hero.jpg"
+          src="/imagens/home-hero.jpg"
           eager
           ratio="4/3"
           alt="Atendimento na Somos do Bem"

@@ -58,10 +58,10 @@ export function AboutSection() {
           <Reveal from="right" delay={0.1}>
             <div className="overflow-hidden rounded-card border border-line">
               <ImageSlot
-                src={null} // "/imagens/sobre-nos.jpg"
+                src="/imagens/sobre-nos.jpg"
                 ratio="4/3"
                 alt="Atividade em grupo na Somos do Bem"
-                hint="Foto de uma atividade em grupo — oficina, sala de aula ou terapia — mostrando convivência"
+                hint="Foto de uma atividade em grupo (oficina, sala de aula ou terapia) mostrando convivência"
               />
             </div>
           </Reveal>

@@ -12,27 +12,37 @@ import { ImageSlot } from "../../components/ui/image-slot"
 import { Prose } from "../../components/ui/prose"
 import { SectionHeading } from "../../components/ui/section"
 
-const PROGRAMS: { title: string; text: string; icon: LucideIcon; tone: string; photo: string }[] = [
+const PROGRAMS: {
+  title: string
+  text: string
+  icon: LucideIcon
+  tone: string
+  photo: string | null
+  hint: string
+}[] = [
   {
     title: "Ambulatório",
     text: "Atendimento clínico, terapêutico e de reabilitação, com acompanhamento contínuo da pessoa e da família.",
     icon: Stethoscope,
     tone: "bg-institutional-soft text-institutional-dark",
-    photo: "Atendimento no ambulatório, com profissional e usuário",
+    photo: "/imagens/programa-ambulatorio.jpg",
+    hint: "Atendimento no ambulatório, com profissional e usuário",
   },
   {
     title: "Escola de Educação Especial",
     text: "Ensino adaptado ao ritmo de cada estudante, construído junto com quem convive com ele todos os dias.",
     icon: GraduationCap,
     tone: "bg-primary-soft text-primary",
-    photo: "Sala de aula da Escola de Educação Especial",
+    photo: "/imagens/educacional.png", // "/imagens/programa-escola.jpg"
+    hint: "Sala de aula da Escola de Educação Especial",
   },
   {
     title: "Programa de Oficina Terapêutica",
     text: "Autonomia, convivência e trabalho protegido para jovens e adultos atendidos pela associação.",
     icon: Users,
     tone: "bg-success-soft text-success-dark",
-    photo: "Atividade na oficina terapêutica",
+    photo: "/imagens/oficina.jpeg", // "/imagens/programa-oficina.jpg"
+    hint: "Atividade na oficina terapêutica",
   },
 ]
 
@@ -63,7 +73,7 @@ export default function AboutPage() {
             <p>
               A Somos do Bem é uma associação beneficente de Indaiatuba que atua na defesa de direitos
               e na prestação de serviços para pessoas com Deficiência Intelectual e/ou Múltipla de
-              causa neurológica e Transtornos Invasivos do Desenvolvimento — e para suas famílias.
+              causa neurológica e Transtornos Invasivos do Desenvolvimento, e para suas famílias.
             </p>
           </ReadingSwitch>
         }
@@ -93,7 +103,7 @@ export default function AboutPage() {
               <Prose className="mt-6">
                 <p>
                   Buscamos promover mais igualdade para todos. Isso acontece por meio de atividades e
-                  projetos que melhoram a qualidade de vida de quem conta com o nosso apoio — e que
+                  projetos que melhoram a qualidade de vida de quem conta com o nosso apoio, e que
                   sustentam a rotina de quem cuida.
                 </p>
                 <p>
@@ -108,7 +118,7 @@ export default function AboutPage() {
           <Reveal from="right" delay={0.1}>
             <div className="overflow-hidden rounded-card border border-line">
               <ImageSlot
-                src={null} // "/imagens/institucional-missao.jpg"
+                src="/imagens/institucional-missao.jpg"
                 ratio="4/3"
                 alt="Equipe e usuários da Somos do Bem"
                 hint="Foto ampla da associação: equipe e usuários juntos, de preferência ao ar livre"
@@ -134,10 +144,10 @@ export default function AboutPage() {
                 <Reveal delay={index * 0.08} className="h-full">
                   <Card as="article" className="h-full">
                     <ImageSlot
-                      src={null}
+                      src={program.photo}
                       ratio="4/3"
-                      alt={program.title}
-                      hint={program.photo}
+                      alt={program.hint}
+                      hint={program.hint}
                     />
 
                     <CardBody>
@@ -162,7 +172,8 @@ export default function AboutPage() {
           <Reveal from="left" className="order-2 lg:order-1">
             <div className="overflow-hidden rounded-card border border-line">
               <ImageSlot
-                src={null} // "/imagens/institucional-historia.jpg"
+                // a mesma foto da coletiva que ilustra a notícia da mudança de nome
+                src="/imagens/noticias/mudanca-de-nome.png"
                 ratio="4/3"
                 alt="Anúncio da nova marca da associação"
                 hint="Foto do anúncio da nova marca, em 2023, ou uma imagem histórica da instituição"
@@ -189,7 +200,7 @@ export default function AboutPage() {
                 </p>
                 <p>
                   A mudança foi de identidade, não de instituição. A equipe, os programas e as pessoas
-                  atendidas seguiram os mesmos — e é por isso que a navegação deste site continua
+                  atendidas seguiram os mesmos, e é por isso que a navegação deste site continua
                   sendo a que a cidade já conhecia.
                 </p>
               </Prose>
