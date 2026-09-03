@@ -1,6 +1,6 @@
 import type { Person } from "../../types/institutional-types"
 import { Badge } from "../ui/badge"
-import { Card, CardBody } from "../ui/card"
+import { Card, CardBody, CardTitle } from "../ui/card"
 import { ImageSlot } from "../ui/image-slot"
 
 type PersonCardProps = {
@@ -20,7 +20,7 @@ export function PersonCard({ person }: PersonCardProps) {
       <CardBody className="gap-2">
         <Badge tone="institutional">{person.position}</Badge>
 
-        <h3 className="font-display text-lg leading-snug font-bold">{person.name}</h3>
+        <CardTitle>{person.name}</CardTitle>
 
         {person.term && <p className="text-sm text-ink-soft">Mandato {person.term}</p>}
       </CardBody>

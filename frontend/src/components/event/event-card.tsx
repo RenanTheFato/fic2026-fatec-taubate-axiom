@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import type { Event } from "../../types/event-types"
 import { formatCurrency, formatDayMonth } from "../../utils/format"
 import { Badge } from "../ui/badge"
-import { Card, CardBody } from "../ui/card"
+import { Card, CardBody, CardText, CardTitle } from "../ui/card"
 import { ImageSlot } from "../ui/image-slot"
 
 type EventCardProps = {
@@ -50,13 +50,13 @@ export function EventCard({ event }: EventCardProps) {
       </div>
 
       <CardBody>
-        <h3 className="font-display text-xl leading-snug font-bold">
+        <CardTitle>
           <Link to={`/eventos/${event.slug}`} className="hover:text-primary">
             {event.title}
           </Link>
-        </h3>
+        </CardTitle>
 
-        {event.description && <p className="line-clamp-3 text-sm leading-relaxed text-ink-soft">{event.description}</p>}
+        {event.description && <CardText>{event.description}</CardText>}
 
         {event.location && (
           <p className="mt-auto flex items-center gap-2 pt-2 text-sm text-ink-soft">

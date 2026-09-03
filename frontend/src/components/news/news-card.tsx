@@ -3,7 +3,7 @@ import type { NewsCategory, NewsPost } from "../../types/news-types"
 import { formatDate } from "../../utils/format"
 import { Badge } from "../ui/badge"
 import type { BadgeTone } from "../ui/badge"
-import { Card, CardBody } from "../ui/card"
+import { Card, CardBody, CardText, CardTitle } from "../ui/card"
 import { ImageSlot } from "../ui/image-slot"
 
 type NewsCardProps = {
@@ -37,13 +37,13 @@ export function NewsCard({ post }: NewsCardProps) {
           </time>
         </div>
 
-        <h3 className="font-display text-xl leading-snug font-bold">
+        <CardTitle>
           <Link to={`/noticias/${post.slug}`} className="hover:text-primary">
             {post.title}
           </Link>
-        </h3>
+        </CardTitle>
 
-        <p className="line-clamp-3 text-sm leading-relaxed text-ink-soft">{post.excerpt}</p>
+        <CardText lines={3}>{post.excerpt}</CardText>
       </CardBody>
     </Card>
   )
