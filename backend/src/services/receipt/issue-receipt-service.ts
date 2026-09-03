@@ -22,7 +22,7 @@ export class IssueReceiptService {
 
     // A fila da corrente. Travar a ponta de "receipts" com ORDER BY ... FOR UPDATE parecia o
     // caminho natural e não é: além da última linha, o InnoDB trava o intervalo aberto depois
-    // dela, que é justamente onde toda emissão precisa inserir — confirmações simultâneas se
+    // dela, que é justamente onde toda emissão precisa inserir: confirmações simultâneas se
     // matavam em deadlock, e a maioria dos pagamentos falhava. Travando sempre a mesma linha
     // pela chave primária, as emissões esperam umas pelas outras em vez de morrerem.
     const allocator = await ReceiptSequence.findByPk(RECEIPT_SEQUENCE_ID, {
@@ -38,7 +38,7 @@ export class IssueReceiptService {
 
     // O elo anterior é lido com trava, e não por disputa: em REPEATABLE READ um SELECT comum
     // enxerga o retrato do banco de quando esta transação começou, e o recibo que a emissão
-    // logo antes desta acabou de gravar simplesmente não estaria lá — a corrente nasceria com
+    // logo antes desta acabou de gravar simplesmente não estaria lá: a corrente nasceria com
     // previous_hash nulo no meio. Leitura travada sempre lê a última versão confirmada. Aqui ela
     // é segura porque a fila do alocador garante que só há uma emissão neste trecho por vez, e
     // porque sequence é índice único, então trava um ponto e não um intervalo.

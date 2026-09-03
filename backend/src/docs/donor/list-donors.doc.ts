@@ -52,7 +52,7 @@ export const listDonorsDoc = {
         .describe("Total number of donors matching the filter, for pagination."),
     }).describe("Donors successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -60,7 +60,7 @@ export const listDonorsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to see the donors."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to see the donors."),
 
     500: z.object({
       error: z.string(),

@@ -63,7 +63,7 @@ export const createDonorDoc = {
     }).describe("Donor registered successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure or invalid document."),
+      .describe("Bad Request: Validation failure or invalid document."),
 
     401: z.object({
       error: z.string(),
@@ -71,7 +71,7 @@ export const createDonorDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to register donors."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to register donors."),
 
     500: z.object({
       error: z.string(),

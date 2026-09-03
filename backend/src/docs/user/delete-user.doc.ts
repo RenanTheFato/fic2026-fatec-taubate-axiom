@@ -14,7 +14,7 @@ export const deleteUserDoc = {
 
     401: z.object({
       error: z.string(),
-    }).describe("Unauthorized — The bearer token is missing, expired or invalid."),
+    }).describe("Unauthorized: The bearer token is missing, expired or invalid."),
 
     404: z.object({
       error: z.string(),

@@ -40,7 +40,7 @@ export const getEventBySlugDoc = {
       }),
     }).describe("Event successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     500: z.object({
       error: z.string(),

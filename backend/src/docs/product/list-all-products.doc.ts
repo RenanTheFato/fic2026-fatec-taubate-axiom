@@ -57,15 +57,15 @@ export const listAllProductsDoc = {
         .describe("Total number of products matching the filter, for pagination."),
     }).describe("Products successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to list all products."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to list all products."),
 
     404: z.object({
       error: z.string(),

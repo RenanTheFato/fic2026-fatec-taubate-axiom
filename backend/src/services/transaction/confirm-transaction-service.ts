@@ -24,7 +24,7 @@ export class ConfirmTransactionService {
   async execute({ transaction_id, source, performed_by, reason, payment_method, gateway_payment_id }: ConfirmTransactionProps) {
 
     //  ou tudo acontece, ou nada acontece. Recibo, arrecadação da campanha, vaga do
-    // evento e log de auditoria vivem na mesma transação de banco — recibo emitido com campanha
+    // evento e log de auditoria vivem na mesma transação de banco: recibo emitido com campanha
     // desatualizada é exatamente o estado parcial que o plano proíbe.
     return await sequelize.transaction(async (t) => {
       const transaction = await Transaction.findByPk(transaction_id, {
@@ -77,7 +77,7 @@ export class ConfirmTransactionService {
       }
 
       // O estoque é debitado aqui e só aqui, pela mesma razão que a vaga: na criação ainda não
-      // há dinheiro. O UPDATE é condicional e a decisão é do banco — ler o estoque, decidir em
+      // há dinheiro. O UPDATE é condicional e a decisão é do banco: ler o estoque, decidir em
       // JavaScript e escrever depois é a corrida que vende a última camiseta duas vezes.
       // A ordem por product_id não é estética: duas confirmações simultâneas que travem os
       // mesmos produtos em ordens opostas se bloqueiam em deadlock. Travar sempre na mesma

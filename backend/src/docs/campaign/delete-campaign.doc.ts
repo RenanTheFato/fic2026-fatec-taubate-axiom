@@ -19,7 +19,7 @@ export const deleteCampaignDoc = {
     
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — Validation failure or business rule violation."),
+    }).describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -27,7 +27,7 @@ export const deleteCampaignDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to publish campaigns."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to publish campaigns."),
 
     404: z.object({
       error: z.string(),

@@ -49,7 +49,7 @@ export const listAllCampaignsDoc = {
         .describe("Total number of campaigns matching the filter, for pagination."),
     }).describe("Campaigns successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -57,7 +57,7 @@ export const listAllCampaignsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to publish campaigns."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to publish campaigns."),
 
     500: z.object({
       error: z.string(),

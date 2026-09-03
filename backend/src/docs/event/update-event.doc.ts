@@ -16,7 +16,7 @@ const serviceErrorSchema = z.object({
 export const updateEventDoc = {
   tags: ["event"],
   summary: "Update an existing event",
-  description: "Updates the editable fields of an event that isn't finished or cancelled. The slug, the status, the capacity and the taken seats are never changed here — capacity has its own route.",
+  description: "Updates the editable fields of an event that isn't finished or cancelled. The slug, the status, the capacity and the taken seats are never changed here: capacity has its own route.",
   security: [
     {
       bearerAuth: [],
@@ -79,7 +79,7 @@ export const updateEventDoc = {
     }).describe("Event updated successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure or business rule violation."),
+      .describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -87,7 +87,7 @@ export const updateEventDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to update events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to update events."),
 
     404: z.object({
       error: z.string(),

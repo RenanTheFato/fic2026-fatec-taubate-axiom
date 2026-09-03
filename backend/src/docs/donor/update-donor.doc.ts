@@ -59,7 +59,7 @@ export const updateDonorDoc = {
     }).describe("Donor updated successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure, empty body or an already anonymized donor."),
+      .describe("Bad Request: Validation failure, empty body or an already anonymized donor."),
 
     401: z.object({
       error: z.string(),
@@ -67,7 +67,7 @@ export const updateDonorDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to update donors."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to update donors."),
 
     404: z.object({
       error: z.string(),

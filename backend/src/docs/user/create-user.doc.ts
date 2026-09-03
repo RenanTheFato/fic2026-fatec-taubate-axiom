@@ -26,7 +26,7 @@ export const createUserDoc = {
   }),
   response: {
     201: z.object({ message: z.string().describe("Success message.") }).describe("User account created successfully."),
-    400: z.union([validationErrorSchema, serviceErrorSchema]).describe("Bad Request — Validation failure or business rule violation."),
-    500: internalErrorSchema.describe("Internal Server Error — Unexpected failure during user creation."),
+    400: z.union([validationErrorSchema, serviceErrorSchema]).describe("Bad Request: Validation failure or business rule violation."),
+    500: internalErrorSchema.describe("Internal Server Error: Unexpected failure during user creation."),
   },
 }

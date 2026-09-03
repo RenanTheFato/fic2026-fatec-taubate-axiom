@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const downloadReceiptCertificateDoc = {
   tags: ["receipt"],
   summary: "Download the receipt as a coloured certificate",
-  description: "The same receipt as /receipt/download, rendered as a landscape certificate meant to be kept and shared by the donor rather than filed by an accountant: institutional logo, coloured frame, the amount in evidence and the same verification QR code. It deliberately omits the donor document — this is the copy that circulates, and rule 3.6 keeps personal data off anything public. A refunded receipt is stamped CANCELADO across the page. Open, like the verification itself: the hash is the credential. The response body is the file, not JSON.",
+  description: "The same receipt as /receipt/download, rendered as a landscape certificate meant to be kept and shared by the donor rather than filed by an accountant: institutional logo, coloured frame, the amount in evidence and the same verification QR code. It deliberately omits the donor document: this is the copy that circulates, and rule 3.6 keeps personal data off anything public. A refunded receipt is stamped CANCELADO across the page. Open, like the verification itself: the hash is the credential. The response body is the file, not JSON.",
   contentType: "application/pdf",
   params: z.object({
     hash: z.string()

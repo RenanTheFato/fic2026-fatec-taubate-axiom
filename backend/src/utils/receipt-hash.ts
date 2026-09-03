@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 // A corrente de recibos: cada documento carrega o hash do anterior, então alterar um registro
 // antigo muda o hash dele e quebra o elo de todos os que vieram depois. A verificação pública
-// recalcula esta mesma função sobre o que está gravado e compara com o hash guardado — por isso
+// recalcula esta mesma função sobre o que está gravado e compara com o hash guardado: por isso
 // a montagem da string canônica não pode mudar depois que o primeiro recibo for emitido.
 
 export interface ReceiptHashPayload {

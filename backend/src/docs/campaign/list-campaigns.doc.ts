@@ -44,7 +44,7 @@ export const listCampaignsDoc = {
         .describe("Total number of campaigns matching the filter, for pagination."),
     }).describe("Campaigns successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     500: z.object({
       error: z.string(),

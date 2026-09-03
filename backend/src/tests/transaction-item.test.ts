@@ -13,7 +13,7 @@ function soldItem(overrides: Record<string, unknown> = {}) {
     id: "item-1",
     transaction_id: transactionId,
     product_id: productId,
-    description: "Camiseta Somos do Bem — M",
+    description: "Camiseta Somos do Bem tamanho M",
     quantity: 2,
     unit_price: "49.90",
     ...overrides,

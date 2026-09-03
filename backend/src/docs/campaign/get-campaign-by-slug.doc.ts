@@ -38,7 +38,7 @@ export const getCampaignBySlugDoc = {
       })
     }).describe("Campaigns successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     404: z.object({
       error: z.string(),

@@ -52,7 +52,7 @@ export const getReceiptDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read a receipt."),
+    }).describe("Forbidden: Only admin and finance can read a receipt."),
 
     404: z.object({
       error: z.string(),

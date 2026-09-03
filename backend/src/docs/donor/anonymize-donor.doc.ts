@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const anonymizeDonorDoc = {
   tags: ["donor"],
   summary: "Anonymize a donor on a data removal request",
-  description: "Replaces the personal data of a donor with markers and unlinks the account, stamping anonymized_at. The row itself survives and every transaction keeps pointing to it with the amount and date intact — there is no DELETE for a donor, because removing one would leave an orphan receipt and break the financial history. This is the correct answer to an LGPD erasure request. Restricted to the admin role.",
+  description: "Replaces the personal data of a donor with markers and unlinks the account, stamping anonymized_at. The row itself survives and every transaction keeps pointing to it with the amount and date intact: there is no DELETE for a donor, because removing one would leave an orphan receipt and break the financial history. This is the correct answer to an LGPD erasure request. Restricted to the admin role.",
   security: [
     {
       bearerAuth: [],
@@ -33,7 +33,7 @@ export const anonymizeDonorDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The donor has already been anonymized."),
+    }).describe("Bad Request: The donor has already been anonymized."),
 
     401: z.object({
       error: z.string(),
@@ -41,7 +41,7 @@ export const anonymizeDonorDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only the admin role can anonymize a donor."),
+    }).describe("Forbidden: Only the admin role can anonymize a donor."),
 
     404: z.object({
       error: z.string(),

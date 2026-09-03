@@ -19,7 +19,7 @@ export const deleteEventDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The event isn't a draft."),
+    }).describe("Bad Request: The event isn't a draft."),
 
     401: z.object({
       error: z.string(),
@@ -27,7 +27,7 @@ export const deleteEventDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to delete events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to delete events."),
 
     404: z.object({
       error: z.string(),

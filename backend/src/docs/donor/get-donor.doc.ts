@@ -41,7 +41,7 @@ export const getDonorDoc = {
       }),
     }).describe("Donor successfully fetched."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -49,7 +49,7 @@ export const getDonorDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to see the donor."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to see the donor."),
 
     404: z.object({
       error: z.string(),

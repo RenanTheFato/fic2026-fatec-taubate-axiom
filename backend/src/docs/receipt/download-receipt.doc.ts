@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const downloadReceiptDoc = {
   tags: ["receipt"],
   summary: "Download the receipt as a PDF",
-  description: "Renders the receipt as a PDF carrying the institutional header, the donor data as it stood at issuance, the amount, the chain hash of the document and a QR code pointing at the public verification endpoint. Open, like the verification itself: the hash is the credential. The response body is the file, not JSON — errors still answer in JSON, like the rest of the API.",
+  description: "Renders the receipt as a PDF carrying the institutional header, the donor data as it stood at issuance, the amount, the chain hash of the document and a QR code pointing at the public verification endpoint. Open, like the verification itself: the hash is the credential. The response body is the file, not JSON: errors still answer in JSON, like the rest of the API.",
   contentType: "application/pdf",
   params: z.object({
     hash: z.string()

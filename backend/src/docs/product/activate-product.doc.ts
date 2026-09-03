@@ -21,7 +21,7 @@ export const activateProductDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — Validation failure or business rule violation."),
+    }).describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string(),
@@ -29,7 +29,7 @@ export const activateProductDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to activate products."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to activate products."),
 
     404: z.object({
       error: z.string(),

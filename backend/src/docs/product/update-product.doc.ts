@@ -68,15 +68,15 @@ export const updateProductDoc = {
     }).describe("Product updated successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure or duplicated SKU."),
+      .describe("Bad Request: Validation failure or duplicated SKU."),
 
     401: z.object({
       error: z.string(),
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to update products."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to update products."),
 
     404: z.object({
       error: z.string(),

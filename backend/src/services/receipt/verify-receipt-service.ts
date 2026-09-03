@@ -33,7 +33,7 @@ export class VerifyReceiptService {
 
     const contentMatches = recomputedHash === receipt.hash
 
-    // o elo com o recibo anterior. Cobre o que a primeira não cobre — recalcular o
+    // o elo com o recibo anterior. Cobre o que a primeira não cobre: recalcular o
     // hash de um recibo adulterado só o conserta isolado, porque o elo do recibo seguinte ainda
     // aponta para o hash antigo. E apagar um recibo do meio some com o antecessor esperado.
     const previousReceipt = receipt.sequence > 1 ? await Receipt.findOne({

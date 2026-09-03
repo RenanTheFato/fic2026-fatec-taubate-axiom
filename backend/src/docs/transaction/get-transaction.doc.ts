@@ -72,7 +72,7 @@ export const getTransactionDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read a transaction."),
+    }).describe("Forbidden: Only admin and finance can read a transaction."),
 
     404: z.object({
       error: z.string(),

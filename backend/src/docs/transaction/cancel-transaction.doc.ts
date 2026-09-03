@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const cancelTransactionDoc = {
   tags: ["transaction"],
   summary: "Cancel a transaction",
-  description: "Cancels a transaction that never got paid — the payer gave up, or the team is cleaning up an abandoned checkout. Nothing financial is reversed because nothing was applied yet. Restricted to admin and finance.",
+  description: "Cancels a transaction that never got paid: the payer gave up, or the team is cleaning up an abandoned checkout. Nothing financial is reversed because nothing was applied yet. Restricted to admin and finance.",
   security: [
     {
       bearerAuth: [],
@@ -17,7 +17,7 @@ export const cancelTransactionDoc = {
   body: z.object({
     reason: z.string()
       .nullish()
-      .describe("Why the change was made. Stored in the audit log, which every status change writes — rule 3.1 forbids a status UPDATE without one.")
+      .describe("Why the change was made. Stored in the audit log, which every status change writes, because rule 3.1 forbids a status UPDATE without one.")
       .meta({ example: "Comprovante conferido no extrato do dia 12/09." }),
   }),
   response: {
@@ -45,7 +45,7 @@ export const cancelTransactionDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The transaction is not pending or awaiting confirmation."),
+    }).describe("Bad Request: The transaction is not pending or awaiting confirmation."),
 
     401: z.object({
       error: z.string(),
@@ -53,7 +53,7 @@ export const cancelTransactionDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can move a transaction by hand."),
+    }).describe("Forbidden: Only admin and finance can move a transaction by hand."),
 
     404: z.object({
       error: z.string(),

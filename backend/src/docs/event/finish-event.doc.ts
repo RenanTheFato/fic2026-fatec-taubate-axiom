@@ -21,7 +21,7 @@ export const finishEventDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The event isn't published."),
+    }).describe("Bad Request: The event isn't published."),
 
     401: z.object({
       error: z.string(),
@@ -29,7 +29,7 @@ export const finishEventDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to finish events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to finish events."),
 
     404: z.object({
       error: z.string(),

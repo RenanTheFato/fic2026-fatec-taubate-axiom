@@ -5,7 +5,7 @@ import { TRANSACTION_TYPES } from "../../models/transaction-model.js";
 export const listReceiptsDoc = {
   tags: ["receipt"],
   summary: "List issued receipts for the financial panel",
-  description: "Paginated listing of every receipt, newest first, ordered by its position in the hash chain. There is no endpoint that issues a receipt: a receipt is born inside the confirmation of a transaction, in the same database transaction, so that a document can never exist without a confirmed payment behind it. Restricted to admin and finance — the listing carries the donor name and document in full.",
+  description: "Paginated listing of every receipt, newest first, ordered by its position in the hash chain. There is no endpoint that issues a receipt: a receipt is born inside the confirmation of a transaction, in the same database transaction, so that a document can never exist without a confirmed payment behind it. Restricted to admin and finance: the listing carries the donor name and document in full.",
   security: [
     {
       bearerAuth: [],
@@ -74,7 +74,7 @@ export const listReceiptsDoc = {
         message: z.string(),
         path: z.string(),
       })),
-    }).describe("Bad Request — Invalid pagination or filter values."),
+    }).describe("Bad Request: Invalid pagination or filter values."),
 
     401: z.object({
       error: z.string(),
@@ -82,7 +82,7 @@ export const listReceiptsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read issued receipts."),
+    }).describe("Forbidden: Only admin and finance can read issued receipts."),
 
     500: z.object({
       error: z.string(),

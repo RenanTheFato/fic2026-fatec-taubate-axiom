@@ -38,7 +38,7 @@ export async function renderPdf(options: PdfPageOptions, draw: (document: PDFKit
 }
 
 // A logo é lida uma vez e fica em memória: o arquivo não muda em tempo de execução, e reler o disco
-// a cada recibo emitido seria custo puro. `null` é resposta válida — o template desenha o nome.
+// a cada recibo emitido seria custo puro. `null` é resposta válida: o template desenha o nome.
 const logoCache = new Map<string, Buffer | null>()
 
 export function loadLogo(variant: "color" | "mono") {

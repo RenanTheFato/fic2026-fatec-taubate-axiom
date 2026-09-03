@@ -17,14 +17,14 @@ const serviceErrorSchema = z.object({
 export const createTransactionDoc = {
   tags: ["transaction"],
   summary: "Start a checkout and create a pending transaction",
-  description: "Public entry point of every kind of income: donation, sponsorship, ticket and product all go through this single engine. Finds or creates the donor from the form data — never from the gateway — records the transaction as pending, then creates a Stripe Checkout Session and returns the checkout URL. No money is considered received here: the seat, the stock and the campaign total are only touched when the payment is confirmed.\n\nWhere the amount comes from depends on the type, and the two cases are mutually exclusive. A donation or a sponsorship has a free value: the payer chooses it and sends it in `amount`. A product or a ticket is priced by the institution: `amount` must NOT be sent, and is computed from `products.price` times the quantity, or from the event`s `ticket_price`. Sending an amount on a purchase is rejected with 400 rather than silently ignored, so a client can never choose what it pays. A purchase also returns the priced lines in `items`, which is how the caller learns the total before sending the payer to the checkout.",
+  description: "Public entry point of every kind of income: donation, sponsorship, ticket and product all go through this single engine. Finds or creates the donor from the form data: never from the gateway: records the transaction as pending, then creates a Stripe Checkout Session and returns the checkout URL. No money is considered received here: the seat, the stock and the campaign total are only touched when the payment is confirmed.\n\nWhere the amount comes from depends on the type, and the two cases are mutually exclusive. A donation or a sponsorship has a free value: the payer chooses it and sends it in `amount`. A product or a ticket is priced by the institution: `amount` must NOT be sent, and is computed from `products.price` times the quantity, or from the event`s `ticket_price`. Sending an amount on a purchase is rejected with 400 rather than silently ignored, so a client can never choose what it pays. A purchase also returns the priced lines in `items`, which is how the caller learns the total before sending the payer to the checkout.",
   body: z.object({
     type: z.enum(TRANSACTION_TYPES)
       .describe("What is being paid for. A ticket requires an event; a sponsorship requires a campaign or an event.")
       .meta({ example: "donation" }),
     amount: z.number()
       .optional()
-      .describe("Amount in BRL, with at most two decimal places. Required for a donation or a sponsorship, where the value is free. Must be omitted for a product or a ticket, whose price comes from the catalogue — sending it there is a 400.")
+      .describe("Amount in BRL, with at most two decimal places. Required for a donation or a sponsorship, where the value is free. Must be omitted for a product or a ticket, whose price comes from the catalogue: sending it there is a 400.")
       .meta({ example: 150.00 }),
     items: z.array(z.object({
       product_id: z.uuid()
@@ -36,7 +36,7 @@ export const createTransactionDoc = {
         .meta({ example: 2 }),
     }))
       .optional()
-      .describe("What is being bought. Required and non-empty for a product transaction, forbidden for every other type — a ticket derives its single line from the event, and a donation has nothing to itemise. Note that it carries no price: the unit price is read from the catalogue and copied into the line."),
+      .describe("What is being bought. Required and non-empty for a product transaction, forbidden for every other type: a ticket derives its single line from the event, and a donation has nothing to itemise. Note that it carries no price: the unit price is read from the catalogue and copied into the line."),
     campaign_id: z.uuid()
       .nullish()
       .describe("Campaign the money goes to. Must be an active campaign.")
@@ -98,10 +98,10 @@ export const createTransactionDoc = {
     }).describe("Transaction created and checkout session generated."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure, an amount sent on a purchase, a missing or empty item list, an unknown or inactive product, a product with no stock left, a free event, an inactive campaign, an unpublished event or a sold out event."),
+      .describe("Bad Request: Validation failure, an amount sent on a purchase, a missing or empty item list, an unknown or inactive product, a product with no stock left, a free event, an inactive campaign, an unpublished event or a sold out event."),
 
     500: z.object({
       error: z.string(),
-    }).describe("Internal Server Error — Unexpected failure, including a Stripe outage."),
+    }).describe("Internal Server Error: Unexpected failure, including a Stripe outage."),
   },
 }

@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   // Uma tabela de uma linha só, que existe para ser travada. A corrente de recibos é
-  // inerentemente serial, cada elo carrega o hash do anterior — e travar a última linha de
+  // inerentemente serial, cada elo carrega o hash do anterior, e travar a última linha de
   // "receipts" com ORDER BY ... FOR UPDATE trava também o intervalo aberto depois dela, que é
   // exatamente onde toda emissão precisa inserir. O resultado eram deadlocks sob confirmações
   // simultâneas. Travando sempre a mesma linha por chave primária, as emissões formam fila.

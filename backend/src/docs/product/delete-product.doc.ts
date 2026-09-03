@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const deleteProductDoc = {
   tags: ["product"],
   summary: "Delete a product",
-  description: "Permanently removes a product that has never been activated. A product that was activated at least once, even if currently deactivated, cannot be deleted — use deactivate instead. Only by admins.",
+  description: "Permanently removes a product that has never been activated. A product that was activated at least once, even if currently deactivated, cannot be deleted: use deactivate instead. Only by admins.",
   security: [
     {
       bearerAuth: [],
@@ -19,7 +19,7 @@ export const deleteProductDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The product has already been activated at some point."),
+    }).describe("Bad Request: The product has already been activated at some point."),
 
     401: z.object({
       error: z.string(),
@@ -27,7 +27,7 @@ export const deleteProductDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to delete products."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to delete products."),
 
     404: z.object({
       error: z.string(),

@@ -6,7 +6,7 @@ import { formatDateTime, formatMoney, loadLogo, renderPdf } from "./pdf-document
 import { RECEIPT_SUBJECT_BY_TYPE, RECEIPT_TITLE_BY_TYPE } from "./receipt-labels.js";
 
 // Recibo institucional: preto e branco, sóbrio, feito para ser impresso, arquivado e anexado a uma
-// prestação de contas. Toda a cor foi tirada de propósito — este é o documento que vai para o
+// prestação de contas. Toda a cor foi tirada de propósito: este é o documento que vai para o
 // contador, não o que o doador posta.
 
 const INK = "#111111"
@@ -53,7 +53,7 @@ export async function buildReceiptDocument(receipt: ReceiptInterface, verificati
       document.rect(left, 182, width, 26).fillColor(SURFACE).fill()
       document.rect(left, 182, 3, 26).fillColor(INK).fill()
       document.font("Helvetica-Bold").fontSize(10).fillColor(INK)
-        .text(`DOCUMENTO CANCELADO — transação estornada${receipt.cancelled_at ? ` em ${formatDateTime(receipt.cancelled_at)}` : ""}`,
+        .text(`DOCUMENTO CANCELADO, transação estornada${receipt.cancelled_at ? ` em ${formatDateTime(receipt.cancelled_at)}` : ""}`,
           left + 14, 189, { width: width - 28 })
     }
 

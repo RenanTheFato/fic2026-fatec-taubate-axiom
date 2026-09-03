@@ -50,15 +50,15 @@ export const updateEventCapacityDoc = {
       }),
     }).describe("Event capacity updated successfully."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or capacity lower than seats taken."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or capacity lower than seats taken."),
 
     401: z.object({
       error: z.string(),
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to adjust event capacity."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to adjust event capacity."),
 
     404: z.object({
       error: z.string(),

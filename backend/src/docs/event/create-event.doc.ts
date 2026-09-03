@@ -29,7 +29,7 @@ export const createEventDoc = {
   body: z.object({
     campaign_id: z.uuid()
       .nullish()
-      .describe("Campaign this event belongs to. Optional — an event can exist on its own.")
+      .describe("Campaign this event belongs to. Optional: an event can exist on its own.")
       .meta({ example: "9f1d4c2e-6b7a-4d3f-8c21-0a5e7b9d1c34" }),
     title: z.string()
       .describe("Public title of the event. The slug is derived from it and must be unique.")
@@ -80,16 +80,16 @@ export const createEventDoc = {
     }).describe("Event created successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure, duplicated title or invalid campaign."),
+      .describe("Bad Request: Validation failure, duplicated title or invalid campaign."),
 
     401: z.object({
       error: z.string()
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to create events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to create events."),
 
-    500: internalErrorSchema.describe("Internal Server Error — Unexpected failure during event creation."),
+    500: internalErrorSchema.describe("Internal Server Error: Unexpected failure during event creation."),
   },
 }

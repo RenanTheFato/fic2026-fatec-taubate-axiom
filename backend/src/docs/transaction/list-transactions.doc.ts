@@ -4,7 +4,7 @@ import { TRANSACTION_STATUSES, TRANSACTION_TYPES } from "../../models/transactio
 export const listTransactionsDoc = {
   tags: ["transaction"],
   summary: "List transactions for the financial panel",
-  description: "Paginated listing of every transaction, newest first, with the donor, campaign and event already joined. Accepts filters by status, type, campaign, event, donor and date range — this is the single panel that replaces the spreadsheets the NGO keeps today. Restricted to admin and finance: the listing carries donor data, which rule 3.6 keeps out of public endpoints.",
+  description: "Paginated listing of every transaction, newest first, with the donor, campaign and event already joined. Accepts filters by status, type, campaign, event, donor and date range: this is the single panel that replaces the spreadsheets the NGO keeps today. Restricted to admin and finance: the listing carries donor data, which rule 3.6 keeps out of public endpoints.",
   security: [
     {
       bearerAuth: [],
@@ -37,7 +37,7 @@ export const listTransactionsDoc = {
       .meta({ example: "3c6b1f9e-2a4d-4e7b-8f10-5d9c2a7b3e61" }),
     donor_id: z.uuid()
       .optional()
-      .describe("Filters by donor — the donation history of one person.")
+      .describe("Filters by donor: the donation history of one person.")
       .meta({ example: "5b8d3a1f-4c2e-4b9d-a710-6f3e8c2d5a91" }),
     from: z.coerce.date()
       .optional()
@@ -94,7 +94,7 @@ export const listTransactionsDoc = {
         message: z.string(),
         path: z.string(),
       })),
-    }).describe("Bad Request — Invalid pagination or filter values."),
+    }).describe("Bad Request: Invalid pagination or filter values."),
 
     401: z.object({
       error: z.string(),
@@ -102,7 +102,7 @@ export const listTransactionsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read the financial panel."),
+    }).describe("Forbidden: Only admin and finance can read the financial panel."),
 
     500: z.object({
       error: z.string(),

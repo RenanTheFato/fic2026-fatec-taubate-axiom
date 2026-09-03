@@ -32,7 +32,7 @@ export class CreateDonorService {
 
     // Duas doações simultâneas do mesmo CPF passam as duas pela busca acima sem encontrar nada e
     // chegam juntas no create: a segunda bate no índice único. Isso não é erro do doador, é a
-    // corrida — quem perde relê o cadastro que a outra acabou de gravar e segue com ele.
+    // corrida: quem perde relê o cadastro que a outra acabou de gravar e segue com ele.
     try {
       const donor = await Donor.create({
         name,

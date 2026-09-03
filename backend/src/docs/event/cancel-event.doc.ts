@@ -21,7 +21,7 @@ export const cancelEventDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The event isn't a draft or published."),
+    }).describe("Bad Request: The event isn't a draft or published."),
 
     401: z.object({
       error: z.string(),
@@ -29,7 +29,7 @@ export const cancelEventDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to cancel events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to cancel events."),
 
     404: z.object({
       error: z.string(),

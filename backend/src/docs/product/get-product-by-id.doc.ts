@@ -37,7 +37,7 @@ export const getProductByIdDoc = {
       }),
     }).describe("Product successfully founded."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure or business rule violation."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure or business rule violation."),
 
     404: z.object({
       error: z.string(),

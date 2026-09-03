@@ -69,16 +69,16 @@ export const createProductDoc = {
     }).describe("Product created successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure or duplicated SKU."),
+      .describe("Bad Request: Validation failure or duplicated SKU."),
 
     401: z.object({
       error: z.string()
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to create products."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to create products."),
 
-    500: internalErrorSchema.describe("Internal Server Error — Unexpected failure during product creation."),
+    500: internalErrorSchema.describe("Internal Server Error: Unexpected failure during product creation."),
   },
 }

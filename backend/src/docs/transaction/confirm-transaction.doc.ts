@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const confirmTransactionDoc = {
   tags: ["transaction"],
   summary: "Confirm a transaction manually",
-  description: "Confirms a transaction outside the automatic webhook flow — the negotiated PIX the team receives directly, or a payment the gateway failed to notify. This is the single point where money becomes real: in one atomic database transaction it raises the campaign total, takes the event seat and writes the audit record. If any of those fails, none of them happens. Restricted to admin and finance, as required by rule 3.6 of the plan.",
+  description: "Confirms a transaction outside the automatic webhook flow: the negotiated PIX the team receives directly, or a payment the gateway failed to notify. This is the single point where money becomes real: in one atomic database transaction it raises the campaign total, takes the event seat and writes the audit record. If any of those fails, none of them happens. Restricted to admin and finance, as required by rule 3.6 of the plan.",
   security: [
     {
       bearerAuth: [],
@@ -17,7 +17,7 @@ export const confirmTransactionDoc = {
   body: z.object({
     reason: z.string()
       .nullish()
-      .describe("Why the change was made. Stored in the audit log, which every status change writes — rule 3.1 forbids a status UPDATE without one.")
+      .describe("Why the change was made. Stored in the audit log, which every status change writes, because rule 3.1 forbids a status UPDATE without one.")
       .meta({ example: "Comprovante conferido no extrato do dia 12/09." }),
   }),
   response: {
@@ -45,7 +45,7 @@ export const confirmTransactionDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The transaction is not pending or awaiting confirmation, is already confirmed, or the event ran out of seats."),
+    }).describe("Bad Request: The transaction is not pending or awaiting confirmation, is already confirmed, or the event ran out of seats."),
 
     401: z.object({
       error: z.string(),
@@ -53,7 +53,7 @@ export const confirmTransactionDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can move a transaction by hand."),
+    }).describe("Forbidden: Only admin and finance can move a transaction by hand."),
 
     404: z.object({
       error: z.string(),

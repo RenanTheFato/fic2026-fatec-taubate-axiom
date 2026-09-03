@@ -35,7 +35,7 @@ export class RefundTransactionService {
 
     // O estorno no gateway acontece antes da escrita: se ele falhar, nada mudou no nosso banco.
     // O inverso deixaria a transação marcada como estornada com o dinheiro ainda no Stripe.
-    // A chamada fica fora da transação de banco de propósito — rede não segura trava de linha.
+    // A chamada fica fora da transação de banco de propósito: rede não segura trava de linha.
     if (refund_on_gateway && transaction.gateway_payment_id) {
       await new StripeGateway().refundPayment(transaction.gateway_payment_id)
     }

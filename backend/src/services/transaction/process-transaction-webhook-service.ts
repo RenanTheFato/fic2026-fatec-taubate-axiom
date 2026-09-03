@@ -37,7 +37,7 @@ export class ProcessTransactionWebhookService {
     }
 
     // o efeito financeiro não sai do corpo da notificação. A assinatura garante que
-    // o corpo veio do Stripe, não que ele ainda seja o estado atual — uma reentrega atrasada
+    // o corpo veio do Stripe, não que ele ainda seja o estado atual: uma reentrega atrasada
     // descreve um pagamento que já mudou desde então.
     const payment = outcome.payment_intent_id
       ? await new StripeGateway().getPayment(outcome.payment_intent_id)
@@ -65,7 +65,7 @@ export class ProcessTransactionWebhookService {
     }
 
     // O Stripe reenvia o mesmo evento várias vezes. Chegar num status que a transação já tem
-    // não é erro, é a reentrega — e reprocessar somaria arrecadação duas vezes.
+    // não é erro, é a reentrega, e reprocessar somaria arrecadação duas vezes.
     if (transaction.status === status) {
       return { processed: false, reason: "Transaction is already in this status" }
     }

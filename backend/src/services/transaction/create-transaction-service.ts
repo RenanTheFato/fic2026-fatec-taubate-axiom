@@ -14,10 +14,10 @@ import { fromCents, toCents } from "../../utils/money.js";
 import { CreateDonorService } from "../donor/create-donor-service.js";
 
 const TITLE_BY_TYPE: Record<TransactionInterface['type'], string> = {
-  donation: "Doação — Somos do Bem",
-  sponsorship: "Patrocínio — Somos do Bem",
-  ticket: "Convite — Somos do Bem",
-  product: "Produto — Somos do Bem",
+  donation: "Doação para a Somos do Bem",
+  sponsorship: "Patrocínio à Somos do Bem",
+  ticket: "Convite Somos do Bem",
+  product: "Produto Somos do Bem",
 }
 
 const MAX_AMOUNT = 99999999.99
@@ -26,7 +26,7 @@ type PricedLine = Pick<TransactionItemInterface, "product_id" | "description" | 
 
 // A única soma de dinheiro em JavaScript de toda a API, e por necessidade: ainda não existe linha
 // no banco para usar increment. Acontece em centavos inteiros, pela mesma razão que utils/money.ts
-// explica — em ponto flutuante somar "0.10" + "0.20" dá 0.30000000000000004, e um centavo de
+// explica: em ponto flutuante somar "0.10" + "0.20" dá 0.30000000000000004, e um centavo de
 // diferença aqui vira divergência com o valor cobrado pelo gateway.
 function sumLines(lines: PricedLine[]) {
   return fromCents(lines.reduce((total, line) => total + toCents(line.unit_price) * line.quantity, 0))
@@ -96,7 +96,7 @@ export class CreateTransactionService {
       }
     }
 
-    // Onde nasce o preço decide tudo o que vem abaixo. Doação e patrocínio têm valor livre — é o
+    // Onde nasce o preço decide tudo o que vem abaixo. Doação e patrocínio têm valor livre: é o
     // doador que escolhe quanto dar. Produto e convite têm valor de tabela, e aceitá-lo do corpo
     // da requisição seria deixar qualquer pessoa comprar uma camiseta por um centavo.
     const { lines, total } = type === "product"
@@ -157,7 +157,7 @@ export class CreateTransactionService {
 
     // A sessão é criada fora da transação de banco: chamada de rede não pode segurar trava
     // de linha. Se o gateway falhar, a transação fica pending sem checkout e a rotina de
-    // reconciliação a resolve — o oposto (checkout sem transação) seria dinheiro sem destino.
+    // reconciliação a resolve: o oposto (checkout sem transação) seria dinheiro sem destino.
     const { gateway_checkout_id, checkout_url } = await new StripeGateway().createCheckoutSession({
       transaction_id: transaction.id,
       title: TITLE_BY_TYPE[type],

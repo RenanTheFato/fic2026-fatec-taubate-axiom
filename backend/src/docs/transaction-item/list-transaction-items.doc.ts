@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const listTransactionItemsDoc = {
   tags: ["transaction-item"],
   summary: "List what was actually sold, line by line",
-  description: "Paginated listing of the items of every transaction, newest first, with the transaction and the product already joined. It is the itemisation behind the financial panel: the transaction says how much came in, the item says what it was for. Accepts filters by transaction, product and date range — filtering by product is what answers 'how many of this shirt were sold'. There is no route that creates an item: an item is born inside the checkout, in the same database transaction as the transaction it belongs to, so that no transaction can carry an amount that does not match what was bought. Restricted to admin and finance, like the rest of the money domain.",
+  description: "Paginated listing of the items of every transaction, newest first, with the transaction and the product already joined. It is the itemisation behind the financial panel: the transaction says how much came in, the item says what it was for. Accepts filters by transaction, product and date range: filtering by product is what answers 'how many of this shirt were sold'. There is no route that creates an item: an item is born inside the checkout, in the same database transaction as the transaction it belongs to, so that no transaction can carry an amount that does not match what was bought. Restricted to admin and finance, like the rest of the money domain.",
   security: [
     {
       bearerAuth: [],
@@ -20,11 +20,11 @@ export const listTransactionItemsDoc = {
       .meta({ example: 20 }),
     transaction_id: z.uuid()
       .optional()
-      .describe("Filters by transaction — the itemisation of a single purchase.")
+      .describe("Filters by transaction: the itemisation of a single purchase.")
       .meta({ example: "7a2e5c1b-9d3f-4a6e-b810-2c4f7d9a1e53" }),
     product_id: z.uuid()
       .optional()
-      .describe("Filters by product — the sales history of one catalogue item.")
+      .describe("Filters by product: the sales history of one catalogue item.")
       .meta({ example: "5b8d3a1f-4c2e-4b9d-a710-6f3e8c2d5a91" }),
     from: z.coerce.date()
       .optional()
@@ -74,7 +74,7 @@ export const listTransactionItemsDoc = {
         message: z.string(),
         path: z.string(),
       })),
-    }).describe("Bad Request — Invalid pagination or filter values."),
+    }).describe("Bad Request: Invalid pagination or filter values."),
 
     401: z.object({
       error: z.string(),
@@ -82,7 +82,7 @@ export const listTransactionItemsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read the itemisation."),
+    }).describe("Forbidden: Only admin and finance can read the itemisation."),
 
     500: z.object({
       error: z.string(),

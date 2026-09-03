@@ -33,7 +33,7 @@ function checkoutCompletedEvent(paymentStatus = "paid") {
 
 // A assinatura é montada com o mesmo segredo e o mesmo esquema do Stripe ("t=<ts>,v1=<hmac>"
 // sobre "<ts>.<corpo cru>"), então o controller roda a verificação de verdade em vez de recebê-la
-// mockada — é justamente a checagem que impede um estranho de confirmar transação.
+// mockada: é justamente a checagem que impede um estranho de confirmar transação.
 function signedRequest(event: object) {
   const payload = Buffer.from(JSON.stringify(event))
   const ts = Math.floor(Date.now() / 1000)

@@ -21,7 +21,7 @@ export const publishEventDoc = {
 
     400: z.object({
       error: z.string(),
-    }).describe("Bad Request — The event isn't a draft, or its start date already passed."),
+    }).describe("Bad Request: The event isn't a draft, or its start date already passed."),
 
     401: z.object({
       error: z.string(),
@@ -29,7 +29,7 @@ export const publishEventDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to publish events."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to publish events."),
 
     404: z.object({
       error: z.string(),

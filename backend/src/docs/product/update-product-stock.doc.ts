@@ -12,7 +12,7 @@ const validationErrorSchema = z.object({
 export const updateProductStockDoc = {
   tags: ["product"],
   summary: "Adjust a product's stock",
-  description: "Sets the product's stock to the given absolute quantity, as counted on the shelf during an inventory check. This is not a delta — sending the same value twice does not change the stock twice. Restricted to users with the admin or communication role.",
+  description: "Sets the product's stock to the given absolute quantity, as counted on the shelf during an inventory check. This is not a delta: sending the same value twice does not change the stock twice. Restricted to users with the admin or communication role.",
   security: [
     {
       bearerAuth: [],
@@ -46,15 +46,15 @@ export const updateProductStockDoc = {
       }),
     }).describe("Product stock updated successfully."),
 
-    400: validationErrorSchema.describe("Bad Request — Validation failure."),
+    400: validationErrorSchema.describe("Bad Request: Validation failure."),
 
     401: z.object({
       error: z.string(),
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to adjust product stock."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to adjust product stock."),
 
     404: z.object({
       error: z.string(),

@@ -5,7 +5,7 @@ import { formatDate, formatMoney, loadLogo, renderPdf } from "./pdf-document.js"
 import { CERTIFICATE_DEED_BY_TYPE, CERTIFICATE_TITLE_BY_TYPE } from "./receipt-labels.js";
 
 // Certificado: paisagem, colorido, feito para o doador guardar, imprimir e mostrar. Carrega os
-// mesmos dados do recibo institucional e o mesmo QR de verificação — muda a roupa, não o conteúdo.
+// mesmos dados do recibo institucional e o mesmo QR de verificação: muda a roupa, não o conteúdo.
 // O documento do doador **não** aparece aqui de propósito: é a peça que circula.
 
 const PAPER = "#FDFCF8"
@@ -77,7 +77,7 @@ export async function buildReceiptCertificate(receipt: ReceiptInterface, verific
     document.font("Helvetica").fontSize(10.5).fillColor(MUTED)
       .text("Este certificado reconhece que", 0, ornamentY + 18, { width, align: "center" })
 
-    // O nome é o único campo de tamanho imprevisível da página — uma razão social longa tem cinco
+    // O nome é o único campo de tamanho imprevisível da página: uma razão social longa tem cinco
     // vezes o comprimento de um nome de pessoa. A fonte encolhe até caber numa linha, e o que vem
     // depois é posicionado a partir da altura medida, não de um `y` fixo que o nome atropelaria.
     const nameWidth = width - 160
@@ -146,14 +146,14 @@ export async function buildReceiptCertificate(receipt: ReceiptInterface, verific
       .text(`CNPJ ${organization.document}`, signatureLeft, footerTop + 88, { width: 220, align: "center" })
 
     // A corrente também vai impressa aqui: o certificado é verificável do mesmo jeito que o recibo.
-    // A URL não entra — ela já está no QR, e a linha só cabe em uma. `lineBreak: false` é trava:
+    // A URL não entra: ela já está no QR, e a linha só cabe em uma. `lineBreak: false` é trava:
     // texto que quebrasse aqui passaria da margem inferior e o pdfkit abriria uma segunda página.
     document.font("Courier").fontSize(6.5).fillColor(MUTED)
       .text(`registro #${receipt.sequence}  ·  ${receipt.hash}`,
         60, height - 62, { width: width - 120, align: "center", lineBreak: false })
 
     // Tarja de cancelamento por cima de tudo, para não haver como confundir um documento estornado
-    // com um válido — mas sem apagar o conteúdo, que continua sendo o que foi assinado.
+    // com um válido, mas sem apagar o conteúdo, que continua sendo o que foi assinado.
     if (receipt.status === "cancelled") {
       document.save()
       document.rotate(-22, { origin: [center, height / 2] })

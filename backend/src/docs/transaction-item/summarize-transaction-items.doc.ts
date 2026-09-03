@@ -4,7 +4,7 @@ import { TRANSACTION_TYPES } from "../../models/transaction-model.js";
 export const summarizeTransactionItemsDoc = {
   tags: ["transaction-item"],
   summary: "How much each product sold and how much it brought in",
-  description: "Aggregation of the itemisation: one line per product with the quantity sold, the revenue and how many transactions it appeared in, ordered by revenue. It answers the question the plain listing cannot — 'how many shirts did we sell and what did that raise' — and feeds the shop report of the transparency portal. Only confirmed transactions count: a pending checkout never brought money in, and a refund moves the transaction out of 'confirmed', so it leaves the report on its own. The date range filters on the confirmation date, not on when the item was written, because that is when the money actually arrived. Restricted to admin and finance, like the rest of the money domain.",
+  description: "Aggregation of the itemisation: one line per product with the quantity sold, the revenue and how many transactions it appeared in, ordered by revenue. It answers the question the plain listing cannot: 'how many shirts did we sell and what did that raise': and feeds the shop report of the transparency portal. Only confirmed transactions count: a pending checkout never brought money in, and a refund moves the transaction out of 'confirmed', so it leaves the report on its own. The date range filters on the confirmation date, not on when the item was written, because that is when the money actually arrived. Restricted to admin and finance, like the rest of the money domain.",
   security: [
     {
       bearerAuth: [],
@@ -17,7 +17,7 @@ export const summarizeTransactionItemsDoc = {
       .meta({ example: "5b8d3a1f-4c2e-4b9d-a710-6f3e8c2d5a91" }),
     type: z.enum(TRANSACTION_TYPES)
       .optional()
-      .describe("Restricts the report to one kind of transaction — 'product' for the shop, 'ticket' for event admissions.")
+      .describe("Restricts the report to one kind of transaction: 'product' for the shop, 'ticket' for event admissions.")
       .meta({ example: "product" }),
     from: z.coerce.date()
       .optional()
@@ -59,7 +59,7 @@ export const summarizeTransactionItemsDoc = {
         message: z.string(),
         path: z.string(),
       })),
-    }).describe("Bad Request — Invalid filter values."),
+    }).describe("Bad Request: Invalid filter values."),
 
     401: z.object({
       error: z.string(),
@@ -67,7 +67,7 @@ export const summarizeTransactionItemsDoc = {
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — Only admin and finance can read the itemisation."),
+    }).describe("Forbidden: Only admin and finance can read the itemisation."),
 
     500: z.object({
       error: z.string(),

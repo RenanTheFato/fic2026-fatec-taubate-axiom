@@ -64,16 +64,16 @@ export const createCampaignDoc = {
     }).describe("Campaign created successfully."),
 
     400: z.union([validationErrorSchema, serviceErrorSchema])
-      .describe("Bad Request — Validation failure or business rule violation."),
+      .describe("Bad Request: Validation failure or business rule violation."),
 
     401: z.object({
       error: z.string()
-    }).describe("Unauthorized — Missing, invalid or expired bearer token."),
+    }).describe("Unauthorized: Missing, invalid or expired bearer token."),
 
     403: z.object({
       error: z.string()
-    }).describe("Forbidden — The authenticated user's role is not allowed to create campaigns."),
+    }).describe("Forbidden: The authenticated user's role is not allowed to create campaigns."),
 
-    500: internalErrorSchema.describe("Internal Server Error — Unexpected failure during campaign creation."),
+    500: internalErrorSchema.describe("Internal Server Error: Unexpected failure during campaign creation."),
   },
 }
