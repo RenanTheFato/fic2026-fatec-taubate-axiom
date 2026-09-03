@@ -47,7 +47,7 @@ describe("páginas institucionais", () => {
     renderWithProviders(<FaqPage />)
 
     // A primeira pergunta de cada grupo já nasce aberta, então o teste usa uma
-    // que começa fechada — é o estado que a interação precisa mudar.
+    // que começa fechada, que é o estado que a interação precisa mudar.
     const question = await screen.findByRole("button", { name: /onde ficam as unidades/i })
     expect(question).toHaveAttribute("aria-expanded", "false")
 

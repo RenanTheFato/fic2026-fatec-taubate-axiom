@@ -1,6 +1,6 @@
 import type { FaqItem } from "../../types/institutional-types"
 
-// PROVISÓRIO — as perguntas são as que o site precisa responder; as respostas
+// PROVISÓRIO: as perguntas são as que o site precisa responder; as respostas
 // foram escritas para não afirmar procedimento que não foi confirmado pela ONG.
 // Onde o caminho depende de uma regra interna, a resposta manda falar com a
 // associação em vez de inventar um fluxo. **Precisa de revisão da ONG antes da
@@ -53,7 +53,7 @@ const FAQ: FaqItem[] = [
     category: "doacao",
     question: "Como sei que a minha doação chegou?",
     answer:
-      "Depois do pagamento, o site acompanha a confirmação e só informa que a doação foi concluída quando o recebimento é confirmado de fato. Enquanto isso, a tela mostra que o pagamento está em processamento — nunca um “sucesso” antecipado.",
+      "Depois do pagamento, o site acompanha a confirmação e só informa que a doação foi concluída quando o recebimento é confirmado de fato. Enquanto isso, a tela mostra que o pagamento está em processamento, nunca um “sucesso” antecipado.",
   },
   {
     id: "ser-voluntario",

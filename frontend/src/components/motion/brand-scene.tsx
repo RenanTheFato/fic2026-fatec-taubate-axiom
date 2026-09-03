@@ -11,7 +11,7 @@ type BrandSceneProps = {
 
 // Cenas decorativas em three.js. Este arquivo só existe fora do pacote inicial:
 // quem o importa usa React.lazy, então o three só é baixado por quem tem
-// aparelho para rodá-lo — e, uma vez baixado, todas as cenas do site saem do
+// aparelho para rodá-lo, e uma vez baixado todas as cenas do site saem do
 // mesmo pedaço. Cena nova entra como `variant` daqui, nunca em arquivo novo.
 //
 // Regras de custo, iguais para toda cena: só pontos e linhas (nada de malha,
@@ -33,7 +33,7 @@ let liveScenes = 0
 type Pointer = { x: number; y: number }
 
 type BuildContext = {
-  /** Tela grande. Em celular cada cena usa menos partículas — e menos luxo. */
+  /** Tela grande. Em celular cada cena usa menos partículas, e menos luxo. */
   dense: boolean
 }
 
@@ -46,7 +46,7 @@ type Built = {
 }
 
 // Meia-extensão que a cena ocupa no mundo. A câmera se afasta o suficiente para
-// caber isso na vertical E na horizontal, seja qual for o formato do container —
+// caber isso na vertical E na horizontal, seja qual for o formato do container,
 // é o que faz a mesma cena funcionar no quadrado do desktop e na tira larga e
 // baixa do celular, sem cortar nada.
 type Fit = { halfWidth: number; halfHeight: number }
@@ -70,7 +70,7 @@ function fibonacciSphere(count: number, radius: number): Float32Array {
 }
 
 // ---------------------------------------------------------------------------
-// network — a rede de pontos ligados do topo, literalmente o que o site da ONG
+// network: a rede de pontos ligados do topo, literalmente o que o site da ONG
 // chama de "essa rede que constrói inclusão". Segue o ponteiro de leve.
 // ---------------------------------------------------------------------------
 function buildNetwork({ dense }: BuildContext): Built {
@@ -136,7 +136,7 @@ function buildNetwork({ dense }: BuildContext): Built {
 }
 
 // ---------------------------------------------------------------------------
-// symbol — o símbolo da marca se formando a partir de partículas espalhadas.
+// symbol: o símbolo da marca se formando a partir de partículas espalhadas.
 // Os pontos e as cores saem de uma leitura do próprio `public/simbolo.png`, e
 // não de coordenadas copiadas à mão: se a ONG trocar o arquivo, a cena troca
 // junto.
@@ -256,7 +256,7 @@ function buildSymbol({ dense }: BuildContext): Built {
 }
 
 // ---------------------------------------------------------------------------
-// drift — poeira lenta nas três cores da marca. Sem linhas e sem cálculo por
+// drift: poeira lenta nas três cores da marca. Sem linhas e sem cálculo por
 // quadro além de um deslocamento: é a cena mais barata do projeto, e por isso é
 // a que pode cobrir uma faixa inteira.
 // ---------------------------------------------------------------------------
@@ -317,9 +317,9 @@ function buildDrift({ dense }: BuildContext): Built {
 }
 
 // ---------------------------------------------------------------------------
-// chain — a corrente de blocos da página de verificação, desenhada em pontos.
+// chain: a corrente de blocos da página de verificação, desenhada em pontos.
 // Os cubos são fixos: não giram, não pulsam, não seguem o ponteiro. A única
-// coisa que se move é o dado atravessando a corrente — cometas de pontos que
+// coisa que se move é o dado atravessando a corrente: cometas de pontos que
 // saem de um bloco e chegam no seguinte, e o bloco que recebe o dado muda de
 // cor enquanto ele passa. Paleta escura, para o desenho aparecer sobre o fundo
 // claro do banner.
@@ -670,7 +670,7 @@ function buildChain({ dense }: BuildContext): Built {
   }
 }
 // ---------------------------------------------------------------------------
-// archive — pastas de arquivo se formando no banner da Transparência. As
+// archive: pastas de arquivo se formando no banner da Transparência. As
 // arestas partem espalhadas e se juntam em pastas com aba, uma depois da outra;
 // depois, folhas soltas continuam entrando nelas. A página fala de documentos
 // públicos, então o banner mostra documentos sendo guardados.
@@ -859,10 +859,10 @@ function buildArchive({ dense }: BuildContext): Built {
 }
 
 // ---------------------------------------------------------------------------
-// care — o banner do Painel de Impacto: duas crianças brincando de bola.
+// care: o banner do Painel de Impacto, com duas crianças brincando de bola.
 //
 // Esta é a única cena do projeto que abre mão do orçamento mínimo, e é uma
-// decisão consciente. Traço e partícula funcionam para ideia abstrata — rede,
+// decisão consciente. Traço e partícula funcionam para ideia abstrata (rede,
 // corrente, arquivo. Para gente, não funcionam: figura de contorno lê como
 // pictograma, e pictograma não emociona ninguém. Então aqui tem volume, luz e
 // sombra de verdade: malhas de primitivas, duas fontes de luz e um plano que
@@ -1131,7 +1131,7 @@ export default function BrandScene({ variant, className, onFallback }: BrandScen
     // Cena "rica" é a exceção declarada: malha, luz e sombra em vez de pontos e
     // linhas. Ela paga antisserrilhado e um pixel ratio maior, porque um volume
     // com a borda serrilhada não convence ninguém. O vigia de quadro continua
-    // valendo — se o aparelho não der conta, a cena sai inteira.
+    // valendo: se o aparelho não der conta, a cena sai inteira.
     const rich = RICH_SCENES.has(variant)
 
     const scene = new THREE.Scene()

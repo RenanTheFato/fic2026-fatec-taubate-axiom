@@ -22,7 +22,7 @@ const OFFSET = {
 // ele é escondido e revelado. Com o JavaScript quebrado a página fica inteira.
 //
 // Sempre `opacity`, nunca `autoAlpha`: o `autoAlpha` do GSAP também escreve
-// `visibility: hidden`, e isso tira o elemento da árvore de acessibilidade —
+// `visibility: hidden`, e isso tira o elemento da árvore de acessibilidade:
 // leitor de tela e navegação por teclado deixam de enxergá-lo enquanto a
 // animação não termina. Invisível é aceitável; inexistente não é.
 export function Reveal({ children, className, delay = 0, from = "bottom" }: RevealProps) {

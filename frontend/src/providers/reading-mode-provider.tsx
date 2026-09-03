@@ -7,8 +7,8 @@ import {
 } from "../hooks/use-reading-mode"
 import type { ReadingModeValue } from "../hooks/use-reading-mode"
 
-// Modo Leitura Fácil. É contexto porque atravessa a árvore inteira — cabeçalho,
-// páginas institucionais e o portão de animação — que é exatamente o caso em
+// Modo Leitura Fácil. É contexto porque atravessa a árvore inteira (cabeçalho,
+// páginas institucionais e o portão de animação), que é exatamente o caso em
 // que o projeto autoriza contexto.
 //
 // O modo não é só "fonte maior": ele troca texto longo por texto curto e direto
@@ -43,7 +43,7 @@ export function ReadingModeProvider({ children }: ReadingModeProviderProps) {
       // sem armazenamento, o modo vale só para esta visita
     }
 
-    // Avisa quem não consome o contexto — o portão de animação lê o atributo do
+    // Avisa quem não consome o contexto: o portão de animação lê o atributo do
     // documento e precisa saber que ele mudou.
     window.dispatchEvent(new Event(READING_MODE_EVENT))
   }, [easyReading])

@@ -56,7 +56,7 @@ export function PeopleBoard({ board, label }: PeopleBoardProps) {
       <div className="max-w-2xl">
         <StateMessage
           title={`A composição ${label} ainda não foi publicada`}
-          description={`Assim que a associação enviar a relação de nomes e cargos, ela aparece aqui — com mandato e retrato de cada pessoa. Enquanto isso, o estatuto e os documentos de governança ficam na página de Transparência.`}
+          description={`Assim que a associação enviar a relação de nomes e cargos, ela aparece aqui, com mandato e retrato de cada pessoa. Enquanto isso, o estatuto e os documentos de governança ficam na página de Transparência.`}
           action={
             <div className="flex flex-col gap-3 sm:flex-row">
               <ButtonLink to="/transparencia" size="sm">

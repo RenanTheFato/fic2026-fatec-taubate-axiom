@@ -12,7 +12,7 @@ type CountUpProps = {
 }
 
 // O número final já está no HTML. A contagem é enfeite: se não rodar, o dado
-// certo continua na tela — e é isso que o leitor de tela anuncia de qualquer forma.
+// certo continua na tela, e é isso que o leitor de tela anuncia de qualquer forma.
 export function CountUp({ value, className, duration = 1.6 }: CountUpProps) {
   const capability = useMotionCapability()
   const { ref, inView } = useInView<HTMLSpanElement>()

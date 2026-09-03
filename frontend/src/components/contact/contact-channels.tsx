@@ -5,8 +5,8 @@ import { Card } from "../ui/card"
 // não exemplo: telefone, e-mail e os dois endereços publicados pela associação.
 //
 // A lista é de uma coluna só de propósito. Em duas colunas dentro da metade da
-// página, o cartão fica com ~230px e o endereço de e-mail — que não tem onde
-// quebrar — sai cortado. Endereço de contato cortado é pior do que uma lista
+// página, o cartão fica com ~230px e o endereço de e-mail, que não tem onde
+// quebrar, sai cortado. Endereço de contato cortado é pior do que uma lista
 // mais alta.
 const CHANNELS = [
   {
@@ -28,7 +28,7 @@ const CHANNELS = [
 const UNITS = [
   {
     title: "Ambulatório e Administração",
-    lines: ["Alameda da Criança, 100 — Vila Vitória I", "Indaiatuba - SP, 13338-020"],
+    lines: ["Alameda da Criança, 100, Vila Vitória I", "Indaiatuba - SP, 13338-020"],
   },
   {
     title: "Escola e Oficina",

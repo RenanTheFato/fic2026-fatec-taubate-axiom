@@ -16,7 +16,7 @@ const SITE_LINKS = [
 ]
 
 // O lucide não publica mais marca de terceiro (Facebook, Instagram, YouTube),
-// então essas três — e só essas três — vêm do pacote Simple Icons.
+// então essas três (e só essas três) vêm do pacote Simple Icons.
 const SOCIAL: { icon: ComponentType<{ className?: string }>; label: string; href: string }[] = [
   { icon: SiFacebook, label: "Facebook", href: "https://www.facebook.com/somosdobem.indaiatuba" },
   { icon: SiInstagram, label: "Instagram", href: "https://www.instagram.com/somosdobem.indaiatuba/" },
@@ -72,7 +72,7 @@ export function SiteFooter() {
               <MapPin className="mt-0.5 size-5 shrink-0 text-reward" aria-hidden="true" />
               <span>
                 <strong className="block font-semibold text-white">Ambulatório e Administração</strong>
-                Alameda da Criança, 100 — Vila Vitória I<br />
+                Alameda da Criança, 100, Vila Vitória I<br />
                 Indaiatuba - SP, 13338-020
               </span>
             </li>
@@ -118,7 +118,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/15">
         <Container className="flex flex-col gap-2 py-5 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Somos do Bem — Associação Beneficente de Indaiatuba.</p>
+          <p>© {new Date().getFullYear()} Somos do Bem, Associação Beneficente de Indaiatuba.</p>
           <Link to="/politica-de-privacidade" className="hover:text-reward">
             Política de Privacidade
           </Link>

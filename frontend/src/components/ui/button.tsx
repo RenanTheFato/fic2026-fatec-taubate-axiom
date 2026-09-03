@@ -4,7 +4,7 @@ import { cn } from "../../utils/cn"
 
 // "light" é o tom para fundo escuro (faixa ink, seção primária). Existe como
 // tom, e não como classe solta em quem usa: sobrescrever cor por className
-// depende da ordem do CSS gerado, não da ordem do atributo — e falha calado.
+// depende da ordem do CSS gerado, não da ordem do atributo, e falha calado.
 export type ButtonTone = "primary" | "success" | "partner" | "ink" | "light"
 export type ButtonVariant = "solid" | "outline"
 export type ButtonSize = "sm" | "md" | "lg"

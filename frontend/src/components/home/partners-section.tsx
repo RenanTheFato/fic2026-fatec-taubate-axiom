@@ -87,7 +87,7 @@ function PartnerMarquee({ partners }: { partners: Partner[] }) {
           ))}
         </ul>
 
-        {/* Segunda cópia só para o laço não ter emenda visível — o leitor de
+        {/* Segunda cópia só para o laço não ter emenda visível. O leitor de
             tela não deve ouvir a lista duas vezes. */}
         <ul className="flex gap-4" aria-hidden="true">
           {partners.map((partner) => (

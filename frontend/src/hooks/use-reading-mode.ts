@@ -1,7 +1,7 @@
 import { createContext, use } from "react"
 
 // O contexto do Modo Leitura Fácil mora aqui, e não junto do provider, para que
-// o arquivo do provider exporte só o componente — é o que o `oxlint` cobra e o
+// o arquivo do provider exporte só o componente, que é o que o `oxlint` cobra e o
 // que mantém o fast refresh funcionando.
 
 export const READING_MODE_STORAGE_KEY = "somosdobem:leitura-facil"

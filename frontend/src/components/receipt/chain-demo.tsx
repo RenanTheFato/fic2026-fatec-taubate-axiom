@@ -6,12 +6,12 @@ import { useMotionCapability } from "../../hooks/use-motion-capability"
 import { cn } from "../../utils/cn"
 
 // Demonstração interativa da corrente de recibos. Ela existe porque explicar
-// "cada documento carrega o hash do anterior" em texto não convence ninguém —
+// "cada documento carrega o hash do anterior" em texto não convence ninguém:
 // quebrar a corrente com o próprio dedo, e ver o estrago se propagar para a
 // frente, convence em dois segundos.
 //
 // Os dados são fictícios e a tela diz isso. O comportamento, não: é exatamente
-// o que o backend confere em `GET /receipt/verify/:hash` — conteúdo que bate com
+// o que o backend confere em `GET /receipt/verify/:hash`: conteúdo que bate com
 // o próprio hash, e hash que bate com o elo anterior.
 
 type Block = {
@@ -143,7 +143,7 @@ export function ChainDemo() {
 
                 <span className="flex flex-col gap-0.5 text-xs">
                   <span className="text-ink-soft">
-                    anterior: <span className="font-mono">{index === 0 ? "—" : BLOCKS[index - 1].hash}</span>
+                    anterior: <span className="font-mono">{index === 0 ? "nenhum, é o primeiro" : BLOCKS[index - 1].hash}</span>
                   </span>
                   <span className={cn("font-mono", HASH_STYLE[status])}>
                     {status === "ok" ? block.hash : block.tamperedHash}
@@ -177,7 +177,7 @@ export function ChainDemo() {
               com o conteúdo.{" "}
               {tamperedAt < BLOCKS.length - 1
                 ? `E como os ${BLOCKS.length - 1 - tamperedAt} recibos seguintes apontam para o código antigo, o elo deles também se rompeu. Não dá para alterar um documento sem quebrar todos os que vieram depois.`
-                : "Era o último da corrente — mas o código não bate com o conteúdo, e a conferência acusa."}
+                : "Era o último da corrente, mas o código não bate com o conteúdo, e a conferência acusa."}
             </>
           )}
         </p>

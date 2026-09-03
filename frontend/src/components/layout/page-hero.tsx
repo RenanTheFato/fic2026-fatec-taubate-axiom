@@ -19,7 +19,7 @@ type PageHeroProps = {
   breadcrumb: { label: string; to?: string }[]
   tone?: PageHeroTone
   action?: ReactNode
-  /** Cena 3D do banner. Só entra em aparelho capaz — em qualquer largura. */
+  /** Cena 3D do banner. Só entra em aparelho capaz, mas em qualquer largura. */
   scene?: SceneVariant
   children?: ReactNode
 }
@@ -29,7 +29,7 @@ type PageHeroProps = {
 // documento só, em vez de onze páginas feitas em dias diferentes.
 //
 // A cascata de entrada mora aqui, e não em cada página, para que abrir qualquer
-// tela interna tenha exatamente o mesmo ritmo — é o que "motion-first" quer
+// tela interna tenha exatamente o mesmo ritmo, que é o que "motion-first" quer
 // dizer na prática: o movimento é parte do sistema, não enfeite por tela.
 const GRADIENT: Record<PageHeroTone, string> = {
   institutional: "bg-[radial-gradient(52%_120%_at_88%_0%,rgba(0,222,206,0.20),transparent_62%)]",
@@ -83,7 +83,7 @@ export function PageHero({
       const items = gsap.utils.toArray<HTMLElement>(".page-hero-in")
 
       // O `set` acontece antes da primeira pintura (useGSAP roda em layout
-      // effect), então não existe piscada — e com o JavaScript quebrado o
+      // effect), então não existe piscada, e com o JavaScript quebrado o
       // cabeçalho aparece inteiro e parado.
       gsap.set(items, { opacity: 0, y: 18 })
 

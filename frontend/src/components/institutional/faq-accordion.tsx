@@ -9,7 +9,7 @@ type FaqAccordionProps = {
 
 // Sanfona própria, com a ligação de ARIA feita à mão: `aria-expanded` no botão,
 // `aria-controls` apontando para o painel e o painel apontando de volta com
-// `aria-labelledby`. Abrir e fechar não anima altura — animar altura recalcula
+// `aria-labelledby`. Abrir e fechar não anima altura, porque animar altura recalcula
 // layout, e a regra do projeto é mexer só em transform e opacidade.
 export function FaqAccordion({ items }: FaqAccordionProps) {
   const [openId, setOpenId] = useState<string | null>(items[0]?.id ?? null)

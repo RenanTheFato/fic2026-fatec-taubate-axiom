@@ -2,12 +2,12 @@ import { useEffect, useState } from "react"
 import { READING_MODE_EVENT } from "./use-reading-mode"
 
 // Portão único de animação do projeto. Todo componente animado pergunta aqui
-// antes de mover qualquer pixel — o público da ONG usa celular antigo e máquina
+// antes de mover qualquer pixel, porque o público da ONG usa celular antigo e máquina
 // de escola, então movimento é melhoria progressiva, nunca requisito.
 //
-//   full     — anima e pode carregar a cena 3D
-//   reduced  — anima o essencial (revelação, contador), sem 3D
-//   none     — nada se move; a página já está completa sem isso
+//   full      anima e pode carregar a cena 3D
+//   reduced   anima o essencial (revelação, contador), sem 3D
+//   none      nada se move; a página já está completa sem isso
 
 export type MotionCapability = "full" | "reduced" | "none"
 
@@ -20,7 +20,7 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
 function detect(): MotionCapability {
   // Sem window ou sem matchMedia (jsdom, navegador antigo), o padrão é a
-  // página parada — nunca o contrário.
+  // página parada, nunca o contrário.
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return "none"
 
   if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return "none"
@@ -43,7 +43,7 @@ function detect(): MotionCapability {
 
 export function useMotionCapability(): MotionCapability {
   // Detecção síncrona na primeira renderização: se ela ficasse num efeito, o
-  // elemento pintaria visível e só depois seria escondido para animar — um
+  // elemento pintaria visível e só depois seria escondido para animar, e isso é um
   // piscar que aparece justamente nos aparelhos mais lentos.
   const [capability, setCapability] = useState<MotionCapability>(detect)
 

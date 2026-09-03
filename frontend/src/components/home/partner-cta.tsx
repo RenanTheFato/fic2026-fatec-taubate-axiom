@@ -21,7 +21,7 @@ export function PartnerCta() {
 
           <p className="mt-4 text-lg leading-relaxed text-white/90">
             A sua ajuda tem um peso enorme para diversas vidas. Doe uma vez, doe todo mês ou doe o
-            seu tempo — tudo chega no mesmo lugar.
+            seu tempo, tudo chega no mesmo lugar.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

@@ -3,7 +3,7 @@
 export function formatCurrency(value: string | number): string {
   const amount = typeof value === "string" ? Number(value) : value
 
-  if (!Number.isFinite(amount)) return "—"
+  if (!Number.isFinite(amount)) return "valor indisponível"
 
   return amount.toLocaleString("pt-BR", {
     style: "currency",
@@ -19,7 +19,7 @@ export function formatNumber(value: number): string {
 export function formatDate(iso: string): string {
   const date = new Date(iso)
 
-  if (Number.isNaN(date.getTime())) return "—"
+  if (Number.isNaN(date.getTime())) return "data indisponível"
 
   return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
 }

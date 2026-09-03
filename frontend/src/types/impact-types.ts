@@ -1,4 +1,4 @@
-// Painel de Impacto — ainda sem rota no backend. Os três números institucionais
+// Painel de Impacto, ainda sem rota no backend. Os três números institucionais
 // que a home mostra hoje vêm do site atual e continuam corretos como dado da
 // ONG; a arrecadação e os voluntários ativos entram quando a API existir.
 export type ImpactStat = {

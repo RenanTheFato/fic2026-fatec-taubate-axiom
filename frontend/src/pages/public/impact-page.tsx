@@ -141,7 +141,7 @@ export default function ImpactPage() {
                 id="em-breve"
                 eyebrow="Honestidade"
                 title="O que ainda não é tempo real"
-                description="Os números acima são informados pela instituição e conferidos por ela. Os indicadores abaixo dependem do sistema de doações estar em operação — e só aparecem aqui quando forem reais."
+                description="Os números acima são informados pela instituição e conferidos por ela. Os indicadores abaixo dependem do sistema de doações estar em operação, e só aparecem aqui quando forem reais."
               />
             </div>
 

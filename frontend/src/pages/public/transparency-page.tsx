@@ -62,8 +62,8 @@ export default function TransparencyPage() {
           >
             <p>
               Quem doa tem o direito de saber para onde o dinheiro foi. Esta página reúne os
-              documentos que a associação publica — estatuto, certificações, demonstrações
-              financeiras e relatórios de atividades — para download livre, sem cadastro.
+              documentos que a associação publica (estatuto, certificações, demonstrações
+              financeiras e relatórios de atividades) para download livre, sem cadastro.
             </p>
           </ReadingSwitch>
         }

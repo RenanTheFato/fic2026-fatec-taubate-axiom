@@ -82,7 +82,7 @@ export function ImpactNumbers() {
         </div>
 
         {/* O símbolo da marca se formando a partir de partículas. Só aparece em
-            tela grande e em aparelho capaz — por isso a coluna também some, em
+            tela grande e em aparelho capaz, por isso a coluna também some, em
             vez de reservar um vazio no celular. */}
         <div className="relative hidden min-h-80 lg:block">
           <BrandCanvas variant="symbol" className="absolute inset-0" />

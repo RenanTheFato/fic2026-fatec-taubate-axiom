@@ -1,7 +1,7 @@
 import type { ImpactPanel } from "../../types/impact-types"
 import { getImpactSummary } from "./get-impact-summary-service"
 
-// PROVISÓRIO — o Painel de Impacto não tem rota no backend. Os números por
+// PROVISÓRIO: o Painel de Impacto não tem rota no backend. Os números por
 // programa são os que a ONG publica hoje; o que ainda não existe está declarado
 // em `pending`, e a tela mostra essa lista em vez de fingir que o dado é vivo.
 export async function getImpactPanel(): Promise<ImpactPanel> {

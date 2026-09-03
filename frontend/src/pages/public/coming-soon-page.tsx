@@ -9,13 +9,13 @@ type ComingSoonPageProps = {
 }
 
 // Toda rota do mapa existe desde já, mesmo antes da tela. Link que leva a lugar
-// nenhum é pior do que link que diz honestamente em que fase ele entra —
+// nenhum é pior do que link que diz honestamente em que fase ele entra, e
 // e a fase é a mesma que está em goals.md.
 export default function ComingSoonPage({ title, description, phase }: ComingSoonPageProps) {
   return (
     <Container className="flex max-w-2xl flex-col items-start gap-5 py-20 sm:py-28">
       <span className="inline-flex items-center gap-2 rounded-pill bg-institutional/15 px-4 py-2 font-display text-sm font-bold text-ink">
-        Em construção — {phase}
+        Em construção, {phase}
       </span>
 
       <h1 className="text-4xl font-extrabold sm:text-5xl">{title}</h1>

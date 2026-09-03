@@ -22,7 +22,7 @@ type Verdict = {
 }
 
 // Três desfechos, e cada um diz uma coisa diferente. "Autêntico mas cancelado"
-// não é falha de verificação: o documento é verdadeiro, só não vale mais — e
+// não é falha de verificação: o documento é verdadeiro, só não vale mais, e
 // misturar os dois casos num só aviso seria enganoso nas duas direções.
 function verdictOf(verification: ReceiptVerification): Verdict {
   if (verification.valid) {
@@ -112,7 +112,7 @@ export function VerificationResult({ verification }: VerificationResultProps) {
             <span>
               <strong className="block font-display text-ink">Ligação com o documento anterior</strong>
               Cada documento aponta para o anterior. Se um deles fosse alterado ou removido, essa
-              corrente se romperia — e é isso que este teste verifica.
+              corrente se romperia, e é isso que este teste verifica.
             </span>
           </li>
         </ul>

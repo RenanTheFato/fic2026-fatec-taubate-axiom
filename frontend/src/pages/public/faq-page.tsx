@@ -46,7 +46,7 @@ export default function FaqPage() {
         lead={
           <p>
             As dúvidas que mais chegam pelo telefone e pelo e-mail, respondidas aqui. Se a sua não
-            estiver na lista, fale com a gente — a resposta pode virar uma pergunta desta página.
+            estiver na lista, fale com a gente: a resposta pode virar uma pergunta desta página.
           </p>
         }
       />

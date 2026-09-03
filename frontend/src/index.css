@@ -73,7 +73,7 @@
   }
 
   /* Modo Leitura Fácil: corpo maior, entrelinha folgada, medida mais curta e
-     nada de decoração na tela. O que é `data-decorativo` some — não é conteúdo,
+     nada de decoração na tela. O que é `data-decorativo` some, porque não é conteúdo,
      e em leitura fácil tudo que não é conteúdo atrapalha. */
   :root[data-leitura-facil="on"] body {
     font-size: 1.125rem;

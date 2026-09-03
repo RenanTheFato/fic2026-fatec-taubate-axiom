@@ -14,7 +14,7 @@ type BrandCanvasProps = {
 // Porta de entrada das cenas 3D. Quem quiser uma cena usa este componente e não
 // precisa repetir a decisão: capacidade do aparelho, WebGL disponível, largura
 // mínima e desistência por baixo desempenho ficam todas aqui. Quando qualquer
-// uma reprova, o componente não renderiza nada — e o fundo estático da seção,
+// uma reprova, o componente não renderiza nada, e o fundo estático da seção,
 // que já está lá, é o que todo mundo vê.
 export function BrandCanvas({ variant, className, minWidth = 1024 }: BrandCanvasProps) {
   const capability = useMotionCapability()

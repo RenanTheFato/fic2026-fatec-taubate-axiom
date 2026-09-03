@@ -59,7 +59,7 @@ export default function OmbudsmanPage() {
                 Você recebe uma resposta no e-mail que informar.
               </p>
               <p>
-                Se preferir, pode enviar sem se identificar — nesse caso, escreva direto para o
+                Se preferir, pode enviar sem se identificar. Nesse caso, escreva direto para o
                 e-mail da ouvidoria, porque o formulário abaixo pede nome e e-mail para que a
                 resposta tenha para onde ir.
               </p>

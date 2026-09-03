@@ -64,7 +64,7 @@ export function HeroSection() {
           <p className="hero-in mt-4 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
             Seja bem-vindo(a) a essa rede que constrói inclusão, saúde e apoio a pessoas com
             Deficiência Intelectual e/ou Múltipla de causa neurológica e Transtornos Invasivos do
-            Desenvolvimento — e às suas famílias.
+            Desenvolvimento, e às suas famílias.
           </p>
 
           <div className="hero-in mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

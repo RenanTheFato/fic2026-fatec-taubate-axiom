@@ -1,5 +1,5 @@
 // Espelha a resposta de `GET /receipt/verify/:hash`, que é pública e não exige
-// login — o hash de 64 caracteres é a própria credencial.
+// login, porque o hash de 64 caracteres é a própria credencial.
 export type ReceiptStatus = "issued" | "cancelled"
 
 export type TransactionType = "donation" | "sponsorship" | "ticket" | "product"

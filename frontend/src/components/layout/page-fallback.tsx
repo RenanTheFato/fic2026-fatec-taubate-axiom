@@ -3,7 +3,7 @@ import { Skeleton } from "../ui/states"
 
 // O que aparece entre clicar num link e o pedaço daquela página chegar. Repete
 // a forma do cabeçalho de página real (migalha, título, linha de apoio), para
-// a troca não parecer um salto — e nunca uma tela em branco.
+// a troca não parecer um salto, e nunca uma tela em branco.
 export function PageFallback() {
   return (
     <div aria-busy="true" aria-live="polite">

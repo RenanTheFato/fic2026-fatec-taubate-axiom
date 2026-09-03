@@ -7,7 +7,7 @@ import type { Person, PersonBoard } from "../../types/institutional-types"
 // enviar a lista, a página monta a estrutura inteira e mostra o estado vazio,
 // que diz honestamente que a composição será publicada ali.
 //
-// Para preencher, basta acrescentar os objetos abaixo — a página não muda:
+// Para preencher, basta acrescentar os objetos abaixo, e a página não muda:
 //   { id: "1", name: "Nome Sobrenome", position: "Presidente",
 //     board: "diretoria", term: "2024–2026",
 //     photo: "/imagens/pessoas/nome-sobrenome.jpg" }
