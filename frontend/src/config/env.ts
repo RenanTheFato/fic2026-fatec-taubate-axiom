@@ -19,6 +19,6 @@ function readUrl(value: string | undefined, fallback: string, name: string): str
 }
 
 export const env: Env = {
-  apiUrl: readUrl(import.meta.env.VITE_API_URL, "http://localhost:3000/api/v1", "VITE_API_URL"),
+  apiUrl: readUrl(import.meta.env.VITE_API_URL, "http://localhost:3333/api/v1", "VITE_API_URL"),
   isDevelopment: import.meta.env.DEV,
 }
