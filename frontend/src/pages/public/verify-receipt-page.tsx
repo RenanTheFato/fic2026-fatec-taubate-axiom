@@ -1,6 +1,7 @@
 import { Search, ShieldCheck } from "lucide-react"
 import { useState } from "react"
 import type { FormEvent } from "react"
+import { useSearchParams } from "react-router-dom"
 import { ChainDemo } from "../../components/receipt/chain-demo"
 import { VerificationResult } from "../../components/receipt/verification-result"
 import { PageHero } from "../../components/layout/page-hero"
@@ -18,7 +19,7 @@ import { NotFoundError } from "../../config/errors"
 const STEPS = [
   {
     title: "Cada documento recebe um código único",
-    text: "Quando um recibo ou certificado é emitido, ele ganha um código de 64 caracteres calculado a partir do próprio conteúdo — valor, nome, data e número.",
+    text: "Quando um recibo ou certificado é emitido, ele ganha um código de 64 caracteres calculado a partir do próprio conteúdo: valor, nome, data e número.",
   },
   {
     title: "Cada documento aponta para o anterior",
@@ -26,12 +27,18 @@ const STEPS = [
   },
   {
     title: "Alterar um documento rompe a corrente",
-    text: "Se alguém mudasse um valor depois da emissão, o código deixaria de bater — e o documento seguinte, que aponta para o antigo, denunciaria a alteração.",
+    text: "Se alguém mudasse um valor depois da emissão, o código deixaria de bater, e o documento seguinte, que aponta para o antigo, denunciaria a alteração.",
   },
 ]
 
 export default function VerifyReceiptPage() {
-  const [submittedHash, setSubmittedHash] = useState("")
+  // `?codigo=` deixa a tela de status do pedido e o QR do recibo apontarem
+  // direto para a conferência já preenchida. Continua sendo o mesmo formulário:
+  // quem chega sem o parâmetro digita, quem chega com ele já vê o resultado.
+  const [params] = useSearchParams()
+  const fromLink = (params.get("codigo") ?? "").trim()
+
+  const [submittedHash, setSubmittedHash] = useState(fromLink)
   const [error, setError] = useState<string | undefined>(undefined)
   const verification = useVerifyReceipt(submittedHash)
 
@@ -99,6 +106,7 @@ export default function VerifyReceiptPage() {
                   autoComplete="off"
                   spellCheck={false}
                   className="font-mono text-sm"
+                  defaultValue={fromLink}
                   placeholder="a1b2c3d4…"
                 />
               )}
@@ -124,7 +132,7 @@ export default function VerifyReceiptPage() {
               <StateMessage
                 tone="error"
                 title="Não encontramos esse código"
-                description="Confira se o código foi copiado por inteiro, sem espaços. Se o problema continuar, fale com a associação — pode ser um documento antigo, anterior a este sistema."
+                description="Confira se o código foi copiado por inteiro, sem espaços. Se o problema continuar, fale com a associação: pode ser um documento antigo, anterior a este sistema."
               />
             )}
 
@@ -174,7 +182,7 @@ export default function VerifyReceiptPage() {
             id="como-funciona"
             eyebrow="Como funciona"
             title="Por que esse código não pode ser falsificado"
-            description="Sem jargão: é o mesmo princípio que faz um livro-caixa numerado à mão ser difícil de adulterar — só que conferido por qualquer pessoa, a qualquer hora."
+            description="Sem jargão: é o mesmo princípio que faz um livro-caixa numerado à mão ser difícil de adulterar, só que conferido por qualquer pessoa, a qualquer hora."
             tone="institutional"
           />
 
