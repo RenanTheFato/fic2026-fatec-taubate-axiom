@@ -1,8 +1,9 @@
 import { CircleCheck, Send } from "lucide-react"
 import { useState } from "react"
+import { flushSync } from "react-dom"
 import type { FormEvent } from "react"
 import { Button } from "../ui/button"
-import { Field, SelectInput, TextArea, TextInput } from "../ui/field"
+import { Field, FieldRow, SelectInput, TextArea, TextInput } from "../ui/field"
 
 type Subject = {
   value: string
@@ -24,7 +25,7 @@ type Errors = Partial<Record<"name" | "email" | "subject" | "message", string>>
 // Não existe rota de contato no backend, e inventar um "enviado com sucesso"
 // que não envia nada seria a pior mentira possível numa página de ouvidoria.
 // Então o formulário monta a mensagem e abre o programa de e-mail do usuário,
-// que é um caminho real e verificável — e a tela mostra o endereço por extenso
+// que é um caminho real e verificável, e a tela mostra o endereço por extenso
 // para quem não usa cliente de e-mail no navegador.
 export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, note }: MessageFormProps) {
   const [errors, setErrors] = useState<Errors>({})
@@ -47,7 +48,9 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
     if (!subject) found.subject = "Escolha um assunto."
     if (message.length < 20) found.message = "Conte um pouco mais: pelo menos 20 caracteres."
 
-    setErrors(found)
+    // Mesma razão do `checkout-form`: a mensagem de erro precisa existir antes
+    // de o foco chegar ao campo.
+    flushSync(() => setErrors(found))
 
     if (Object.keys(found).length > 0) {
       const firstInvalid = document.getElementById(`${id}-${Object.keys(found)[0]}`)
@@ -72,7 +75,7 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+      <FieldRow>
         <Field id={`${id}-name`} label="Nome completo" error={errors.name} required>
           {(control) => <TextInput {...control} name="name" autoComplete="name" />}
         </Field>
@@ -80,9 +83,9 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
         <Field id={`${id}-email`} label="E-mail" error={errors.email} required>
           {(control) => <TextInput {...control} name="email" type="email" autoComplete="email" />}
         </Field>
-      </div>
+      </FieldRow>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <FieldRow>
         <Field id={`${id}-phone`} label="Telefone" hint="Se preferir que a gente ligue.">
           {(control) => <TextInput {...control} name="phone" type="tel" autoComplete="tel" />}
         </Field>
@@ -101,7 +104,7 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
             </SelectInput>
           )}
         </Field>
-      </div>
+      </FieldRow>
 
       <Field id={`${id}-message`} label="Mensagem" error={errors.message} required>
         {(control) => <TextArea {...control} name="message" />}
@@ -133,7 +136,7 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
           <CircleCheck className="size-5 shrink-0 text-success-dark" aria-hidden="true" />
           <span>
             Abrimos o seu programa de e-mail com a mensagem preenchida. <strong>Ela ainda não foi
-            enviada</strong> — confira e clique em enviar por lá. Se nada abriu, copie o endereço
+            enviada</strong>. Confira e clique em enviar por lá. Se nada abriu, copie o endereço
             acima e escreva pelo e-mail que você já usa.
           </span>
         </p>
