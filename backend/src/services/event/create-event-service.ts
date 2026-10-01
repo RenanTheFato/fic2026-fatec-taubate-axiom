@@ -5,7 +5,7 @@ import { Event } from "../../models/event-model.js";
 import { slugify } from "../../utils/slugify.js";
 
 export class CreateEventService {
-  async execute({ campaign_id, title, description, location, starts_at, ends_at, ticket_price, capacity }: Pick<EventInterface, 'campaign_id' | 'title' | 'description' | 'location' | 'starts_at' | 'ends_at' | 'ticket_price' | 'capacity'>) {
+  async execute({ campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price, capacity }: Pick<EventInterface, 'campaign_id' | 'title' | 'description' | 'location' | 'image_url' | 'starts_at' | 'ends_at' | 'ticket_price' | 'capacity'>) {
     const slug = slugify(title)
 
     if (!slug) {
@@ -40,6 +40,7 @@ export class CreateEventService {
       slug,
       description,
       location,
+      image_url,
       starts_at,
       ends_at,
       ticket_price,

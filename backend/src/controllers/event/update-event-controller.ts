@@ -21,6 +21,11 @@ export class UpdateEventController {
       location: z.string()
         .max(255, { error: "The location has exceeded the character limit (255)." })
         .nullish(),
+      image_url: z.string({ error: "The image url must be a string" })
+        .trim()
+        .max(512, { error: "The image url has exceeded the character limit (512)." })
+        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .nullish(),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }).optional(),
       ends_at: z.coerce.date({ error: "The end date isn't a valid date." })
         .nullish(),
@@ -47,11 +52,11 @@ export class UpdateEventController {
       return res.status(400).json({ message: "Validation Error Occurred", errors })
     }
 
-    const { campaign_id, title, description, location, starts_at, ends_at, ticket_price } = parsedEvent.data
+    const { campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price } = parsedEvent.data
 
     try {
       const updateEventService = new UpdateEventService()
-      const event = await updateEventService.execute({ event_id, campaign_id, title, description, location, starts_at, ends_at, ticket_price })
+      const event = await updateEventService.execute({ event_id, campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price })
 
       return res.status(200).json({ message: "Event Updated Successfully", event })
     } catch (error: unknown) {

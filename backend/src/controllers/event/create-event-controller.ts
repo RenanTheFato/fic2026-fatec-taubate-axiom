@@ -21,6 +21,12 @@ export class CreateEventController {
         .max(255, { error: "The location has exceeded the character limit (255)." })
         .nullish()
         .default(null),
+      image_url: z.string({ error: "The image url must be a string" })
+        .trim()
+        .max(512, { error: "The image url has exceeded the character limit (512)." })
+        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .nullish()
+        .default(null),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }),
       ends_at: z.coerce.date({ error: "The end date isn't a valid date." })
         .nullish()
@@ -56,11 +62,11 @@ export class CreateEventController {
       return res.status(400).json({ message: "Validation Error Occurred", errors })
     }
 
-    const { campaign_id, title, description, location, starts_at, ends_at, ticket_price, capacity } = parsedEvent.data
+    const { campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price, capacity } = parsedEvent.data
 
     try {
       const createEventService = new CreateEventService()
-      const event = await createEventService.execute({ campaign_id, title, description, location, starts_at, ends_at, ticket_price, capacity })
+      const event = await createEventService.execute({ campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price, capacity })
       return res.status(201).json({ message: "Event Created Successfully", event })
     } catch (error: unknown) {
       if (error instanceof BadRequestError) {

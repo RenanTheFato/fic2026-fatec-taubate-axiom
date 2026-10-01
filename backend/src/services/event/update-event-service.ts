@@ -9,13 +9,14 @@ interface UpdateEventProps {
   title?: EventInterface['title'],
   description?: EventInterface['description'],
   location?: EventInterface['location'],
+  image_url?: EventInterface['image_url'],
   starts_at?: EventInterface['starts_at'],
   ends_at?: EventInterface['ends_at'],
   ticket_price?: EventInterface['ticket_price'],
 }
 
 export class UpdateEventService {
-  async execute({ event_id, campaign_id, title, description, location, starts_at, ends_at, ticket_price }: UpdateEventProps) {
+  async execute({ event_id, campaign_id, title, description, location, image_url, starts_at, ends_at, ticket_price }: UpdateEventProps) {
 
     const event = await Event.findOne({
       where: {
@@ -58,6 +59,7 @@ export class UpdateEventService {
       ...(title !== undefined ? { title } : {}),
       ...(description !== undefined ? { description } : {}),
       ...(location !== undefined ? { location } : {}),
+      ...(image_url !== undefined ? { image_url } : {}),
       ...(starts_at !== undefined ? { starts_at } : {}),
       ...(ends_at !== undefined ? { ends_at } : {}),
       ...(ticket_price !== undefined ? { ticket_price } : {}),

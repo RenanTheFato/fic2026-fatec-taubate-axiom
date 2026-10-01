@@ -42,6 +42,10 @@ export const createEventDoc = {
       .nullish()
       .describe("Where the event happens.")
       .meta({ example: "Salão Paroquial, Rua das Flores 120, Sorocaba" }),
+    image_url: z.string()
+      .nullish()
+      .describe("Site path (/imagens/...) or https address of the cover photo.")
+      .meta({ example: "/imagens/eventos/chefs-do-bem-6a-edicao.jpg" }),
     starts_at: z.iso.datetime()
       .describe("Start date and time of the event.")
       .meta({ example: "2026-09-12T20:00:00.000Z" }),
@@ -68,6 +72,7 @@ export const createEventDoc = {
         slug: z.string(),
         description: z.string().nullable(),
         location: z.string().nullable(),
+        image_url: z.string().nullable(),
         starts_at: z.iso.datetime(),
         ends_at: z.iso.datetime().nullable(),
         ticket_price: z.string(),
