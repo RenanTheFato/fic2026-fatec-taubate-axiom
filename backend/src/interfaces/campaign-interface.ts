@@ -5,6 +5,7 @@ export interface CampaignInterface{
   title: string,
   slug: string,
   description: string | null,
+  image_url: string | null,
   goal_amount: string,
   raised_amount: string,
   starts_at: Date,

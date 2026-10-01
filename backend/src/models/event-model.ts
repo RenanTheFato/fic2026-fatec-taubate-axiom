@@ -12,6 +12,7 @@ export class Event extends Model<InferAttributes<Event>, InferCreationAttributes
   declare slug: string
   declare description: CreationOptional<string | null>
   declare location: CreationOptional<string | null>
+  declare image_url: CreationOptional<string | null>
   declare starts_at: Date
   declare ends_at: CreationOptional<Date | null>
   declare ticket_price: CreationOptional<string>
@@ -48,6 +49,10 @@ Event.init(
     },
     location: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    image_url: {
+      type: DataTypes.STRING(512),
       allowNull: true,
     },
     starts_at: {

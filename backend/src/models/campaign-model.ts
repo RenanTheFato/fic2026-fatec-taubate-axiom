@@ -10,6 +10,7 @@ export class Campaign extends Model<InferAttributes<Campaign>, InferCreationAttr
   declare title: string
   declare slug: string
   declare description: CreationOptional<string | null>
+  declare image_url: CreationOptional<string | null>
   declare goal_amount: string
   declare raised_amount: CreationOptional<string>
   declare starts_at: Date
@@ -37,6 +38,10 @@ Campaign.init(
     },
     description: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    image_url: {
+      type: DataTypes.STRING(512),
       allowNull: true,
     },
     goal_amount: {

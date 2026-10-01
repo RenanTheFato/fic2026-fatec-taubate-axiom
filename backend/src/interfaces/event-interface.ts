@@ -7,6 +7,7 @@ export interface EventInterface{
   slug: string,
   description: string | null,
   location: string | null,
+  image_url: string | null,
   starts_at: Date,
   ends_at: Date | null,
   ticket_price: string,
