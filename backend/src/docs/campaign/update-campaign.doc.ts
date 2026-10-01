@@ -36,6 +36,10 @@ export const updateCampaignDoc = {
       .nullish()
       .describe("Long description shown on the campaign page.")
       .meta({ example: "Arrecadação de cestas básicas para 200 famílias." }),
+    image_url: z.string()
+      .nullish()
+      .describe("Site path (/imagens/...) or https address of the cover photo.")
+      .meta({ example: "/imagens/campanhas/natal-do-bem-2026.jpg" }),
     goal_amount: z.number()
       .optional()
       .describe("Fundraising goal, with at most two decimal places.")
@@ -57,6 +61,7 @@ export const updateCampaignDoc = {
         title: z.string(),
         slug: z.string(),
         description: z.string().nullable(),
+        image_url: z.string().nullable(),
         goal_amount: z.string(),
         raised_amount: z.string(),
         starts_at: z.iso.datetime(),

@@ -14,6 +14,12 @@ export class CreateCampaignController {
         .max(2048, { error: "The description has exceeded the character limit (2048)." })
         .nullish()
         .default(null),
+      image_url: z.string({ error: "The image url must be a string" })
+        .trim()
+        .max(512, { error: "The image url has exceeded the character limit (512)." })
+        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .nullish()
+        .default(null),
       goal_amount: z.number({ error: "The goal amount must be a number." })
         .positive({ error: "The goal amount must be greater than zero." })
         .multipleOf(0.01, { error: "The goal amount must have at most two decimal places." })
@@ -41,11 +47,11 @@ export class CreateCampaignController {
       return res.status(400).json({ message: "Validation Error Occurred", errors })
     }
 
-    const { title, description, goal_amount, starts_at, ends_at } = parsedCampaign.data
+    const { title, description, image_url, goal_amount, starts_at, ends_at } = parsedCampaign.data
 
     try {
       const createCampaignService = new CreateCampaignService()
-      const campaign = await createCampaignService.execute({ title, description, goal_amount, starts_at, ends_at })
+      const campaign = await createCampaignService.execute({ title, description, image_url, goal_amount, starts_at, ends_at })
       return res.status(201).json({ message: "Campaign Created Successfully", campaign })
     } catch (error: unknown) {
       if (error instanceof BadRequestError) {

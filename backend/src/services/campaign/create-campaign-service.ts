@@ -4,7 +4,7 @@ import { Campaign } from "../../models/campaign-model.js";
 import { slugify } from "../../utils/slugify.js";
 
 export class CreateCampaignService {
-  async execute({ title, description, goal_amount, starts_at, ends_at }: Pick<CampaignInterface, 'title' | 'description' | 'goal_amount' | 'starts_at' | 'ends_at'>) {
+  async execute({ title, description, image_url, goal_amount, starts_at, ends_at }: Pick<CampaignInterface, 'title' | 'description' | 'image_url' | 'goal_amount' | 'starts_at' | 'ends_at'>) {
     const slug = slugify(title)
 
     if (!slug) {
@@ -25,6 +25,7 @@ export class CreateCampaignService {
       title,
       slug,
       description,
+      image_url,
       goal_amount,
       starts_at,
       ends_at,

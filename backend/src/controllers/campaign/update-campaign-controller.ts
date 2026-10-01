@@ -16,6 +16,11 @@ export class UpdateCampaignController {
       description: z.string()
         .max(2048, { error: "The description has exceeded the character limit (2048)." })
         .nullish(),
+      image_url: z.string({ error: "The image url must be a string" })
+        .trim()
+        .max(512, { error: "The image url has exceeded the character limit (512)." })
+        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .nullish(),
       goal_amount: z.number({ error: "The goal amount must be a number." })
         .positive({ error: "The goal amount must be greater than zero." })
         .multipleOf(0.01, { error: "The goal amount must have at most two decimal places." })
@@ -41,7 +46,7 @@ export class UpdateCampaignController {
       return res.status(400).json({ error: "Validation Error Occurred", errors })
     }
 
-    const { title, description, goal_amount, starts_at, ends_at } = parsedCampaign.data
+    const { title, description, image_url, goal_amount, starts_at, ends_at } = parsedCampaign.data
 
     try {
       const updateCampaignService = new UpdateCampaignService()
@@ -49,6 +54,7 @@ export class UpdateCampaignController {
         campaign_id,
         title,
         description,
+        image_url,
         goal_amount,
         starts_at,
         ends_at

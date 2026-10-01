@@ -6,13 +6,14 @@ interface UpdateCampaignProps {
   campaign_id: CampaignInterface['id'],
   title?: CampaignInterface['title'],
   description?: CampaignInterface['description'],
+  image_url?: CampaignInterface['image_url'],
   goal_amount?: CampaignInterface['goal_amount'],
   starts_at?: CampaignInterface['starts_at'],
   ends_at?: CampaignInterface['ends_at'],
 }
 
 export class UpdateCampaignService {
-  async execute({ campaign_id, title, description, goal_amount, starts_at, ends_at }: UpdateCampaignProps) {
+  async execute({ campaign_id, title, description, image_url, goal_amount, starts_at, ends_at }: UpdateCampaignProps) {
 
     const campaign = await Campaign.findOne({
       where: {
@@ -41,6 +42,7 @@ export class UpdateCampaignService {
     await campaign.update({
       ...(title !== undefined ? { title } : {}),
       ...(description !== undefined ? { description } : {}),
+      ...(image_url !== undefined ? { image_url } : {}),
       ...(goal_amount !== undefined ? { goal_amount } : {}),
       ...(starts_at !== undefined ? { starts_at } : {}),
       ...(ends_at !== undefined ? { ends_at } : {}),
