@@ -6,6 +6,7 @@ import { VerifyReceiptController } from "../controllers/receipt/verify-receipt-c
 import { DownloadReceiptController } from "../controllers/receipt/download-receipt-controller.js";
 import { DownloadReceiptCertificateController } from "../controllers/receipt/download-receipt-certificate-controller.js";
 import { GetReceiptController } from "../controllers/receipt/get-receipt-controller.js";
+import { ViewReceiptCertificateController } from "../controllers/receipt/view-receipt-certificate-controller.js";
 
 export const receiptRoutes = Router()
 
@@ -28,6 +29,11 @@ receiptRoutes.get("/download/:hash", async (req: Request, res: Response) => {
 
 receiptRoutes.get("/certificate/:hash", async (req: Request, res: Response) => {
   return new DownloadReceiptCertificateController().handle(req, res)
+})
+
+// a segunda via que o site desenha na tela, para quem perdeu o arquivo e tem o código
+receiptRoutes.get("/view-certificate/:hash", async (req: Request, res: Response) => {
+  return new ViewReceiptCertificateController().handle(req, res)
 })
 
 receiptRoutes.get("/:id", AuthMiddleware, RoleMiddleware("admin", "finance"), async (req: Request, res: Response) => {
