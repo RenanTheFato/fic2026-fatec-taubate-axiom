@@ -20,6 +20,7 @@ export class Receipt extends Model<InferAttributes<Receipt>, InferCreationAttrib
   declare cancelled_at: CreationOptional<Date | null>
   declare previous_hash: CreationOptional<string | null>
   declare hash: string
+  declare certificate_design_id: CreationOptional<string | null>
   declare readonly created_at: CreationOptional<Date>
   declare readonly updated_at: CreationOptional<Date>
 }
@@ -90,6 +91,12 @@ Receipt.init(
       type: DataTypes.STRING(64),
       allowNull: false,
       unique: true,
+    },
+    // Fora do hash: é a versão de certificado com que o recibo nasceu, ou seja, a roupa do
+    // documento e não o conteúdo assinado. NULL é o modelo de fábrica.
+    certificate_design_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE,

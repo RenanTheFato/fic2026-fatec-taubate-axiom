@@ -14,6 +14,7 @@ import { mockSequelizeTransaction } from "./utils/mock-sequelize.js";
 import { TransactionItem } from "../models/transaction-item-model.js";
 import { Product } from "../models/product-model.js";
 import { ReceiptSequence } from "../models/receipt-sequence-model.js";
+import { CertificateDesign } from "../models/certificate-design-model.js";
 
 const transactionId = "transaction-123"
 const userId = "user-123"
@@ -56,6 +57,8 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
     // também precisa da ponta do recibo de mentira.
     jest.spyOn(Donor, "findByPk").mockResolvedValue({ id: "donor-123", name: "Maria Oliveira", document: null } as never)
     // A emissão trava a linha única do alocador antes de calcular a sequência.
+    // A emissão do recibo pergunta qual versão de certificado vale. Sem nenhuma, é o de fábrica.
+    jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([] as never)
     jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
       last_sequence: 0,
       update: jest.fn().mockResolvedValue(undefined),
@@ -262,6 +265,8 @@ describe("Stock as a finite resource (rule 3.3)", () => {
     jest.spyOn(StripeGateway.prototype, "refundPayment").mockResolvedValue(undefined)
     jest.spyOn(Donor, "findByPk").mockResolvedValue({ id: "donor-123", name: "Maria Oliveira", document: null } as never)
     // A emissão trava a linha única do alocador antes de calcular a sequência.
+    // A emissão do recibo pergunta qual versão de certificado vale. Sem nenhuma, é o de fábrica.
+    jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([] as never)
     jest.spyOn(ReceiptSequence, "findByPk").mockResolvedValue({
       last_sequence: 0,
       update: jest.fn().mockResolvedValue(undefined),

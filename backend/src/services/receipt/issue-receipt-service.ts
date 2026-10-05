@@ -5,6 +5,7 @@ import { Receipt } from "../../models/receipt-model.js";
 import { ReceiptSequence, RECEIPT_SEQUENCE_ID } from "../../models/receipt-sequence-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { buildReceiptHash, buildReceiptNumber, truncateToSecond } from "../../utils/receipt-hash.js";
+import { ResolveCertificateDesignService } from "../certificate/resolve-certificate-design-service.js";
 
 interface IssueReceiptProps {
   transaction: Transaction,
@@ -66,6 +67,14 @@ export class IssueReceiptService {
       previous_hash: previousHash,
     })
 
+    // A versão de certificado é decidida na emissão e gravada no recibo, fora do hash. Personalizar
+    // a pasta depois não muda o que este doador recebeu: muda só o que os próximos vão receber.
+    const certificateDesignId = await new ResolveCertificateDesignService().execute({
+      campaign_id: transaction.campaign_id ?? null,
+      event_id: transaction.event_id ?? null,
+      database_transaction,
+    })
+
     const receipt = await Receipt.create({
       transaction_id: transaction.id,
       sequence,
@@ -77,6 +86,7 @@ export class IssueReceiptService {
       issued_at: issuedAt,
       previous_hash: previousHash,
       hash,
+      certificate_design_id: certificateDesignId,
     }, { transaction: database_transaction })
 
     // O avanço do contador é a última coisa: se qualquer passo acima falhar, a transação de banco

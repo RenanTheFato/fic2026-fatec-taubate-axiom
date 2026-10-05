@@ -9,6 +9,9 @@ import { TransactionAuditLog } from "./transaction-audit-log-model.js";
 import { Receipt } from "./receipt-model.js";
 import { ReceiptSequence } from "./receipt-sequence-model.js";
 import { TransactionItem } from "./transaction-item-model.js";
+import { Post } from "./post-model.js";
+import { CertificateAsset } from "./certificate-asset-model.js";
+import { CertificateDesign } from "./certificate-design-model.js";
 
 // Identity
 
@@ -52,5 +55,19 @@ Transaction.hasMany(TransactionAuditLog, { foreignKey: "transaction_id", as: "au
 TransactionAuditLog.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
 TransactionAuditLog.belongsTo(User, { foreignKey: "performed_by", as: "author" })
 
+// Post
+
+Post.belongsTo(User, { foreignKey: "author_id", as: "author" })
+
+// Certificate
+
+CertificateDesign.belongsTo(Campaign, { foreignKey: "campaign_id", as: "campaign" })
+CertificateDesign.belongsTo(Event, { foreignKey: "event_id", as: "event" })
+CertificateDesign.belongsTo(User, { foreignKey: "created_by", as: "author" })
+CertificateDesign.hasMany(Receipt, { foreignKey: "certificate_design_id", as: "receipts" })
+Receipt.belongsTo(CertificateDesign, { foreignKey: "certificate_design_id", as: "certificate_design" })
+
+CertificateAsset.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" })
+
 // ReceiptSequence não tem associação: é a linha única que serializa a emissão da corrente.
-export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem }
+export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem, Post, CertificateAsset, CertificateDesign }

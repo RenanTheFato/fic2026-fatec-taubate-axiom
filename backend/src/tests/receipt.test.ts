@@ -14,6 +14,7 @@ import { mockSequelizeTransaction } from "./utils/mock-sequelize.js";
 import { TransactionItem } from "../models/transaction-item-model.js";
 import { Product } from "../models/product-model.js";
 import { ReceiptSequence } from "../models/receipt-sequence-model.js";
+import { CertificateDesign } from "../models/certificate-design-model.js";
 
 const financeUserId = "user-finance-1"
 const donorId = "donor-1"
@@ -81,6 +82,10 @@ describe("Receipt ledger (issuance, hash chain and public verification)", () => 
       name: "Maria Oliveira",
       document: "12345678901",
     } as never)
+    // Sem personalização gravada: o recibo nasce no modelo de fábrica, e o certificado não tem
+    // campanha nem evento para citar.
+    jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([] as never)
+    jest.spyOn(Transaction, "findByPk").mockResolvedValue(null)
   })
 
   it("issues the first receipt of the chain when a transaction is confirmed", async () => {
