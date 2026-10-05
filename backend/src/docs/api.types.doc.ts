@@ -7,6 +7,8 @@ export interface ApiDoc<TBody extends ZodType | undefined = ZodType | undefined,
   description: string,
   security?: { bearerAuth: string[] }[],
   contentType?: string,
+  // Para a rara rota cujo corpo não é JSON, como o envio de imagem crua do certificado.
+  bodyContentType?: string,
   params?: ZodObject,
   query?: ZodObject,
   body?: TBody,

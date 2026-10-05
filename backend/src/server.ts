@@ -56,6 +56,9 @@ async function start() {
   // body parser
   // O webhook do Stripe precisa do corpo cru, a assinatura é um HMAC sobre os bytes exatos da requisição
   app.use("/api/v1/transaction/webhook", express.raw({ type: "application/json" }));
+  // A imagem de certificado chega crua, com o tipo dela. O teto aqui é um pouco acima do que o
+  // service aceita, para a recusa sair com a mensagem do service e não com um 413 genérico.
+  app.use("/api/v1/certificate/upload-asset", express.raw({ type: ["image/png", "image/jpeg"], limit: "4mb" }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
