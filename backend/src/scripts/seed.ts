@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { hash as hashPassword } from "bcryptjs";
 import { QueryTypes } from "sequelize";
 import { sequelize } from "../models/index.js";
@@ -12,6 +14,15 @@ import { Transaction } from "../models/transaction-model.js";
 import { TransactionAuditLog } from "../models/transaction-audit-log-model.js";
 import { TransactionItem } from "../models/transaction-item-model.js";
 import { User } from "../models/user-model.js";
+import { Post } from "../models/post-model.js";
+import type { PostCategory, PostStatus } from "../models/post-model.js";
+import { CertificateAsset } from "../models/certificate-asset-model.js";
+import { CertificateDesign, folderKey } from "../models/certificate-design-model.js";
+import type { CertificateScope } from "../models/certificate-design-model.js";
+import { FACTORY_DESIGN, classicDesign } from "../utils/certificate-classic.js";
+import type { ClassicOptions, ClassicSticker } from "../utils/certificate-classic.js";
+import type { CertificateDesignSpec, CertificateElement, CertificateText } from "../utils/certificate-design.js";
+import { readImageInfo } from "../utils/image-size.js";
 import { buildReceiptHash, buildReceiptNumber, truncateToSecond } from "../utils/receipt-hash.js";
 import type { PaymentMethod, TransactionStatus, TransactionType } from "../models/transaction-model.js";
 
@@ -25,11 +36,15 @@ import type { PaymentMethod, TransactionStatus, TransactionType } from "../model
 // `/recibo/verificar` classificaria como adulterados.
 //
 // O conteúdo institucional (campanhas, eventos, produtos) é o da ONG. Doador e pagamento são
-// fictícios, porque dado pessoal real não entra em base de demonstração.
+// fictícios, porque dado pessoal real não entra em base de demonstração. As notícias novas falam
+// dos programas reais sem inventar número: resultado de atendimento é dado que só a associação tem.
+//
+// As versões de certificado seguem a mesma regra da corrente: cada recibo grava a versão que valia
+// na pasta mais específica no instante em que foi emitido, exatamente como a emissão real decide.
 
 const PASSWORD = "Somos@2026"
 
-const NOW = new Date("2026-09-03T12:00:00.000Z")
+const NOW = new Date("2026-10-08T12:00:00.000Z")
 
 // Gerador determinístico: valores, datas e a distribuição entre os estados são os mesmos em toda
 // execução, senão comparar duas rodadas do painel vira adivinhação. O que muda de uma rodada para
@@ -74,6 +89,9 @@ async function wipe() {
   const tables = [
     "transaction_audit_logs",
     "receipts",
+    "certificate_designs",
+    "certificate_assets",
+    "posts",
     "receipt_sequences",
     "transaction_items",
     "transactions",
@@ -111,13 +129,16 @@ async function seedUsers() {
   )
 }
 
-// Campanhas: as três frentes que a associação sustenta, mais uma encerrada e uma em rascunho
+// Campanhas: as três frentes que a associação sustenta, as duas edições do Natal do Bem (a de 2025
+// encerrada, a de 2026 no ar), a Páscoa encerrada e uma em rascunho. A foto mora no banco agora:
+// o caminho aponta para `frontend/public/imagens/`, que é de onde o site a serve.
 
 async function seedCampaigns() {
   return await Campaign.bulkCreate([
     {
       title: "Ambulatório: atendimento contínuo",
       slug: "ambulatorio-atendimento-continuo",
+      image_url: "/imagens/programa-ambulatorio.jpg",
       description:
         "O Ambulatório atende de forma clínica, terapêutica e de reabilitação, com acompanhamento contínuo da pessoa e da família. Esta campanha cobre o custo fixo da equipe e dos insumos ao longo do ano.",
       goal_amount: money(180000),
@@ -128,6 +149,7 @@ async function seedCampaigns() {
     {
       title: "Escola de Educação Especial",
       slug: "escola-de-educacao-especial",
+      image_url: "/imagens/educacional.png",
       description:
         "Ensino adaptado ao ritmo de cada estudante, construído junto com a família. A campanha sustenta material pedagógico, transporte e a equipe docente.",
       goal_amount: money(240000),
@@ -138,6 +160,7 @@ async function seedCampaigns() {
     {
       title: "Oficina Terapêutica: autonomia e trabalho",
       slug: "oficina-terapeutica-autonomia-e-trabalho",
+      image_url: "/imagens/oficina.jpeg",
       description:
         "Autonomia, convivência e trabalho protegido para jovens e adultos atendidos pela associação. A campanha cobre insumos das oficinas e acompanhamento profissional.",
       goal_amount: money(96000),
@@ -148,6 +171,7 @@ async function seedCampaigns() {
     {
       title: "Chocolate do Bem 2026",
       slug: "chocolate-do-bem-2026",
+      image_url: "/imagens/eventos/chocolate-do-bem-2026.png",
       description:
         "A campanha de Páscoa que já virou tradição na cidade. Cada caixa vendida vira material da Escola de Educação Especial.",
       goal_amount: money(60000),
@@ -165,21 +189,46 @@ async function seedCampaigns() {
       ends_at: daysAhead(210, 23),
       status: "draft",
     },
+    {
+      title: "Natal do Bem 2026",
+      slug: "natal-do-bem-2026",
+      image_url: "/imagens/campanhas/natal-do-bem-2026.jpg",
+      description:
+        "O Natal das famílias atendidas pela associação: cestas, presentes escolhidos pelas próprias crianças e a ceia de fim de ano na sede. O que sobra da meta reforça o caixa dos três programas no começo do ano, quando a arrecadação mais cai.",
+      goal_amount: money(120000),
+      starts_at: daysAgo(20, 9),
+      ends_at: daysAhead(77, 23),
+      status: "active",
+    },
+    {
+      title: "Natal do Bem 2025",
+      slug: "natal-do-bem-2025",
+      image_url: "/imagens/campanhas/natal-do-bem-2025.jpg",
+      description:
+        "A edição de 2025 do Natal do Bem, com cestas e presentes para as famílias atendidas pelo Ambulatório, pela Escola e pela Oficina Terapêutica.",
+      goal_amount: money(90000),
+      starts_at: daysAgo(341, 9),
+      ends_at: daysAgo(288, 23),
+      status: "finished",
+    },
   ])
 }
 
-// Eventos: os três com foto em `public/imagens/eventos/` mantêm o slug do arquivo
+// Eventos: os que têm foto em `frontend/public/imagens/eventos/` levam o caminho em `image_url`
 
 async function seedEvents(campaigns: Campaign[]) {
   const escola = campaigns.find((campaign) => campaign.slug === "escola-de-educacao-especial")
   const ambulatorio = campaigns.find((campaign) => campaign.slug === "ambulatorio-atendimento-continuo")
   const chocolate = campaigns.find((campaign) => campaign.slug === "chocolate-do-bem-2026")
+  const natal2026 = campaigns.find((campaign) => campaign.slug === "natal-do-bem-2026")
+  const natal2025 = campaigns.find((campaign) => campaign.slug === "natal-do-bem-2025")
 
   return await Event.bulkCreate([
     {
       campaign_id: ambulatorio?.id ?? null,
       title: "6ª edição do Chefs do Bem",
       slug: "chefs-do-bem-6a-edicao",
+      image_url: "/imagens/eventos/chefs-do-bem-6a-edicao.png",
       description:
         "Três noites de jantar beneficente com chefs convidados de Indaiatuba. Cada noite tem um menu próprio, harmonização e leilão de experiências, e toda a renda sustenta o Ambulatório.",
       location: "Espaço Viber, Av. Presidente Kennedy, Indaiatuba",
@@ -193,6 +242,7 @@ async function seedEvents(campaigns: Campaign[]) {
       campaign_id: null,
       title: "Dia de Portas Abertas",
       slug: "dia-de-portas-abertas",
+      image_url: "/imagens/eventos/dia-de-portas-abertas.jpg",
       description:
         "Visita guiada pelo Ambulatório e pela Oficina Terapêutica, com as famílias contando o que muda no dia a dia. Entrada gratuita, com inscrição para organizar os grupos.",
       location: "Sede da Somos do Bem, Indaiatuba",
@@ -245,6 +295,7 @@ async function seedEvents(campaigns: Campaign[]) {
       campaign_id: chocolate?.id ?? null,
       title: "Chocolate do Bem 2026",
       slug: "chocolate-do-bem-2026",
+      image_url: "/imagens/eventos/chocolate-do-bem-2026.png",
       description:
         "A campanha de Páscoa que já virou tradição na cidade. Cada caixa vendida vira material da Escola de Educação Especial.",
       location: "Alameda da Criança, 100, Indaiatuba",
@@ -278,6 +329,34 @@ async function seedEvents(campaigns: Campaign[]) {
       ticket_price: money(130),
       capacity: 300,
       status: "draft",
+    },
+    {
+      campaign_id: natal2026?.id ?? null,
+      title: "Cantata de Natal do Bem 2026",
+      slug: "cantata-de-natal-do-bem-2026",
+      image_url: "/imagens/eventos/cantata-de-natal-2026.jpg",
+      description:
+        "O coral dos estudantes da Escola de Educação Especial e convidados da cidade numa noite de músicas de Natal. A renda dos convites entra no Natal do Bem 2026.",
+      location: "Salão de eventos da sede, Indaiatuba",
+      starts_at: daysAhead(65, 19),
+      ends_at: daysAhead(65, 22),
+      ticket_price: money(40),
+      capacity: 250,
+      status: "published",
+    },
+    {
+      campaign_id: natal2025?.id ?? null,
+      title: "Ceia Solidária de Natal 2025",
+      slug: "ceia-solidaria-de-natal-2025",
+      image_url: "/imagens/eventos/ceia-solidaria-de-natal-2025.jpg",
+      description:
+        "A ceia de fim de ano com as famílias atendidas, os voluntários e quem apoia a associação ao longo do ano.",
+      location: "Sede da Somos do Bem, Indaiatuba",
+      starts_at: daysAgo(299, 20),
+      ends_at: daysAgo(299, 23),
+      ticket_price: money(80),
+      capacity: 180,
+      status: "finished",
     },
   ])
 }
@@ -415,7 +494,7 @@ async function seedDonors() {
 
   const used = new Set<string>()
 
-  while (rows.length < 26) {
+  while (rows.length < 44) {
     const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`
 
     if (used.has(name)) {
@@ -458,6 +537,7 @@ type PlannedTransaction = {
   donor: Donor,
   campaign_id: string | null,
   event_id: string | null,
+  public_recognition: boolean,
   created_at: Date,
   confirmed_at: Date | null,
   refunded_at: Date | null,
@@ -471,18 +551,45 @@ const SPONSORSHIP_AMOUNTS = [2500, 3000, 5000, 7500, 10000]
 
 const PAYMENT_METHODS: PaymentMethod[] = ["pix", "credit_card", "debit_card", "boleto"]
 
+// Quem marca a caixa do mural. A maioria marca, mas não todo mundo: o mural precisa mostrar que a
+// escolha existe, e a contagem de "apoiou sem aparecer" precisa ter o que contar.
+function consents(chance = 0.78) {
+  return random() < chance
+}
+
+function between(from: Date, to: Date, hour: number) {
+  const span = Math.max(to.getTime() - from.getTime(), 0)
+  const date = new Date(from.getTime() + Math.floor(random() * span))
+  date.setUTCHours(hour, Math.floor(random() * 60), 0, 0)
+  return date
+}
+
 function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products: Product[]) {
   const planned: PlannedTransaction[] = []
 
-  const activeCampaigns = campaigns.filter((campaign) => campaign.status === "active" || campaign.status === "finished")
-  const sellableEvents = events.filter((event) => Number(event.ticket_price) > 0 && event.status !== "draft")
+  const sellableEvents = events.filter((event) =>
+    Number(event.ticket_price) > 0 && event.status !== "draft" && event.slug !== "cantata-de-natal-do-bem-2026" && event.slug !== "ceia-solidaria-de-natal-2025"
+  )
   const sellableProducts = products.filter((product) => product.active && product.stock > 0)
   const individuals = donors.filter((donor) => donor.document_type === "cpf")
   const companies = donors.filter((donor) => donor.document_type === "cnpj")
 
+  // Uma doação destinada só cai numa campanha que estava aberta naquele dia. Sem isso, a carga
+  // produzia doação para o Natal de 2026 feita em março, e o certificado dela sairia com a roupa de
+  // uma versão que ainda não existia.
+  function campaignOpenAt(date: Date) {
+    const open = campaigns.filter((campaign) =>
+      (campaign.status === "active" || campaign.status === "finished")
+      && campaign.starts_at <= date
+      && (!campaign.ends_at || campaign.ends_at >= date)
+    )
+
+    return open.length > 0 ? pick(open) : null
+  }
+
   // Doações avulsas ao longo de doze meses. A maioria confirma: é o caminho normal e é o que o
   // painel precisa mostrar. Os outros estados existem porque a tela de reconciliação é sobre eles.
-  for (let index = 0; index < 46; index += 1) {
+  for (let index = 0; index < 58; index += 1) {
     const created = daysAgo(Math.floor(random() * 350) + 2, 8 + Math.floor(random() * 12))
     const roll = random()
     const status: TransactionStatus = roll < 0.76 ? "confirmed"
@@ -498,8 +605,9 @@ function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products:
       amount: money(pick(DONATION_AMOUNTS)),
       payment_method: status === "confirmed" ? pick(PAYMENT_METHODS) : null,
       donor: pick(individuals),
-      campaign_id: random() < 0.75 ? pick(activeCampaigns).id : null,
+      campaign_id: random() < 0.75 ? campaignOpenAt(created)?.id ?? null : null,
       event_id: null,
+      public_recognition: consents(),
       created_at: created,
       confirmed_at: null,
       refunded_at: null,
@@ -508,9 +616,15 @@ function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products:
     })
   }
 
-  // Patrocínio de empresa: valor alto, sempre ligado a uma campanha, e é o que sustenta o custo fixo
+  // Patrocínio de empresa: valor alto, sempre ligado a uma campanha aberta, e é o que sustenta o
+  // custo fixo.
   for (let index = 0; index < 9; index += 1) {
     const created = daysAgo(Math.floor(random() * 330) + 10, 14)
+    const campaign = campaignOpenAt(created)
+
+    if (!campaign) {
+      continue
+    }
 
     planned.push({
       id: randomUUID(),
@@ -519,8 +633,9 @@ function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products:
       amount: money(pick(SPONSORSHIP_AMOUNTS)),
       payment_method: "boleto",
       donor: pick(companies),
-      campaign_id: pick(activeCampaigns).id,
+      campaign_id: campaign.id,
       event_id: null,
+      public_recognition: consents(0.9),
       created_at: created,
       confirmed_at: null,
       refunded_at: null,
@@ -546,12 +661,86 @@ function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products:
       donor: pick(individuals),
       campaign_id: event.campaign_id,
       event_id: event.id,
+      public_recognition: consents(),
       created_at: created,
       confirmed_at: null,
       refunded_at: null,
       notes: null,
       items: [],
     })
+  }
+
+  // O Natal do Bem. As duas edições ganham doação, patrocínio e convite dentro da própria janela,
+  // porque são elas que demonstram o mural da campanha e o histórico de certificados: a de 2025 já
+  // atravessou duas versões de certificado, e a de 2026 está na primeira.
+  const christmas = [
+    { campaign: "natal-do-bem-2025", event: "ceia-solidaria-de-natal-2025", donations: 22, tickets: 14 },
+    { campaign: "natal-do-bem-2026", event: "cantata-de-natal-do-bem-2026", donations: 12, tickets: 7 },
+  ]
+
+  for (const edition of christmas) {
+    const campaign = campaigns.find((item) => item.slug === edition.campaign) as Campaign
+    const event = events.find((item) => item.slug === edition.event) as Event
+    const closes = campaign.ends_at && campaign.ends_at < NOW ? campaign.ends_at : daysAgo(1, 9)
+
+    for (let index = 0; index < edition.donations; index += 1) {
+      const created = between(campaign.starts_at, closes, 9 + Math.floor(random() * 12))
+
+      planned.push({
+        id: randomUUID(),
+        type: "donation",
+        status: random() < 0.9 ? "confirmed" : "pending",
+        amount: money(pick(DONATION_AMOUNTS)),
+        payment_method: pick(PAYMENT_METHODS),
+        donor: pick(individuals),
+        campaign_id: campaign.id,
+        event_id: null,
+        public_recognition: consents(),
+        created_at: created,
+        confirmed_at: null,
+        refunded_at: null,
+        notes: null,
+        items: [],
+      })
+    }
+
+    planned.push({
+      id: randomUUID(),
+      type: "sponsorship",
+      status: "confirmed",
+      amount: money(pick(SPONSORSHIP_AMOUNTS)),
+      payment_method: "boleto",
+      donor: pick(companies),
+      campaign_id: campaign.id,
+      event_id: null,
+      public_recognition: true,
+      created_at: between(campaign.starts_at, closes, 14),
+      confirmed_at: null,
+      refunded_at: null,
+      notes: "Patrocínio do Natal do Bem",
+      items: [],
+    })
+
+    const ticketsClose = event.starts_at < closes ? event.starts_at : closes
+
+    for (let index = 0; index < edition.tickets; index += 1) {
+      planned.push({
+        id: randomUUID(),
+        type: "ticket",
+        status: random() < 0.88 ? "confirmed" : "pending",
+        amount: money(Number(event.ticket_price)),
+        payment_method: pick(PAYMENT_METHODS),
+        donor: pick(individuals),
+        campaign_id: campaign.id,
+        event_id: event.id,
+        public_recognition: consents(),
+        created_at: between(campaign.starts_at, ticketsClose, 19),
+        confirmed_at: null,
+        refunded_at: null,
+        notes: null,
+        items: [],
+      })
+    }
   }
 
   // Compras da loja. O valor da transação é a soma dos itens pelo preço de tabela, nunca um
@@ -583,6 +772,7 @@ function plan(donors: Donor[], campaigns: Campaign[], events: Event[], products:
       donor: pick(individuals),
       campaign_id: null,
       event_id: null,
+      public_recognition: consents(0.6),
       created_at: daysAgo(Math.floor(random() * 300) + 2, 15),
       confirmed_at: null,
       refunded_at: null,
@@ -642,6 +832,7 @@ async function seedTransactions(planned: PlannedTransaction[]) {
     donor_id: transaction.donor.id,
     campaign_id: transaction.campaign_id,
     event_id: transaction.event_id,
+    public_recognition: transaction.public_recognition,
     gateway_checkout_id: transaction.notes === "Falha de rede na criação do checkout"
       ? null
       : `cs_test_${transaction.id.replace(/-/g, "").slice(0, 24)}`,
@@ -673,10 +864,315 @@ async function seedTransactions(planned: PlannedTransaction[]) {
   }
 }
 
+// Biblioteca de imagens do certificado. Os arquivos moram em `src/assets/certificate/` e foram
+// compostos a partir dos ícones do lucide, a mesma família de ícones do site.
+
+const ASSET_FILES: { key: string, name: string, file: string }[] = [
+  { key: "estrela", name: "Estrela dourada", file: "natal-estrela.png" },
+  { key: "presente", name: "Presente vermelho", file: "natal-presente.png" },
+  { key: "arvore", name: "Árvore de Natal", file: "natal-arvore.png" },
+  { key: "sino", name: "Sino de Natal", file: "natal-sino.png" },
+  { key: "bengala", name: "Bengala doce", file: "natal-bengala.png" },
+  { key: "floco", name: "Floco de neve", file: "natal-floco.png" },
+  { key: "neve", name: "Fundo de neve", file: "natal-fundo-neve.png" },
+  { key: "ovo", name: "Ovo de Páscoa", file: "pascoa-ovo.png" },
+  { key: "coelho", name: "Coelho de Páscoa", file: "pascoa-coelho.png" },
+  { key: "chapeu", name: "Chapéu de chef", file: "chefs-chapeu.png" },
+  { key: "talheres", name: "Talheres cruzados", file: "chefs-talheres.png" },
+  { key: "coracao", name: "Coração", file: "coracao.png" },
+]
+
+async function seedAssets(uploadedBy: string) {
+  const rows = ASSET_FILES.map((asset, index) => {
+    const data = readFileSync(resolve(process.cwd(), "src/assets/certificate", asset.file))
+    const info = readImageInfo(data)
+
+    if (!info) {
+      throw new Error(`${asset.file} is not a PNG or JPEG`)
+    }
+
+    return {
+      name: asset.name,
+      mime_type: info.mime_type,
+      width: info.width,
+      height: info.height,
+      size: data.length,
+      data,
+      uploaded_by: uploadedBy,
+      created_at: daysAgo(430 - index, 10),
+      updated_at: daysAgo(430 - index, 10),
+    }
+  })
+
+  const created = await CertificateAsset.bulkCreate(rows)
+
+  return new Map(ASSET_FILES.map((asset, index) => [asset.key, created[index].id]))
+}
+
+// Versões de certificado. Cada pasta conta uma história: o modelo padrão mudou para as cores da
+// marca; a Páscoa ganhou ovos e coelho; o Natal de 2025 nasceu vermelho e dourado e ganhou neve no
+// meio da campanha; o de 2026 foi desenhado do zero no editor livre, com letra caligráfica e
+// enfeites espalhados; o Chefs do Bem ganhou chapéu e talheres.
+
+type PlannedDesign = {
+  scope: CertificateScope,
+  target_id: string | null,
+  label: string,
+  created_at: Date,
+  design: CertificateDesignSpec,
+}
+
+function sticker(asset_id: string, x: number, y: number, size: number, rotation = 0, opacity = 1): ClassicSticker {
+  return { asset_id, x, y, size, rotation, opacity }
+}
+
+const ELEMENT_BASE = { rotation: 0, opacity: 1, locked: false }
+
+type TextStyle = Partial<Omit<CertificateText, "id" | "type" | "content" | "x" | "y" | "width">> & Pick<CertificateText, "font" | "size" | "color">
+
+function text(id: string, content: string, x: number, y: number, width: number, style: TextStyle): CertificateText {
+  const lineHeight = style.line_height ?? 1.2
+
+  return {
+    ...ELEMENT_BASE,
+    id,
+    type: "text",
+    content,
+    x,
+    y,
+    width,
+    height: Math.round(style.size * lineHeight * 100) / 100,
+    bold: false,
+    italic: false,
+    underline: false,
+    align: "center",
+    letter_spacing: 0,
+    line_height: lineHeight,
+    uppercase: false,
+    fit: "wrap",
+    ...style,
+  }
+}
+
+function image(id: string, asset_id: string, x: number, y: number, size: number, rotation = 0, opacity = 1): CertificateElement {
+  return { ...ELEMENT_BASE, id, type: "image", asset_id, x, y, width: size, height: size, rotation, opacity, flip_x: false, flip_y: false }
+}
+
+// O Natal de 2026 mostra o que o editor livre faz e o modelo clássico não fazia: título em letra
+// caligráfica com degradê, a mensagem escrita à mão e levemente torta, moldura pontilhada, o
+// rodapé reorganizado em volta do QR e os enfeites em tamanhos e giros diferentes.
+function christmas2026(assets: (key: string) => string): CertificateDesignSpec {
+  return {
+    palette: { paper: "#FBFDF8", primary: "#14532D", secondary: "#15803D", accent: "#B98A2E", ink: "#1C2B22", muted: "#5D6B62" },
+    background: { color: "@paper", asset_id: assets("neve"), opacity: 0.55 },
+    elements: [
+      {
+        ...ELEMENT_BASE, id: "moldura", type: "shape", shape: "rect", x: 20, y: 20, width: 801.89, height: 555.28, radius: 14,
+        fill: null, stroke: { stops: ["@primary", "@accent", "@primary"], angle: 35 }, stroke_width: 3, dash: "solid",
+      },
+      {
+        ...ELEMENT_BASE, id: "moldura-pontilhada", type: "shape", shape: "rect", x: 32, y: 32, width: 777.89, height: 531.28, radius: 10,
+        fill: null, stroke: "@accent", stroke_width: 1.4, dash: "dotted",
+      },
+      image("estrela-1", assets("estrela"), 44, 44, 44, -12),
+      image("estrela-2", assets("estrela"), 754, 44, 44, 12),
+      image("arvore", assets("arvore"), 50, 330, 150),
+      image("presente", assets("presente"), 664, 392, 108, 6),
+      image("sino", assets("sino"), 690, 96, 72, 14),
+      image("floco-1", assets("floco"), 126, 126, 36, 0, 0.8),
+      image("floco-2", assets("floco"), 764, 262, 28, 0, 0.7),
+      { ...ELEMENT_BASE, id: "logo", type: "logo", x: 394.95, y: 42, width: 52, height: 52 },
+      text("titulo-natal", "Feliz Natal", 170.95, 90, 500, {
+        font: "greatvibes", size: 56, color: { stops: ["@primary", "@secondary"], angle: 0 }, fit: "shrink",
+      }),
+      text("titulo", "{{titulo}}", 170.95, 160, 500, { font: "cinzel", size: 13, bold: true, color: "@label", letter_spacing: 4, uppercase: true, fit: "shrink" }),
+      text("abertura", "Este certificado reconhece que", 170.95, 196, 500, { font: "cormorant", size: 15, italic: true, color: "@muted" }),
+      text("nome", "{{nome}}", 170.95, 218, 500, { font: "greatvibes", size: 44, color: "@primary", fit: "shrink" }),
+      {
+        ...ELEMENT_BASE, id: "divisor", type: "shape", shape: "line", x: 320.95, y: 291.5, width: 200, height: 1,
+        fill: null, stroke: { stops: ["@paper", "@accent", "@paper"], angle: 0 }, stroke_width: 1, radius: 0, dash: "solid",
+      },
+      {
+        ...ELEMENT_BASE, id: "losango", type: "shape", shape: "rect", x: 416.71, y: 287.76, width: 8.49, height: 8.49, rotation: 45,
+        fill: "@accent", stroke: null, stroke_width: 0, radius: 0, dash: "solid",
+      },
+      text("texto", "{{acao}} {{valor}}, destinada {{destino}}.", 190.95, 304, 460, { font: "cormorant", size: 16, color: "@ink", line_height: 1.3 }),
+      { ...text("mensagem", "Que a sua generosidade ilumine o Natal de muitas famílias.", 195.95, 370, 450, { font: "caveat", size: 22, color: "@secondary" }), rotation: -2 },
+      text("rotulo-recibo", "RECIBO Nº", 232, 452, 140, { font: "cinzel", size: 7, color: "@label", letter_spacing: 1.5, align: "left" }),
+      text("numero", "{{numero}}", 232, 463, 140, { font: "nunito", size: 12, bold: true, color: "@ink", align: "left" }),
+      text("rotulo-data", "EMITIDO EM", 232, 487, 140, { font: "cinzel", size: 7, color: "@label", letter_spacing: 1.5, align: "left" }),
+      text("data", "{{data}}", 232, 498, 140, { font: "nunito", size: 10, color: "@ink", align: "left" }),
+      { ...ELEMENT_BASE, id: "qr", type: "qr", x: 382.95, y: 444, width: 76, height: 76, color: "@primary" },
+      text("rotulo-qr", "VERIFIQUE A AUTENTICIDADE", 320.95, 524, 200, { font: "nunito", size: 6.5, color: "@muted", letter_spacing: 0.8 }),
+      {
+        ...ELEMENT_BASE, id: "assinatura-linha", type: "shape", shape: "line", x: 480, y: 491.6, width: 160, height: 0.8,
+        fill: null, stroke: "@ink", stroke_width: 0.8, radius: 0, dash: "solid",
+      },
+      text("assinatura", "{{associacao}}", 470, 497, 180, { font: "nunito", size: 9, bold: true, color: "@ink" }),
+      text("cnpj", "CNPJ {{cnpj}}", 470, 510, 180, { font: "nunito", size: 7.5, color: "@muted" }),
+      text("registro", "registro #{{registro}}  ·  {{codigo}}", 60, 543, 721.89, { font: "courier", size: 6, color: "@muted", fit: "shrink" }),
+    ],
+  }
+}
+
+async function seedCertificateDesigns(assets: Map<string, string>, campaigns: Campaign[], events: Event[], author: string) {
+  const asset = (key: string) => assets.get(key) as string
+  const campaign = (slug: string) => (campaigns.find((item) => item.slug === slug) as Campaign).id
+  const event = (slug: string) => (events.find((item) => item.slug === slug) as Event).id
+
+  const christmas2025: ClassicOptions = {
+    palette: { paper: "#FFFBF2", primary: "#7F1D1D", secondary: "#B91C1C", accent: "#B98A2E", ink: "#2B1B17", muted: "#6E5A50" },
+    font: "times",
+    title: "Certificado de Natal",
+    message: "Obrigado por fazer o Natal de alguém mais feliz.",
+    stickers: [
+      sticker(asset("estrela"), 58, 52, 70, -12),
+      sticker(asset("estrela"), 136, 112, 34, 14, 0.85),
+      sticker(asset("presente"), 706, 54, 78, 8),
+      sticker(asset("arvore"), 54, 236, 104),
+      sticker(asset("bengala"), 712, 250, 76, -10),
+    ],
+  }
+
+  const planned: PlannedDesign[] = [
+    {
+      scope: "default",
+      target_id: null,
+      label: "Modelo institucional",
+      created_at: daysAgo(420, 10),
+      design: FACTORY_DESIGN,
+    },
+    {
+      scope: "default",
+      target_id: null,
+      label: "Cores da marca",
+      created_at: daysAgo(75, 15),
+      design: classicDesign({
+        palette: { paper: "#FFFFFF", primary: "#0A7A73", secondary: "#00B3A6", accent: "#BB2DD7", ink: "#343937", muted: "#5C6260" },
+        font: "nunito",
+        message: "Obrigado por fazer parte da Somos do Bem.",
+        stickers: [
+          sticker(asset("coracao"), 66, 60, 44, -10, 0.9),
+          sticker(asset("coracao"), 732, 60, 44, 10, 0.9),
+        ],
+      }),
+    },
+    {
+      scope: "campaign",
+      target_id: campaign("chocolate-do-bem-2026"),
+      label: "Páscoa com ovos e coelho",
+      created_at: daysAgo(325, 11),
+      design: classicDesign({
+        palette: { paper: "#FFF8F0", primary: "#5B3415", secondary: "#8B4A22", accent: "#C08A3E", ink: "#3B2A1E", muted: "#7A6656" },
+        title: "Certificado de Páscoa",
+        message: "Uma Páscoa mais doce para quem mais precisa.",
+        stickers: [
+          sticker(asset("ovo"), 60, 60, 66, -14),
+          sticker(asset("ovo"), 120, 120, 40, 18, 0.9),
+          sticker(asset("coelho"), 704, 56, 84),
+          sticker(asset("ovo"), 724, 250, 60, 12),
+        ],
+      }),
+    },
+    {
+      scope: "campaign",
+      target_id: campaign("natal-do-bem-2025"),
+      label: "Natal 2025 vermelho e dourado",
+      created_at: daysAgo(345, 16),
+      design: classicDesign(christmas2025),
+    },
+    {
+      scope: "campaign",
+      target_id: campaign("natal-do-bem-2025"),
+      label: "Natal 2025 com neve",
+      created_at: daysAgo(315, 10),
+      design: classicDesign({
+        ...christmas2025,
+        background: { asset_id: asset("neve"), opacity: 0.7 },
+        stickers: [
+          ...(christmas2025.stickers ?? []),
+          sticker(asset("sino"), 78, 360, 52, -8),
+          sticker(asset("floco"), 736, 350, 46, 0, 0.9),
+        ],
+      }),
+    },
+    {
+      scope: "campaign",
+      target_id: campaign("natal-do-bem-2026"),
+      label: "Natal 2026 verde, dourado e caligrafia",
+      created_at: daysAgo(22, 14),
+      design: christmas2026(asset),
+    },
+    {
+      scope: "event",
+      target_id: event("chefs-do-bem-6a-edicao"),
+      label: "Chefs do Bem com chapéu e talheres",
+      created_at: daysAgo(60, 11),
+      design: classicDesign({
+        palette: { paper: "#FFFFFF", primary: "#343937", secondary: "#B83A3C", accent: "#B83A3C", ink: "#1F2421", muted: "#5C6260" },
+        title: "Certificado Chefs do Bem",
+        message: "Obrigado por estar à mesa com a gente.",
+        stickers: [
+          sticker(asset("chapeu"), 60, 50, 76, -10),
+          sticker(asset("talheres"), 710, 56, 68, 8),
+        ],
+      }),
+    },
+  ]
+
+  const versions = new Map<string, number>()
+
+  const rows = planned
+    .sort((left, right) => left.created_at.getTime() - right.created_at.getTime())
+    .map((item) => {
+      const folder = folderKey(item.scope, item.target_id)
+      const version = (versions.get(folder) ?? 0) + 1
+      versions.set(folder, version)
+
+      return {
+        scope: item.scope,
+        campaign_id: item.scope === "campaign" ? item.target_id : null,
+        event_id: item.scope === "event" ? item.target_id : null,
+        folder,
+        version,
+        label: item.label,
+        design: item.design,
+        created_by: author,
+        created_at: item.created_at,
+        updated_at: item.created_at,
+      }
+    })
+
+  return await CertificateDesign.bulkCreate(rows)
+}
+
+// A mesma decisão da emissão real (ResolveCertificateDesignService), aplicada no instante em que
+// cada recibo da carga nasceu: evento, campanha e modelo padrão, nessa ordem, e dentro da pasta a
+// versão mais nova que já existia naquele dia.
+function designAt(designs: CertificateDesign[], transaction: PlannedTransaction, issuedAt: Date) {
+  const priority = [
+    ...(transaction.event_id ? [folderKey("event", transaction.event_id)] : []),
+    ...(transaction.campaign_id ? [folderKey("campaign", transaction.campaign_id)] : []),
+    folderKey("default", null),
+  ]
+
+  for (const folder of priority) {
+    const available = designs
+      .filter((design) => design.folder === folder && design.created_at.getTime() <= issuedAt.getTime())
+      .sort((left, right) => right.version - left.version)
+
+    if (available[0]) {
+      return available[0].id
+    }
+  }
+
+  return null
+}
+
 // A corrente. Um recibo por transação confirmada, na ordem em que foram confirmadas, cada um
 // carregando o hash do anterior. `sequence` não pode ter buraco: verificar a corrente é caminhar
 // de sequence em sequence.
-async function seedReceipts(planned: PlannedTransaction[]) {
+async function seedReceipts(planned: PlannedTransaction[], designs: CertificateDesign[]) {
   const confirmed = planned
     .filter((transaction) => transaction.confirmed_at !== null)
     .sort((left, right) => (left.confirmed_at as Date).getTime() - (right.confirmed_at as Date).getTime())
@@ -716,6 +1212,7 @@ async function seedReceipts(planned: PlannedTransaction[]) {
       cancelled_at: transaction.refunded_at,
       previous_hash: previousHash,
       hash,
+      certificate_design_id: designAt(designs, transaction, issuedAt),
       created_at: issuedAt,
       updated_at: transaction.refunded_at ?? issuedAt,
     }
@@ -831,6 +1328,205 @@ async function applySideEffects(planned: PlannedTransaction[]) {
   }
 }
 
+// Notícias. As três primeiras são as do site atual da associação, com a data em que foram
+// publicadas lá. As outras contam os programas e as campanhas desta carga sem inventar resultado:
+// número de atendimento é dado que só a associação tem. Uma em rascunho e uma arquivada existem
+// porque o painel de Comunicação precisa mostrar os três estados.
+
+type PlannedPost = {
+  title: string,
+  slug: string,
+  excerpt: string,
+  category: PostCategory,
+  image_url: string | null,
+  status: PostStatus,
+  published_at: Date | null,
+  body: string[],
+}
+
+async function seedPosts(author: string) {
+  const posts: PlannedPost[] = [
+    {
+      title: "Natal do Bem 2026 está no ar",
+      slug: "natal-do-bem-2026-esta-no-ar",
+      excerpt: "A campanha de fim de ano já recebe doações, e quem apoia pode escolher ter o nome no mural de agradecimento.",
+      category: "eventos",
+      image_url: "/imagens/campanhas/natal-do-bem-2026.jpg",
+      status: "published",
+      published_at: daysAgo(19, 13),
+      body: [
+        "O Natal do Bem 2026 começou. A campanha reúne as cestas de fim de ano, os presentes escolhidos pelas próprias crianças e a ceia com as famílias atendidas pelo Ambulatório, pela Escola de Educação Especial e pela Oficina Terapêutica.",
+        "Toda doação confirmada gera um recibo verificável e um certificado com a cara desta edição. Quem quiser pode marcar, na hora de doar, que o nome apareça no mural de agradecimento da campanha. O mural não tem ranking: os nomes aparecem em ordem aleatória, e nenhum valor é mostrado.",
+        "A Cantata de Natal do Bem, com o coral dos estudantes da Escola, encerra a programação em dezembro. Os convites já estão à venda na página de Eventos.",
+      ],
+    },
+    {
+      title: "Convites da 6ª edição do Chefs do Bem estão à venda",
+      slug: "convites-da-6a-edicao-do-chefs-do-bem-estao-a-venda",
+      excerpt: "Três noites no Espaço Viber, em Indaiatuba, com chefs convidados e toda a renda destinada ao Ambulatório.",
+      category: "eventos",
+      image_url: "/imagens/eventos/chefs-do-bem-6a-edicao.png",
+      status: "published",
+      published_at: daysAgo(35, 12),
+      body: [
+        "A sexta edição do Chefs do Bem já tem data: três noites de jantar beneficente no Espaço Viber, em Indaiatuba, com um menu diferente a cada noite.",
+        "Os convites são vendidos pelo site, um por pedido, para que cada lugar seja reservado no nome de quem vai. A renda sustenta o Ambulatório, que atende de forma clínica, terapêutica e de reabilitação.",
+        "Quem comprar o convite recebe o recibo por e-mail e um certificado de participação desta edição.",
+      ],
+    },
+    {
+      title: "Oficina Terapêutica abre nova turma",
+      slug: "oficina-terapeutica-abre-nova-turma",
+      excerpt: "Jovens e adultos atendidos pela associação ganham mais um horário de atividades de autonomia e trabalho protegido.",
+      category: "inclusao",
+      image_url: "/imagens/oficina.jpeg",
+      status: "published",
+      published_at: daysAgo(48, 15),
+      body: [
+        "A Oficina Terapêutica abriu um novo horário para jovens e adultos atendidos pela associação. As atividades trabalham autonomia, convivência e trabalho protegido, sempre com acompanhamento profissional.",
+        "Parte do que é produzido na oficina vai para a loja solidária do site, como as ecobags e os chaveiros. Cada peça comprada volta para os insumos da própria oficina.",
+        "Famílias interessadas podem falar com a associação pelo Fale Conosco.",
+      ],
+    },
+    {
+      title: "Material pedagógico novo para a Escola de Educação Especial",
+      slug: "material-pedagogico-novo-para-a-escola-de-educacao-especial",
+      excerpt: "A campanha da Escola garantiu a reposição do material usado no ensino adaptado ao ritmo de cada estudante.",
+      category: "educacao",
+      image_url: "/imagens/educacional.png",
+      status: "published",
+      published_at: daysAgo(63, 10),
+      body: [
+        "As salas da Escola de Educação Especial receberam material pedagógico novo, comprado com as doações da campanha da Escola.",
+        "O ensino na Escola é adaptado ao ritmo de cada estudante e construído junto com a família. O material concreto, como jogos, peças de encaixe e livros adaptados, é o que permite esse trabalho individual.",
+        "A campanha continua aberta na página Doe Agora, e quem apoia acompanha a meta subir em tempo real.",
+      ],
+    },
+    {
+      title: "Ambulatório organiza a reforma da sala de fisioterapia",
+      slug: "ambulatorio-organiza-a-reforma-da-sala-de-fisioterapia",
+      excerpt: "A adequação do piso, da iluminação e dos equipamentos vai virar campanha própria nos próximos meses.",
+      category: "saude",
+      image_url: "/imagens/programa-ambulatorio.jpg",
+      status: "published",
+      published_at: daysAgo(80, 11),
+      body: [
+        "O Ambulatório começou a planejar a reforma da sala de fisioterapia: piso, iluminação e equipamentos.",
+        "A reforma vai ganhar uma campanha própria, com meta e prazo, para que quem doar saiba exatamente para onde o dinheiro vai. Enquanto isso, a campanha de atendimento contínuo do Ambulatório segue recebendo doações.",
+      ],
+    },
+    {
+      title: "Festa Junina do Bem reuniu famílias na sede",
+      slug: "festa-junina-do-bem-reuniu-familias-na-sede",
+      excerpt: "Quadrilha, comidas típicas e barracas conduzidas pelos jovens da Oficina Terapêutica.",
+      category: "eventos",
+      image_url: "/imagens/institucional-missao.jpg",
+      status: "published",
+      published_at: daysAgo(79, 12),
+      body: [
+        "A Festa Junina do Bem encheu a sede da associação de famílias, voluntários e vizinhos.",
+        "As barracas foram conduzidas pelos jovens da Oficina Terapêutica, e a quadrilha teve participação dos estudantes da Escola. A renda dos convites entrou no caixa geral, que a associação aplica onde a necessidade for maior.",
+        "Obrigado a todos que vieram e a quem ajudou a montar a festa.",
+      ],
+    },
+    {
+      title: "Obrigado a quem fez o Natal do Bem 2025",
+      slug: "obrigado-a-quem-fez-o-natal-do-bem-2025",
+      excerpt: "A campanha de 2025 terminou, e os nomes de quem apoiou e quis aparecer seguem no mural da campanha.",
+      category: "eventos",
+      image_url: "/imagens/campanhas/natal-do-bem-2025.jpg",
+      status: "published",
+      published_at: daysAgo(284, 12),
+      body: [
+        "O Natal do Bem 2025 terminou na véspera de Natal, depois da Ceia Solidária com as famílias atendidas, os voluntários e quem apoia a associação ao longo do ano.",
+        "A página da campanha continua no ar como registro, com o mural de quem apoiou e pediu para ter o nome ali. A ordem dos nomes é aleatória e muda a cada visita: ninguém aparece na frente por ter doado mais.",
+      ],
+    },
+    {
+      title: "Chocolate do Bem: uma Páscoa de solidariedade",
+      slug: "chocolate-do-bem-uma-pascoa-de-solidariedade",
+      excerpt: "Na Páscoa deste ano, a solidariedade foi o ingrediente principal da campanha organizada pela associação Somos do Bem.",
+      category: "eventos",
+      image_url: "/imagens/noticias/chocolate-do-bem.png",
+      status: "published",
+      published_at: new Date("2024-12-11T12:00:00.000Z"),
+      body: [
+        "A campanha Chocolate do Bem transforma a Páscoa em arrecadação para os programas da associação. Cada caixa vendida vira atendimento no Ambulatório, material na Escola de Educação Especial e insumo nas oficinas.",
+        "A produção reúne voluntários, famílias e empresas parceiras, que ajudam desde a montagem das caixas até a entrega. É um trabalho coletivo, e é isso que faz o preço final caber no bolso de quem compra e ainda sustentar o atendimento.",
+        "Quem quiser participar da próxima edição pode falar com a associação pelo Fale Conosco ou acompanhar a agenda na página de Eventos.",
+      ],
+    },
+    {
+      title: "5ª edição do Chefs do Bem",
+      slug: "5a-edicao-do-chefs-do-bem",
+      excerpt: "Realizada nos dias 23, 24 e 25 de agosto, no Espaço Viber, em Indaiatuba, a edição foi um grande sucesso.",
+      category: "eventos",
+      image_url: "/imagens/noticias/5a-edicao-do-chefs-do-bem.png",
+      status: "published",
+      published_at: new Date("2024-11-25T12:00:00.000Z"),
+      body: [
+        "A quinta edição do Chefs do Bem aconteceu nos dias 23, 24 e 25 de agosto, no Espaço Viber, em Indaiatuba.",
+        "O jantar beneficente reúne chefs convidados da cidade em três noites de menu preparado especialmente para o evento. Toda a renda dos convites sustenta os programas da associação.",
+        "O Chefs do Bem é hoje o maior evento do calendário da casa, e a próxima edição é anunciada na página de Eventos assim que a data é fechada.",
+      ],
+    },
+    {
+      title: "Mudança de nome da APAE de Indaiatuba",
+      slug: "mudanca-de-nome-da-apae-de-indaiatuba",
+      excerpt: "A instituição realizou uma coletiva de imprensa para anunciar seu novo nome e sua nova marca: Somos do Bem.",
+      category: "inclusao",
+      image_url: "/imagens/noticias/mudanca-de-nome.png",
+      status: "published",
+      published_at: new Date("2024-11-25T11:00:00.000Z"),
+      body: [
+        "Em coletiva de imprensa, a instituição anunciou o novo nome e a nova identidade visual: Somos do Bem.",
+        "A troca de nome não muda o trabalho nem o público atendido. O Ambulatório, a Escola de Educação Especial e o Programa de Oficina Terapêutica seguem com a mesma equipe e a mesma proposta.",
+        "A nova marca passou a ser usada no site, nos materiais impressos e nos canais de comunicação da associação.",
+      ],
+    },
+    {
+      title: "Inscrições abertas para o Dia de Portas Abertas",
+      slug: "inscricoes-abertas-para-o-dia-de-portas-abertas",
+      excerpt: "Visita guiada pelo Ambulatório e pela Oficina Terapêutica, com inscrição para organizar os grupos.",
+      category: "eventos",
+      image_url: "/imagens/eventos/dia-de-portas-abertas.jpg",
+      status: "archived",
+      published_at: daysAgo(40, 10),
+      body: [
+        "A associação abre as portas para quem quer conhecer de perto o Ambulatório e a Oficina Terapêutica.",
+        "A entrada é gratuita, com inscrição pelo Fale Conosco para organizar os grupos de visita.",
+      ],
+    },
+    {
+      title: "Prestação de contas do primeiro semestre",
+      slug: "prestacao-de-contas-do-primeiro-semestre",
+      excerpt: "O resumo do que entrou e de onde foi aplicado entre janeiro e junho.",
+      category: "inclusao",
+      image_url: null,
+      status: "draft",
+      published_at: null,
+      body: [
+        "Rascunho em revisão pela diretoria antes da publicação.",
+        "Os números entram depois da aprovação do conselho fiscal.",
+      ],
+    },
+  ]
+
+  return await Post.bulkCreate(posts.map((post) => ({
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    category: post.category,
+    image_url: post.image_url,
+    status: post.status,
+    published_at: post.published_at,
+    body: post.body.join("\n\n"),
+    author_id: author,
+    created_at: post.published_at ?? daysAgo(3, 10),
+    updated_at: post.published_at ?? daysAgo(3, 10),
+  })))
+}
+
 async function run() {
   await sequelize.authenticate()
 
@@ -842,12 +1538,21 @@ async function run() {
   const products = await seedProducts()
   const donors = await seedDonors()
 
+  const communication = users.find((user) => user.role === "communication") as User
+  const posts = await seedPosts(communication.id)
+  const assets = await seedAssets(communication.id)
+  const designs = await seedCertificateDesigns(assets, campaigns, events, communication.id)
+
   const planned = plan(donors, campaigns, events, products)
 
   await seedTransactions(planned)
-  const receipts = await seedReceipts(planned)
+  const receipts = await seedReceipts(planned, designs)
   const logs = await seedAuditLogs(planned, users[1].id)
   await applySideEffects(planned)
+
+  const listed = new Set(planned
+    .filter((transaction) => transaction.confirmed_at && !transaction.refunded_at && transaction.public_recognition)
+    .map((transaction) => transaction.donor.id))
 
   const valid = receipts.filter((receipt) => receipt.status === "issued")
   const cancelled = receipts.filter((receipt) => receipt.status === "cancelled")
@@ -862,6 +1567,10 @@ async function run() {
   console.log(`  transações .......... ${planned.length}`)
   console.log(`  recibos ............. ${receipts.length} (${cancelled.length} cancelados por estorno)`)
   console.log(`  linhas de auditoria . ${logs}`)
+  console.log(`  notícias ............ ${posts.length}`)
+  console.log(`  imagens ............. ${assets.size} na biblioteca de certificados`)
+  console.log(`  certificados ........ ${designs.length} versões`)
+  console.log(`  Mural do Bem ........ ${listed.size} nomes`)
   console.log("")
   console.log(`  senha de todos os acessos: ${PASSWORD}`)
   console.log("")
