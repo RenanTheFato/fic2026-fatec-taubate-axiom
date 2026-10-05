@@ -48,10 +48,11 @@ interface CreateTransactionProps {
   donor_email: DonorInterface['email'],
   donor_document: DonorInterface['document'],
   donor_phone: DonorInterface['phone'],
+  public_recognition: TransactionInterface['public_recognition'],
 }
 
 export class CreateTransactionService {
-  async execute({ type, amount, items, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone }: CreateTransactionProps) {
+  async execute({ type, amount, items, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone, public_recognition }: CreateTransactionProps) {
 
     // Convite exige evento e patrocínio exige campanha ou evento: sem isso a transação nasce
     // sem nada a que se referir e o painel financeiro não consegue atribuir a receita.
@@ -131,6 +132,7 @@ export class CreateTransactionService {
         campaign_id,
         event_id,
         notes,
+        public_recognition,
       }, { transaction: t })
 
       // Ou nasce transação com os itens que a justificam, ou não nasce nada: um valor que

@@ -85,6 +85,24 @@ describe("Transaction checkout (donor form to Stripe checkout session)", () => {
     expect(res.status).toHaveBeenCalledWith(201)
   })
 
+  it("keeps the donor's name off the supporters wall unless the donor chose to appear", async () => {
+    jest.spyOn(Transaction, "create").mockResolvedValue(createdTransaction() as never)
+
+    const silent = mockRequest({
+      body: { type: "donation", amount: 50, donor_name: "Maria Oliveira", donor_email: "maria@email.com" },
+    })
+    await new CreateTransactionController().handle(silent, mockResponse())
+
+    const chosen = mockRequest({
+      body: { type: "donation", amount: 50, donor_name: "Maria Oliveira", donor_email: "maria@email.com", public_recognition: true },
+    })
+    await new CreateTransactionController().handle(chosen, mockResponse())
+
+    const create = Transaction.create as jest.Mock
+    expect(create.mock.calls[0][0]).toEqual(expect.objectContaining({ public_recognition: false }))
+    expect(create.mock.calls[1][0]).toEqual(expect.objectContaining({ public_recognition: true }))
+  })
+
   it("refuses a ticket transaction that carries no event", async () => {
     jest.spyOn(Transaction, "create").mockResolvedValue(createdTransaction() as never)
 
@@ -98,6 +116,7 @@ describe("Transaction checkout (donor form to Stripe checkout session)", () => {
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()
@@ -118,6 +137,7 @@ describe("Transaction checkout (donor form to Stripe checkout session)", () => {
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()
@@ -142,6 +162,7 @@ describe("Transaction checkout (donor form to Stripe checkout session)", () => {
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()
@@ -308,6 +329,7 @@ describe("Transaction pricing (where the amount is allowed to come from)", () =>
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()
@@ -327,6 +349,7 @@ describe("Transaction pricing (where the amount is allowed to come from)", () =>
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()
@@ -353,6 +376,7 @@ describe("Transaction pricing (where the amount is allowed to come from)", () =>
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })
 
     expect(Transaction.create).toHaveBeenCalledWith(
@@ -466,6 +490,7 @@ describe("Event capacity only guards what actually takes a seat", () => {
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })
 
     expect(created.id).toBe(transactionId)
@@ -485,6 +510,7 @@ describe("Event capacity only guards what actually takes a seat", () => {
       donor_email: "maria@email.com",
       donor_document: null,
       donor_phone: null,
+      public_recognition: false,
     })).rejects.toBeInstanceOf(BadRequestError)
 
     expect(Transaction.create).not.toHaveBeenCalled()

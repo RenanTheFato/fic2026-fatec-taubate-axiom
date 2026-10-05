@@ -63,6 +63,10 @@ export const createTransactionDoc = {
       .nullish()
       .describe("Phone number of the donor.")
       .meta({ example: "+55 15 99999-0000" }),
+    public_recognition: z.boolean()
+      .optional()
+      .describe("Consent to show the donor's name on the public supporters wall of the campaign, the event and the site. Defaults to false: a name goes public only by choice.")
+      .meta({ example: true }),
   }),
   response: {
     201: z.object({

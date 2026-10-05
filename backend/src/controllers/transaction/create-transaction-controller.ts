@@ -55,10 +55,15 @@ export class CreateTransactionController {
         .max(20, { error: "The donor phone has exceeded the maximum length (20)" })
         .nullish()
         .default(null),
+      // Consentimento para o nome aparecer no mural de apoiadores. Ausente é `false`: nome em
+      // página pública só com escolha expressa de quem contribuiu.
+      public_recognition: z.boolean({ error: "The public recognition must be a boolean" })
+        .optional()
+        .default(false),
     }).superRefine((transaction, ctx) => {
       // Produto e convite têm preço de tabela; doação e patrocínio têm valor livre. Quem manda
       // preço numa compra está tentando escolher quanto pagar, e isso é 400, não um valor ignorado
-      // em silêncio — o cliente precisa saber que o valor cobrado não é o que ele mandou.
+      // em silêncio: o cliente precisa saber que o valor cobrado não é o que ele mandou.
       const pricedByCatalogue = transaction.type === "product" || transaction.type === "ticket"
 
       if (pricedByCatalogue && transaction.amount !== undefined) {
@@ -106,7 +111,7 @@ export class CreateTransactionController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { type, amount, items, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone } = parsedTransaction.data
+    const { type, amount, items, campaign_id, event_id, notes, donor_name, donor_email, donor_document, donor_phone, public_recognition } = parsedTransaction.data
 
     try {
       const createTransactionService = new CreateTransactionService()
@@ -121,6 +126,7 @@ export class CreateTransactionController {
         donor_email,
         donor_document,
         donor_phone,
+        public_recognition,
       })
 
       return res.status(201).json({ message: "Transaction Created Successfully", transaction })
