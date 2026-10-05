@@ -7,6 +7,9 @@ import { eventRoutes } from "./event-routes.js";
 import { transactionRoutes } from "./transaction-routes.js";
 import { receiptRoutes } from "./receipt-routes.js";
 import { transactionItemRoutes } from "./transaction-item-routes.js";
+import { postRoutes } from "./post-routes.js";
+import { supporterRoutes } from "./supporter-routes.js";
+import { certificateRoutes } from "./certificate-routes.js";
 
 export const routes = Router()
 
@@ -24,3 +27,6 @@ routes.use("/event", eventRoutes)
 routes.use("/transaction", transactionRoutes)
 routes.use("/receipt", receiptRoutes)
 routes.use("/transaction-item", transactionItemRoutes)
+routes.use("/post", postRoutes)
+routes.use("/supporter", supporterRoutes)
+routes.use("/certificate", certificateRoutes)

@@ -52,8 +52,29 @@ import { verifyReceiptDoc } from "../docs/receipt/verify-receipt.doc.js";
 import { downloadReceiptDoc } from "../docs/receipt/download-receipt.doc.js";
 import { downloadReceiptCertificateDoc } from "../docs/receipt/download-receipt-certificate.doc.js";
 import { getReceiptDoc } from "../docs/receipt/get-receipt.doc.js";
+import { viewReceiptCertificateDoc } from "../docs/receipt/view-receipt-certificate.doc.js";
 import { listTransactionItemsDoc } from "../docs/transaction-item/list-transaction-items.doc.js";
 import { summarizeTransactionItemsDoc } from "../docs/transaction-item/summarize-transaction-items.doc.js";
+import { createPostDoc } from "../docs/post/create-post.doc.js";
+import { listPostsDoc } from "../docs/post/list-posts.doc.js";
+import { listAllPostsDoc } from "../docs/post/list-all-posts.doc.js";
+import { getPostBySlugDoc } from "../docs/post/get-post-by-slug.doc.js";
+import { updatePostDoc } from "../docs/post/update-post.doc.js";
+import { publishPostDoc } from "../docs/post/publish-post.doc.js";
+import { archivePostDoc } from "../docs/post/archive-post.doc.js";
+import { deletePostDoc } from "../docs/post/delete-post.doc.js";
+import { listSupportersDoc } from "../docs/supporter/list-supporters.doc.js";
+import { listCampaignSupportersDoc } from "../docs/supporter/list-campaign-supporters.doc.js";
+import { listEventSupportersDoc } from "../docs/supporter/list-event-supporters.doc.js";
+import { listCertificateFoldersDoc } from "../docs/certificate/list-certificate-folders.doc.js";
+import { listCertificateDesignsDoc } from "../docs/certificate/list-certificate-designs.doc.js";
+import { createCertificateDesignDoc } from "../docs/certificate/create-certificate-design.doc.js";
+import { previewCertificateDoc } from "../docs/certificate/preview-certificate.doc.js";
+import { previewCertificateDesignDoc } from "../docs/certificate/preview-certificate-design.doc.js";
+import { listIssuedCertificatesDoc } from "../docs/certificate/list-issued-certificates.doc.js";
+import { uploadCertificateAssetDoc } from "../docs/certificate/upload-certificate-asset.doc.js";
+import { listCertificateAssetsDoc } from "../docs/certificate/list-certificate-assets.doc.js";
+import { getCertificateAssetDoc } from "../docs/certificate/get-certificate-asset.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -67,7 +88,7 @@ function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
         ...(doc.query ? { query: doc.query } : {}),
       }
     } : {}),
-    ...(doc.body ? { requestBody: { content: { "application/json": { schema: doc.body } } } } : {}),
+    ...(doc.body ? { requestBody: { content: { [doc.bodyContentType ?? "application/json"]: { schema: doc.body } } } } : {}),
     responses: Object.fromEntries(
       Object.entries(doc.response).map(([status, schema]) => [
         status,
@@ -153,9 +174,33 @@ export const openApiDocument = createDocument({
     "/receipt/verify/{hash}": { get: toOperation(verifyReceiptDoc) },
     "/receipt/download/{hash}": { get: toOperation(downloadReceiptDoc) },
     "/receipt/certificate/{hash}": { get: toOperation(downloadReceiptCertificateDoc) },
+    "/receipt/view-certificate/{hash}": { get: toOperation(viewReceiptCertificateDoc) },
     "/receipt/{id}": { get: toOperation(getReceiptDoc) },
 
     "/transaction-item/list": { get: toOperation(listTransactionItemsDoc) },
     "/transaction-item/summary": { get: toOperation(summarizeTransactionItemsDoc) },
+
+    "/post/create": { post: toOperation(createPostDoc) },
+    "/post/list": { get: toOperation(listPostsDoc) },
+    "/post/list-all": { get: toOperation(listAllPostsDoc) },
+    "/post/publish/{id}": { patch: toOperation(publishPostDoc) },
+    "/post/archive/{id}": { patch: toOperation(archivePostDoc) },
+    "/post/update/{id}": { put: toOperation(updatePostDoc) },
+    "/post/delete/{id}": { delete: toOperation(deletePostDoc) },
+    "/post/{slug}": { get: toOperation(getPostBySlugDoc) },
+
+    "/supporter/list": { get: toOperation(listSupportersDoc) },
+    "/supporter/campaign/{slug}": { get: toOperation(listCampaignSupportersDoc) },
+    "/supporter/event/{slug}": { get: toOperation(listEventSupportersDoc) },
+
+    "/certificate/list-folders": { get: toOperation(listCertificateFoldersDoc) },
+    "/certificate/list-designs": { get: toOperation(listCertificateDesignsDoc) },
+    "/certificate/create-design": { post: toOperation(createCertificateDesignDoc) },
+    "/certificate/preview": { post: toOperation(previewCertificateDoc) },
+    "/certificate/preview/{id}": { get: toOperation(previewCertificateDesignDoc) },
+    "/certificate/list-issued": { get: toOperation(listIssuedCertificatesDoc) },
+    "/certificate/upload-asset": { post: toOperation(uploadCertificateAssetDoc) },
+    "/certificate/list-assets": { get: toOperation(listCertificateAssetsDoc) },
+    "/certificate/asset/{id}": { get: toOperation(getCertificateAssetDoc) },
   },
 })
