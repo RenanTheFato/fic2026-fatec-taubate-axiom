@@ -13,6 +13,7 @@ export interface TransactionInterface{
   gateway_payment_id: string | null,
   checkout_url: string | null,
   notes: string | null,
+  public_recognition: boolean,
   confirmed_at: Date | null,
   refunded_at: Date | null,
   created_at: Date,

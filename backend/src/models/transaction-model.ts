@@ -26,6 +26,7 @@ export class Transaction extends Model<InferAttributes<Transaction>, InferCreati
   declare gateway_payment_id: CreationOptional<string | null>
   declare checkout_url: CreationOptional<string | null>
   declare notes: CreationOptional<string | null>
+  declare public_recognition: CreationOptional<boolean>
   declare confirmed_at: CreationOptional<Date | null>
   declare refunded_at: CreationOptional<Date | null>
   declare readonly created_at: CreationOptional<Date>
@@ -84,6 +85,11 @@ Transaction.init(
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    public_recognition: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     confirmed_at: {
       type: DataTypes.DATE,
