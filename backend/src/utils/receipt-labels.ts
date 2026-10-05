@@ -30,3 +30,17 @@ export const CERTIFICATE_DEED_BY_TYPE: Record<TransactionType, string> = {
   ticket: "esteve presente conosco, com a aquisição de ingresso no valor de",
   product: "apoiou nossas ações pela loja solidária, com",
 }
+
+// O complemento de "destinada" no certificado. Evento vem antes de campanha porque é o mais
+// específico: um convite do Chefs do Bem também aponta para a campanha que o evento sustenta.
+export function destinationPhrase(destination: { event?: string | null, campaign?: string | null }) {
+  if (destination.event) {
+    return `ao evento ${destination.event}`
+  }
+
+  if (destination.campaign) {
+    return `à campanha ${destination.campaign}`
+  }
+
+  return null
+}
