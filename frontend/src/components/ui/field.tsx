@@ -128,3 +128,78 @@ export function SelectInput({ className, children, ...rest }: SelectProps) {
     </select>
   )
 }
+
+type CheckboxProps = ComponentProps<"input"> & {
+  label: string
+}
+
+// A caixa de marcar vive dentro do próprio rótulo, então a área clicável é a
+// linha inteira e não um quadrado de 16px. O estado marcado é desenhado pela
+// borda e pelo fundo, e não só pelo símbolo dentro da caixa, porque quem
+// enxerga pouco precisa distinguir a opção escolhida à distância.
+export function Checkbox({ label, className, ...rest }: CheckboxProps) {
+  return (
+    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-tile border-2 border-line bg-surface px-4 py-2.5 transition-colors hover:border-ink-soft/40 has-[:checked]:border-institutional has-[:checked]:bg-institutional-soft">
+      <input type="checkbox" {...rest} className={cn("size-4 shrink-0 accent-primary", className)} />
+      <span className="font-display text-sm font-bold text-ink">{label}</span>
+    </label>
+  )
+}
+
+type CheckboxGroupProps = {
+  id: string
+  legend: string
+  hint?: string
+  error?: string
+  required?: boolean
+  columns?: 2 | 3
+  children: ReactNode
+}
+
+const COLUMNS: Record<2 | 3, string> = {
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+}
+
+// Um conjunto de opções é um campo só, e por isso é `fieldset` com `legend`: o
+// leitor de tela anuncia a pergunta antes de cada opção, em vez de ler quatro
+// caixas soltas. O `tabIndex` negativo existe para o mesmo motivo do `Field`:
+// quando a validação falha, o foco precisa ter para onde ir.
+export function CheckboxGroup({ id, legend, hint, error, required, columns = 3, children }: CheckboxGroupProps) {
+  const hintId = hint ? `${id}-dica` : undefined
+  const errorId = error ? `${id}-erro` : undefined
+  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined
+
+  return (
+    <fieldset
+      id={id}
+      tabIndex={-1}
+      aria-describedby={describedBy}
+      aria-invalid={error ? true : undefined}
+      className="grid content-start gap-2 focus:outline-none"
+    >
+      <legend className="font-display text-sm font-bold text-ink">
+        {legend}
+        {required && (
+          <span className="ml-1 text-primary" aria-hidden="true">
+            *
+          </span>
+        )}
+      </legend>
+
+      {hint && (
+        <p id={hintId} className="text-xs text-ink-soft">
+          {hint}
+        </p>
+      )}
+
+      <div className={cn("mt-1 grid gap-3", COLUMNS[columns])}>{children}</div>
+
+      {error && (
+        <p id={errorId} className="text-sm font-semibold text-primary">
+          {error}
+        </p>
+      )}
+    </fieldset>
+  )
+}
