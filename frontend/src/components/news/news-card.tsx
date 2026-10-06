@@ -1,24 +1,17 @@
 import { Link } from "react-router-dom"
-import type { NewsCategory, NewsPost } from "../../types/news-types"
+import type { NewsPost } from "../../types/news-types"
 import { formatDate } from "../../utils/format"
 import { Badge } from "../ui/badge"
-import type { BadgeTone } from "../ui/badge"
 import { Card, CardBody, CardText, CardTitle } from "../ui/card"
 import { ImageSlot } from "../ui/image-slot"
+import { CATEGORY_LABEL } from "./news-labels"
 
 type NewsCardProps = {
   post: NewsPost
 }
 
-const CATEGORY: Record<NewsCategory, { label: string; tone: BadgeTone }> = {
-  educacao: { label: "Educação", tone: "institutional" },
-  inclusao: { label: "Inclusão", tone: "partner" },
-  saude: { label: "Saúde", tone: "success" },
-  eventos: { label: "Eventos", tone: "primary" },
-}
-
 export function NewsCard({ post }: NewsCardProps) {
-  const category = CATEGORY[post.category]
+  const category = CATEGORY_LABEL[post.category]
 
   return (
     <Card as="article" interactive className="h-full">
