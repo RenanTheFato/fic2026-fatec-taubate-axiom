@@ -1,20 +1,20 @@
 import { Reveal } from "../motion/reveal"
 import { usePeople } from "../../hooks/use-people"
 import type { PersonBoard } from "../../types/institutional-types"
-import { ButtonLink } from "../ui/button"
 import { CardSkeleton, StateMessage } from "../ui/states"
 import { PersonCard } from "./person-card"
 
 type PeopleBoardProps = {
   board: PersonBoard
-  /** Nome do colegiado como aparece na frase do estado vazio. */
+  /** Nome do colegiado como aparece na mensagem de falha de carga. */
   label: string
 }
 
 // Diretoria e conselhos compartilham a mesma tela; muda o colegiado e o texto.
-// O estado vazio aqui não é um acidente: nome de pessoa e cargo estatutário são
-// dados que só a associação tem, e a página prefere dizer isso a exibir uma
-// composição inventada.
+// Nome e retrato de pessoa são dados que só a associação tem, então enquanto a
+// relação nominal não chega o bloco simplesmente não ocupa espaço: quem explica
+// o colegiado ao visitante é a estrutura de cargos, logo abaixo, em
+// `GovernanceRoles`. Inventar uma composição está fora de questão.
 export function PeopleBoard({ board, label }: PeopleBoardProps) {
   const { data, isPending, isError, refetch } = usePeople(board)
 
@@ -52,24 +52,7 @@ export function PeopleBoard({ board, label }: PeopleBoardProps) {
   }
 
   if (data.length === 0) {
-    return (
-      <div className="max-w-2xl">
-        <StateMessage
-          title={`A composição ${label} ainda não foi publicada`}
-          description={`Assim que a associação enviar a relação de nomes e cargos, ela aparece aqui, com mandato e retrato de cada pessoa. Enquanto isso, o estatuto e os documentos de governança ficam na página de Transparência.`}
-          action={
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <ButtonLink to="/transparencia" size="sm">
-                Ver transparência
-              </ButtonLink>
-              <ButtonLink to="/fale-conosco" size="sm" variant="outline">
-                Falar com a associação
-              </ButtonLink>
-            </div>
-          }
-        />
-      </div>
-    )
+    return null
   }
 
   return (

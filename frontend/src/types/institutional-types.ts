@@ -1,8 +1,16 @@
-// Conteúdo institucional. Nenhum desses dados tem rota no backend ainda: são as
-// informações que a própria ONG mantém. Os tipos já são os definitivos para que
-// a troca, quando vier, seja de uma função em `services/`.
+// Conteúdo institucional, mantido pela própria associação. Os tipos são os
+// definitivos, então o dia em que esses dados tiverem rota na API, a troca é de
+// uma função em `services/`.
 
-export type PersonBoard = "diretoria" | "conselho-fiscal" | "conselho-consultivo"
+// A diretoria tem dois colegiados, e eles não são a mesma lista: a eleita são os
+// cargos escolhidos em assembleia, e a nomeada são as pastas por área. A mesma
+// pessoa pode estar nas duas, então cada participação é um registro próprio, e
+// não um cargo com dois nomes dentro.
+export type PersonBoard =
+  | "diretoria-eleita"
+  | "diretoria-nomeada"
+  | "conselho-fiscal"
+  | "conselho-consultivo"
 
 export type Person = {
   id: string
@@ -10,7 +18,7 @@ export type Person = {
   /** Cargo estatutário: "Presidente", "1º Tesoureiro", "Conselheiro titular". */
   position: string
   board: PersonBoard
-  /** Mandato, quando informado: "2024–2026". */
+  /** Mandato, quando informado: "2024 a 2026". */
   term: string | null
   /** Caminho da foto em `public/imagens/pessoas/`. */
   photo: string | null

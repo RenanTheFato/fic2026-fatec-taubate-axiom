@@ -29,17 +29,26 @@ describe("páginas institucionais", () => {
     expect(document.documentElement.dataset.leituraFacil).toBe("on")
   })
 
-  it("a diretoria admite que a composição ainda não foi publicada, em vez de inventar nomes", async () => {
+  // Os dois colegiados são listas diferentes, e a mesma pessoa pode estar nas
+  // duas: quem é eleito para um cargo também pode responder por uma pasta. O
+  // teste trava isso, senão uma "correção" futura junta as duas listas e some
+  // com um dos cargos da pessoa repetida.
+  it("a diretoria mostra o colegiado eleito e as pastas nomeadas", async () => {
     renderWithProviders(<BoardPage />)
 
     await waitFor(() =>
-      expect(screen.getByText(/composição da diretoria ainda não foi publicada/i)).toBeInTheDocument(),
+      expect(screen.getByRole("heading", { name: /amadeu tachinardi rocha/i })).toBeInTheDocument(),
     )
 
-    expect(screen.getByRole("link", { name: /ver transparência/i })).toHaveAttribute(
-      "href",
-      "/transparencia",
-    )
+    expect(screen.getByRole("heading", { name: /diretoria eleita/i })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: /diretoria nomeada/i })).toBeInTheDocument()
+
+    expect(screen.getByText("Presidente")).toBeInTheDocument()
+    expect(screen.getByText("Diretor de Tecnologia")).toBeInTheDocument()
+
+    // Victor ocupa a Tesouraria e a pasta de Planejamento, então o nome aparece
+    // duas vezes, uma em cada colegiado.
+    expect(screen.getAllByRole("heading", { name: /victor gonçalves hipólito/i })).toHaveLength(2)
   })
 
   it("a sanfona do FAQ liga botão e resposta por ARIA", async () => {
