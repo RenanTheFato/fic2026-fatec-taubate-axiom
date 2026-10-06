@@ -1,4 +1,4 @@
-# Docker Compose — Cheatsheet MySQL
+# Docker Compose: Cheatsheet MySQL
 
 Comandos de referência para gerenciar o container do MySQL no backend.
 

@@ -9,7 +9,7 @@ export class TransactionWebhookController {
     // A rota é pública porque quem chama é o Stripe, não um usuário logado. A assinatura é o que
     // faz o papel do token aqui: sem ela, qualquer um que descubra a URL confirma transação. A
     // checagem vem antes de qualquer consulta ao banco, e é ela que também valida o formato do
-    // corpo — por isso não há schema Zod nesta rota.
+    // corpo: por isso não há schema Zod nesta rota.
     const event = constructWebhookEvent(
       req.body as Buffer,
       req.headers["stripe-signature"] as string | undefined
