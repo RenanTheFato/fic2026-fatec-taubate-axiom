@@ -1,8 +1,8 @@
 import type { Partner } from "../../types/partner-types"
 
-// Os 14 parceiros que a ONG exibe no site atual. Enquanto não houver cadastro
-// no backend, a lista é fixa, mas continua sendo uma lista, com um item e um
-// nome acessível por parceiro, nunca uma imagem única de logos.
+// Os 14 parceiros da rede da associação. A lista é editada aqui, mas continua
+// sendo uma lista, com um item e um nome acessível por parceiro, nunca uma
+// imagem única com todos os logos dentro.
 //
 // Para colocar o logo de um parceiro: salve o arquivo em
 // `public/parceiros/<slug>.png` (fundo transparente, altura mínima de 96px) e
