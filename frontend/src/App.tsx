@@ -4,7 +4,6 @@ import { RequireRole } from "./components/auth/require-role"
 import { ScrollToTop } from "./components/layout/scroll-to-top"
 import PublicLayout from "./layouts/public-layout"
 import { PageFallback } from "./components/layout/page-fallback"
-import ComingSoonPage from "./pages/public/coming-soon-page"
 import HomePage from "./pages/public/home-page"
 import NotFoundPage from "./pages/public/not-found-page"
 
@@ -13,12 +12,22 @@ import NotFoundPage from "./pages/public/not-found-page"
 // entra pela home não deve baixar o código da ouvidoria junto. O `Suspense` que
 // segura a troca está no `public-layout`, envolvendo o `Outlet`.
 const AboutPage = lazy(() => import("./pages/public/about-page"))
+const CampaignPage = lazy(() => import("./pages/public/campaign-page"))
+const CertificatePage = lazy(() => import("./pages/public/certificate-page"))
+const CampaignListPage = lazy(() => import("./pages/public/campaigns-page"))
 const DonatePage = lazy(() => import("./pages/public/donate-page"))
 const EventPage = lazy(() => import("./pages/public/event-page"))
 const EventsPage = lazy(() => import("./pages/public/events-page"))
+const NewsPage = lazy(() => import("./pages/public/news-page"))
 const OrderStatusPage = lazy(() => import("./pages/public/order-status-page"))
+const PartnersPage = lazy(() => import("./pages/public/partners-page"))
+const PostPage = lazy(() => import("./pages/public/post-page"))
 const ProductPage = lazy(() => import("./pages/public/product-page"))
 const StorePage = lazy(() => import("./pages/public/store-page"))
+const SubscriptionPage = lazy(() => import("./pages/public/subscription-page"))
+const SupportersPage = lazy(() => import("./pages/public/supporters-page"))
+const VolunteeringPage = lazy(() => import("./pages/public/volunteering-page"))
+const VolunteerSignupPage = lazy(() => import("./pages/public/volunteer-signup-page"))
 const LoginPage = lazy(() => import("./pages/public/login-page"))
 
 // A metade privada sai inteira do pacote de entrada: quem visita o site para
@@ -27,8 +36,11 @@ const LoginPage = lazy(() => import("./pages/public/login-page"))
 const AdminLayout = lazy(() => import("./layouts/admin-layout"))
 const AdminEventsPage = lazy(() => import("./pages/admin/admin-events-page"))
 const CampaignsPage = lazy(() => import("./pages/admin/campaigns-page"))
+const CertificateEditorPage = lazy(() => import("./pages/admin/certificate-editor-page"))
+const CertificatesPage = lazy(() => import("./pages/admin/certificates-page"))
 const DashboardPage = lazy(() => import("./pages/admin/dashboard-page"))
 const DonorsPage = lazy(() => import("./pages/admin/donors-page"))
+const PostsPage = lazy(() => import("./pages/admin/posts-page"))
 const ProductsPage = lazy(() => import("./pages/admin/products-page"))
 const ReceiptsPage = lazy(() => import("./pages/admin/receipts-page"))
 const ReconciliationPage = lazy(() => import("./pages/admin/reconciliation-page"))
@@ -47,19 +59,7 @@ const WorkWithUsPage = lazy(() => import("./pages/public/work-with-us-page"))
 
 // Único lugar com a árvore de rotas. Os caminhos são os do frontend-plan.md, em
 // pt-BR: id numérico nunca aparece em URL pública. Conteúdo publicado é :slug,
-// documento verificável é :hash, assinatura é :token.
-//
-// As telas que ainda não existem já respondem no caminho definitivo, dizendo em
-// que fase de goals.md elas entram.
-const SOON: { path: string; title: string; description: string; phase: string }[] = [
-  { path: "/noticias", title: "Notícias", description: "Tudo o que a associação publica, com filtro por categoria.", phase: "fase 3" },
-  { path: "/noticias/:slug", title: "Notícia", description: "A publicação completa.", phase: "fase 3" },
-  { path: "/assinaturas/gerenciar/:token", title: "Gerenciar doação recorrente", description: "Alterar ou cancelar a doação mensal sem precisar de login.", phase: "fase 4" },
-  { path: "/voluntariado", title: "Voluntariado", description: "Como funciona o programa de voluntariado da associação.", phase: "fase 6" },
-  { path: "/seja-voluntario", title: "Seja voluntário", description: "Cadastro por área, habilidade e disponibilidade.", phase: "fase 6" },
-  { path: "/parceiros", title: "Parceiros", description: "As empresas que sustentam os programas e o acesso ao portal do parceiro.", phase: "fase 8" },
-]
-
+// documento verificável é :hash, doação recorrente é :token.
 export default function App() {
   return (
     <>
@@ -73,6 +73,20 @@ export default function App() {
           element={
             <Suspense fallback={<PageFallback />}>
               <LoginPage />
+            </Suspense>
+          }
+        />
+
+        {/* O editor de certificado ocupa a tela inteira, como um editor de
+            slides: fica fora da casca do painel, com a mesma checagem de papel
+            da tela de certificados. */}
+        <Route
+          path="/admin/comunicacao/certificados/editor"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <RequireRole roles={["admin", "communication"]}>
+                <CertificateEditorPage />
+              </RequireRole>
             </Suspense>
           }
         />
@@ -149,6 +163,22 @@ export default function App() {
               </RequireRole>
             }
           />
+          <Route
+            path="/admin/comunicacao/noticias"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <PostsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/comunicacao/certificados"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <CertificatesPage />
+              </RequireRole>
+            }
+          />
         </Route>
 
         {/* O voluntariado tem a sua própria porta na mesma casca. Ele não entra
@@ -176,27 +206,32 @@ export default function App() {
           <Route path="/transparencia" element={<TransparencyPage />} />
           <Route path="/impacto" element={<ImpactPage />} />
           <Route path="/recibo/verificar" element={<VerifyReceiptPage />} />
+          <Route path="/certificado" element={<CertificatePage />} />
+          <Route path="/certificado/:hash" element={<CertificatePage />} />
           <Route path="/perguntas-frequentes" element={<FaqPage />} />
+
+          <Route path="/noticias" element={<NewsPage />} />
+          <Route path="/noticias/:slug" element={<PostPage />} />
 
           <Route path="/eventos" element={<EventsPage />} />
           <Route path="/eventos/:slug" element={<EventPage />} />
           <Route path="/loja" element={<StorePage />} />
           <Route path="/loja/:produto" element={<ProductPage />} />
           <Route path="/doe-agora" element={<DonatePage />} />
+          <Route path="/campanhas" element={<CampaignListPage />} />
+          <Route path="/campanhas/:slug" element={<CampaignPage />} />
+          <Route path="/mural-do-bem" element={<SupportersPage />} />
           <Route path="/pedido/:transacaoId/status" element={<OrderStatusPage />} />
+          <Route path="/assinaturas/gerenciar/:token" element={<SubscriptionPage />} />
+
+          <Route path="/parceiros" element={<PartnersPage />} />
+          <Route path="/voluntariado" element={<VolunteeringPage />} />
+          <Route path="/seja-voluntario" element={<VolunteerSignupPage />} />
 
           <Route path="/fale-conosco" element={<ContactPage />} />
           <Route path="/ouvidoria" element={<OmbudsmanPage />} />
           <Route path="/trabalhe-conosco" element={<WorkWithUsPage />} />
           <Route path="/politica-de-privacidade" element={<PrivacyPage />} />
-
-          {SOON.map((page) => (
-            <Route
-              key={page.path}
-              path={page.path}
-              element={<ComingSoonPage title={page.title} description={page.description} phase={page.phase} />}
-            />
-          ))}
 
           <Route path="*" element={<NotFoundPage />} />
         </Route>
