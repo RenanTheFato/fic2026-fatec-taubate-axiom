@@ -103,9 +103,7 @@ export default function ProductsPage() {
         <div className="flex items-center gap-2">
           <StockForm product={row} disabled={action.isPending} />
           {row.stock === 0 && <Badge tone="alert">Esgotado</Badge>}
-          {row.stock > 0 && row.stock <= 10 && (
-            <span className="text-xs font-bold text-alert-dark">baixo</span>
-          )}
+          {row.active && row.stock > 0 && row.stock <= 10 && <Badge tone="reward">Baixo</Badge>}
         </div>
       ),
     },
@@ -123,7 +121,6 @@ export default function ProductsPage() {
   return (
     <AdminPage
       title="Produtos"
-      description="O catálogo da loja. O estoque é debitado na confirmação do pagamento, e quem decide é o backend: a tela mostra o esgotado que conhece."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data && (
@@ -132,13 +129,13 @@ export default function ProductsPage() {
               icon={Package}
               label="No catálogo"
               value={`${active} de ${data.length}`}
-              hint="Produto desativado some de /loja sem ser apagado, então o histórico de venda continua."
+              hint="Na loja"
             />
             <StatTile
               icon={Boxes}
               label="Estoque baixo"
               value={String(low)}
-              hint="Produtos ativos com 10 unidades ou menos. Vale repor antes de esgotar."
+              hint="10 unidades ou menos"
             />
           </>
         )}
@@ -147,7 +144,7 @@ export default function ProductsPage() {
             icon={TrendingUp}
             label="Receita de itens"
             value={formatCurrency(summary.data.totals.revenue)}
-            hint={`${formatNumber(summary.data.totals.quantity)} unidades vendidas. Este total vem somado pelo banco.`}
+            hint={`${formatNumber(summary.data.totals.quantity)} unidades vendidas`}
           />
         )}
       </div>
@@ -192,7 +189,7 @@ export default function ProductsPage() {
       {data && data.length === 0 && (
         <StateMessage
           title="Nenhum produto cadastrado"
-          description="A criação de produto ainda acontece pela API. Assim que o primeiro existir, ele aparece aqui com estoque e os controles de catálogo."
+          description="Nenhum produto cadastrado."
         />
       )}
 
@@ -203,7 +200,7 @@ export default function ProductsPage() {
             columns={columns}
             rows={data}
             rowKey={(row) => row.id}
-            breakpoint="lg"
+            breakpoint="xl"
             actions={(row) => (
               <>
                 {row.active ? (

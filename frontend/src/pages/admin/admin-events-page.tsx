@@ -58,7 +58,6 @@ export default function AdminEventsPage() {
   return (
     <AdminPage
       title="Eventos"
-      description="A agenda que o site publica. Só evento publicado vende convite, e cada convite confirmado ocupa exatamente uma vaga."
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -66,19 +65,19 @@ export default function AdminEventsPage() {
             icon={CalendarDays}
             label="Cadastrados"
             value={String(data.length)}
-            hint="Inclui rascunho e cancelado, que não aparecem na agenda pública."
+            hint="Inclui rascunhos e cancelados"
           />
           <StatTile
             icon={CalendarDays}
             label="Publicados"
             value={String(published)}
-            hint="Os que aparecem em /eventos e aceitam compra de convite."
+            hint="Na agenda do site"
           />
           <StatTile
             icon={Ticket}
             label="Vagas ocupadas"
             value={String(seats)}
-            hint="Soma dos convites confirmados de todos os eventos cadastrados."
+            hint="Convites confirmados"
           />
         </div>
       )}
@@ -123,7 +122,7 @@ export default function AdminEventsPage() {
       {data && data.length === 0 && (
         <StateMessage
           title="Nenhum evento cadastrado"
-          description="A criação de evento ainda acontece pela API. Assim que o primeiro existir, ele aparece aqui com ocupação e os controles de publicação."
+          description="Nenhum evento cadastrado."
         />
       )}
 
@@ -134,8 +133,15 @@ export default function AdminEventsPage() {
             columns={columns}
             rows={data}
             rowKey={(row) => row.id}
-            breakpoint="lg"
-            actions={(row) => (
+            breakpoint="xl"
+            actions={(row) => {
+              const canFinish = row.status === "published"
+              const visible = row.status === "published" || row.status === "finished"
+              const cancellable = canCancel && row.status !== "cancelled" && row.status !== "finished"
+
+              if (row.status !== "draft" && !canFinish && !visible && !cancellable) return null
+
+              return (
               <>
                 {row.status === "draft" && (
                   <Button
@@ -147,24 +153,25 @@ export default function AdminEventsPage() {
                   </Button>
                 )}
 
-                {row.status === "published" && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      tone="ink"
-                      disabled={action.isPending}
-                      onClick={() => action.mutate({ domain: "event", action: "finish", id: row.id })}
-                    >
-                      Encerrar
-                    </Button>
-                    <ButtonLink to={`/eventos/${row.slug}`} size="sm" variant="outline" tone="ink">
-                      Ver no site
-                    </ButtonLink>
-                  </>
+                {canFinish && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    tone="ink"
+                    disabled={action.isPending}
+                    onClick={() => action.mutate({ domain: "event", action: "finish", id: row.id })}
+                  >
+                    Encerrar
+                  </Button>
                 )}
 
-                {canCancel && row.status !== "cancelled" && row.status !== "finished" && (
+                {visible && (
+                  <ButtonLink to={`/eventos/${row.slug}`} size="sm" variant="outline" tone="ink">
+                    Ver no site
+                  </ButtonLink>
+                )}
+
+                {cancellable && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -176,7 +183,8 @@ export default function AdminEventsPage() {
                   </Button>
                 )}
               </>
-            )}
+              )
+            }}
           />
         </div>
       )}

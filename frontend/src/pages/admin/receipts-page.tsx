@@ -1,4 +1,4 @@
-import { Download, FileCheck2, Link2Off, ShieldCheck } from "lucide-react"
+import { Award, Download, FileCheck2, Link2Off, ShieldCheck } from "lucide-react"
 import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
 import { TYPE_LABEL } from "../../components/admin/transaction-labels"
@@ -52,7 +52,6 @@ export default function ReceiptsPage() {
   return (
     <AdminPage
       title="Recibos"
-      description="Os documentos emitidos pela associação, na ordem da corrente. Nenhum recibo é apagado: cancelar mantém o elo e tira a validade."
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -60,19 +59,18 @@ export default function ReceiptsPage() {
             icon={FileCheck2}
             label="Emitidos"
             value={String(data.total)}
-            hint="Total de documentos na corrente, desde o primeiro."
+            hint="Desde o primeiro"
           />
           <StatTile
             icon={ShieldCheck}
             label="Último número"
             value={data.receipts[0]?.number ?? "nenhum ainda"}
-            hint="A numeração não reinicia a cada ano: a corrente só admite uma sequência."
           />
           <StatTile
             icon={Link2Off}
             label="Cancelados nesta página"
             value={String(cancelled)}
-            hint="Continuam autênticos e deixaram de valer. Vêm de um estorno."
+            hint="Vêm de estornos"
           />
         </div>
       )}
@@ -105,7 +103,7 @@ export default function ReceiptsPage() {
       {data && data.receipts.length === 0 && (
         <StateMessage
           title="Nenhum recibo emitido ainda"
-          description="O recibo nasce dentro da confirmação de um pagamento, nunca por fora. É isso que impede um documento existir sem cobrança confirmada."
+          description="Nenhum recibo emitido."
         />
       )}
 
@@ -125,12 +123,24 @@ export default function ReceiptsPage() {
                 <ButtonLink
                   to={`${env.apiUrl}/receipt/download/${row.hash}`}
                   external
+                  ariaLabel={`Baixar o recibo ${row.number}`}
                   size="sm"
                   variant="outline"
                   tone="ink"
                 >
                   <Download className="size-4" aria-hidden="true" />
-                  PDF
+                  Recibo
+                </ButtonLink>
+                <ButtonLink
+                  to={`${env.apiUrl}/receipt/certificate/${row.hash}`}
+                  external
+                  ariaLabel={`Abrir o certificado do recibo ${row.number}`}
+                  size="sm"
+                  variant="outline"
+                  tone="ink"
+                >
+                  <Award className="size-4" aria-hidden="true" />
+                  Certificado
                 </ButtonLink>
               </>
             )}

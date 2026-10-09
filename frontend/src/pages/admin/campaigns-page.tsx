@@ -9,7 +9,7 @@ import { CheckoutError } from "../../config/errors"
 import { useAllCampaigns, useCatalogAction } from "../../hooks/use-admin-catalog"
 import { useSession } from "../../hooks/use-session"
 import type { CampaignStatus } from "../../types/campaign-types"
-import { formatCurrency, formatDate } from "../../utils/format"
+import { formatDate } from "../../utils/format"
 
 const STATUS: Record<CampaignStatus, { label: string; tone: BadgeTone }> = {
   draft: { label: "Rascunho", tone: "alert" },
@@ -30,7 +30,6 @@ export default function CampaignsPage() {
   return (
     <AdminPage
       title="Campanhas"
-      description="Uma campanha dá destino à doação e mostra a meta subindo no site. Só campanha ativa recebe transação nova, então publicar é o que abre o caixa dela."
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -38,13 +37,13 @@ export default function CampaignsPage() {
             icon={Megaphone}
             label="Cadastradas"
             value={String(data.length)}
-            hint="Inclui rascunho e encerrada, que o site público não mostra."
+            hint="Inclui rascunhos e encerradas"
           />
           <StatTile
             icon={Target}
             label="Ativas"
             value={String(data.filter((campaign) => campaign.status === "active").length)}
-            hint="As únicas que aparecem em /doe-agora e aceitam doação destinada."
+            hint="Recebendo doações"
           />
         </div>
       )}
@@ -89,7 +88,7 @@ export default function CampaignsPage() {
       {data && data.length === 0 && (
         <StateMessage
           title="Nenhuma campanha cadastrada"
-          description="A criação de campanha ainda acontece pela API. Assim que a primeira existir, ela aparece aqui com meta, arrecadação e os controles de publicação."
+          description="Nenhuma campanha cadastrada."
         />
       )}
 
@@ -108,15 +107,13 @@ export default function CampaignsPage() {
                 <Badge tone={STATUS[campaign.status].tone}>{STATUS[campaign.status].label}</Badge>
               </div>
 
-              {campaign.description && (
-                <p className="line-clamp-2 text-sm leading-relaxed text-ink-soft">{campaign.description}</p>
-              )}
+              {/* Duas linhas reservadas, com ou sem texto: é o que deixa a barra de
+                  meta de dois cartões vizinhos na mesma altura. */}
+              <p className="line-clamp-2 min-h-[2lh] text-sm leading-relaxed text-ink-soft">
+                {campaign.description ?? "Sem descrição cadastrada."}
+              </p>
 
               <CampaignProgress campaign={campaign} />
-
-              <p className="text-xs text-ink-soft">
-                Meta de {formatCurrency(campaign.goal_amount)}
-              </p>
 
               <div className="mt-auto flex flex-wrap gap-2 border-t border-line pt-4">
                 {campaign.status === "draft" && (
@@ -153,11 +150,22 @@ export default function CampaignsPage() {
                   </Button>
                 )}
 
-                {campaign.status === "active" && (
-                  <ButtonLink to={`/doe-agora?campanha=${campaign.id}`} size="sm" variant="outline" tone="ink">
+                {(campaign.status === "active" || campaign.status === "finished") && (
+                  <ButtonLink to={`/campanhas/${campaign.slug}`} size="sm" variant="outline" tone="ink">
                     Ver no site
                   </ButtonLink>
                 )}
+
+                {/* A pasta de certificados da campanha: é por aqui que a equipe dá a
+                    cara do Natal ao certificado do Natal. */}
+                <ButtonLink
+                  to={`/admin/comunicacao/certificados?pasta=${encodeURIComponent(`campaign:${campaign.id}`)}`}
+                  size="sm"
+                  variant="outline"
+                  tone="ink"
+                >
+                  Certificado
+                </ButtonLink>
               </div>
             </li>
           ))}

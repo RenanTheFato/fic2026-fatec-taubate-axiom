@@ -95,7 +95,6 @@ export default function TransactionsPage() {
   return (
     <AdminPage
       title="Transações"
-      description="Todo movimento do caixa: doação, patrocínio, convite e venda. Confirmar ou estornar aqui altera arrecadação, vaga e estoque, além de emitir ou cancelar um recibo."
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -103,19 +102,18 @@ export default function TransactionsPage() {
             icon={ListFilter}
             label="Resultado do filtro"
             value={String(data.total)}
-            hint="Transações que atendem aos filtros aplicados, em todas as páginas."
+            hint="Com os filtros aplicados"
           />
           <StatTile
             icon={Coins}
             label="Soma desta página"
             value={formatCurrency(sumConfirmed(data.transactions))}
-            hint="Soma das confirmadas listadas nesta página. Não é o relatório do período, porque a API devolve linhas e não somas."
+            hint="Confirmadas nesta página"
           />
           <StatTile
             icon={Receipt}
             label="Página"
             value={`${page} de ${pages}`}
-            hint={`${PAGE_SIZE} transações por página, da mais recente para a mais antiga.`}
           />
         </div>
       )}
@@ -208,7 +206,7 @@ export default function TransactionsPage() {
       {data && data.transactions.length === 0 && (
         <StateMessage
           title="Nenhuma transação com esses filtros"
-          description="Nada foi encontrado para a combinação escolhida. Limpe os filtros para ver o movimento completo."
+          description="Nenhuma transação com estes filtros."
           action={
             <Button size="sm" variant="outline" tone="ink" onClick={() => setFilters({ page: 1 })}>
               Limpar filtros
@@ -224,15 +222,15 @@ export default function TransactionsPage() {
             columns={columns}
             rows={data.transactions}
             rowKey={(row) => row.id}
-            breakpoint="lg"
+            breakpoint="xl"
             actions={(row) => {
               const actions = availableActions(row.status).filter(
                 (action) => action !== "refund" || canRefund,
               )
 
-              if (actions.length === 0) {
-                return <span className="text-xs text-ink-soft">sem ação disponível</span>
-              }
+              // Confirmada sem estorno ao alcance, recusada, cancelada: o
+              // status já diz que não há o que fazer, e a célula fica vazia.
+              if (actions.length === 0) return null
 
               return (
                 <>
