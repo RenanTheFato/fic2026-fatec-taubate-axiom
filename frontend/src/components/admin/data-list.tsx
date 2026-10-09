@@ -21,7 +21,11 @@ type DataListProps<T> = {
   columns: Column<T>[]
   rows: T[]
   rowKey: (row: T) => string
-  /** Ações da linha. No cartão elas vão para o rodapé, com área de toque cheia. */
+  /**
+   * Ações da linha. No cartão elas vão para o rodapé, com área de toque cheia.
+   * `null` quando a linha não tem ação: a célula fica vazia e o cartão perde o
+   * rodapé, em vez de exibir um aviso de "sem ação" que só ocupa espaço.
+   */
   actions?: (row: T) => ReactNode
   /**
    * A partir de qual largura a tabela aparece. Uma tabela com botões na linha
@@ -41,11 +45,12 @@ type DataListProps<T> = {
 // **Uma tabela não encolhe abaixo do conteúdo dela.** Com `table-layout: auto`,
 // se a soma das larguras mínimas passar do container, a tabela vaza para fora em
 // vez de espremer, e é isso que aparece como texto por cima de botão. Por isso
-// aqui: a coluna de ações recebe `w-px`, que em tabela significa "o mínimo
-// possível", sobrando o resto para as colunas de dado; as células alinham pelo
-// topo, para que uma linha alta não deixe as vizinhas flutuando no meio; e cada
-// página escolhe o ponto em que a tabela vira cartão, em vez de todas herdarem o
-// mesmo `md`.
+// aqui: a coluna de ações recebe `w-px` e `whitespace-nowrap`, ou seja, a
+// largura exata dos botões lado a lado, sem que um rótulo como "Ver no site"
+// quebre em duas linhas nem um botão desça para baixo do outro; as células
+// alinham pelo meio, então selo, valor e botões ficam na mesma linha visual; e
+// cada página escolhe o ponto em que a tabela vira cartão, de acordo com quantos
+// botões a linha carrega, em vez de todas herdarem o mesmo `md`.
 const TABLE_FROM: Record<DataListBreakpoint, string> = {
   md: "hidden md:block",
   lg: "hidden lg:block",
@@ -89,15 +94,18 @@ export function DataList<T>({
                 </th>
               ))}
               {actions && (
-                <th scope="col" className="w-px px-3 py-3 text-right">
-                  <span className="sr-only">Ações</span>
+                <th
+                  scope="col"
+                  className="w-px px-3 py-3 text-right font-display text-xs font-bold tracking-wide whitespace-nowrap text-ink-soft uppercase"
+                >
+                  Ações
                 </th>
               )}
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={rowKey(row)} className="border-b border-line/70 align-top hover:bg-surface-muted">
+              <tr key={rowKey(row)} className="h-16 border-b border-line/70 align-middle last:border-b-0 hover:bg-surface-muted">
                 {columns.map((column) => (
                   <td
                     key={column.key}
@@ -114,8 +122,8 @@ export function DataList<T>({
                   </td>
                 ))}
                 {actions && (
-                  <td className="w-px px-3 py-4">
-                    <div className="flex flex-wrap items-center justify-end gap-2">{actions(row)}</div>
+                  <td className="w-px px-3 py-3 whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-2">{actions(row)}</div>
                   </td>
                 )}
               </tr>
@@ -124,35 +132,41 @@ export function DataList<T>({
         </table>
       </div>
 
-      <ul className={cn("flex flex-col gap-4", CARDS_UNTIL[breakpoint])}>
-        {rows.map((row) => (
-          <li key={rowKey(row)} className="rounded-card border border-line bg-surface p-4">
-            {columns
-              .filter((column) => column.primary)
-              .map((column) => (
-                <p key={column.key} className="font-display text-base font-bold">
-                  {column.cell(row)}
-                </p>
-              ))}
+      <ul className={cn("grid gap-4 md:grid-cols-2", CARDS_UNTIL[breakpoint])}>
+        {rows.map((row) => {
+          const rowActions = actions ? actions(row) : null
 
-            <dl className="mt-3 flex flex-col gap-2">
+          return (
+            <li key={rowKey(row)} className="flex flex-col rounded-card border border-line bg-surface p-4">
               {columns
-                .filter((column) => !column.primary)
+                .filter((column) => column.primary)
                 .map((column) => (
-                  <div key={column.key} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <dt className="text-xs font-bold tracking-wide text-ink-soft uppercase">{column.header}</dt>
-                    <dd className="min-w-0 text-sm break-words">{column.cell(row)}</dd>
-                  </div>
+                  <p key={column.key} className="font-display text-base font-bold">
+                    {column.cell(row)}
+                  </p>
                 ))}
-            </dl>
 
-            {actions && (
-              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
-                {actions(row)}
-              </div>
-            )}
-          </li>
-        ))}
+              <dl className="mt-3 flex flex-col gap-2">
+                {columns
+                  .filter((column) => !column.primary)
+                  .map((column) => (
+                    <div key={column.key} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <dt className="text-xs font-bold tracking-wide text-ink-soft uppercase">{column.header}</dt>
+                      <dd className="min-w-0 text-sm break-words">{column.cell(row)}</dd>
+                    </div>
+                  ))}
+              </dl>
+
+              {/* `mt-auto` empurra as ações para o pé: dois cartões vizinhos na
+                  grade terminam com os botões na mesma altura. */}
+              {rowActions && (
+                <div className="mt-auto pt-4">
+                  <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">{rowActions}</div>
+                </div>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </>
   )

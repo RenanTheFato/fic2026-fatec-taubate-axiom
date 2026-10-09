@@ -18,9 +18,12 @@ type Shared = {
   children: ReactNode
 }
 
+// `text-wrap-style`, e não o atalho `text-wrap`: o atalho também redefine o
+// modo de quebra para "wrap" e anula o `nowrap` que uma linha de tabela pede ao
+// botão. Era isso que partia "Ver no site" em três linhas na coluna de ações.
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-pill text-center leading-tight " +
-  "font-display font-bold [text-wrap:balance] " +
+  "font-display font-bold [text-wrap-style:balance] " +
   "transition-[transform,background-color,color] duration-200 " +
   "hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
 
