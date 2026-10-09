@@ -1,13 +1,16 @@
 import {
+  Award,
   CalendarDays,
   FileCheck2,
   HandHeart,
   LayoutDashboard,
   Megaphone,
+  Newspaper,
   Package,
   ReceiptText,
   Scale,
   Users,
+  Wallet,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { UserRole } from "../../types/user-types"
@@ -17,7 +20,7 @@ export type AdminNavItem = {
   to: string
   icon: LucideIcon
   roles: UserRole[]
-  /** Agrupador na barra lateral. Módulos separam Financeiro de Comunicação. */
+  /** O módulo: vira um item da barra de cima, e os itens dele a barra de baixo. */
   group: string
   end?: boolean
 }
@@ -87,9 +90,22 @@ export const ADMIN_NAV: AdminNavItem[] = [
     roles: ["admin", "communication"],
     group: "Comunicação",
   },
-  // O voluntariado ainda não tem vertical no backend, então esta é uma tela de
-  // protótipo, alimentada por dado simulado e por eventos reais. A Administração
-  // também a alcança, porque é ela quem demonstra o sistema inteiro.
+  {
+    label: "Notícias",
+    to: "/admin/comunicacao/noticias",
+    icon: Newspaper,
+    roles: ["admin", "communication"],
+    group: "Comunicação",
+  },
+  {
+    label: "Certificados",
+    to: "/admin/comunicacao/certificados",
+    icon: Award,
+    roles: ["admin", "communication"],
+    group: "Comunicação",
+  },
+  // A Administração também alcança o painel do voluntariado, porque é ela quem
+  // apresenta o sistema inteiro e precisa ver o que o voluntário vê.
   {
     label: "Meu painel",
     to: "/voluntario/painel",
@@ -100,9 +116,24 @@ export const ADMIN_NAV: AdminNavItem[] = [
   },
 ]
 
-export function navFor(role: UserRole): { group: string; items: AdminNavItem[] }[] {
+export type AdminNavGroup = {
+  group: string
+  icon: LucideIcon
+  items: AdminNavItem[]
+}
+
+// O ícone do módulo na barra de cima. Módulo de uma tela só usa o da própria
+// tela, porque ali o módulo e a tela são a mesma coisa.
+const GROUP_ICON: Record<string, LucideIcon> = {
+  Início: LayoutDashboard,
+  Financeiro: Wallet,
+  Comunicação: Megaphone,
+  Voluntariado: HandHeart,
+}
+
+export function navFor(role: UserRole): AdminNavGroup[] {
   const allowed = ADMIN_NAV.filter((item) => item.roles.includes(role))
-  const groups: { group: string; items: AdminNavItem[] }[] = []
+  const groups: AdminNavGroup[] = []
 
   for (const item of allowed) {
     const existing = groups.find((entry) => entry.group === item.group)
@@ -110,11 +141,21 @@ export function navFor(role: UserRole): { group: string; items: AdminNavItem[] }
     if (existing) {
       existing.items.push(item)
     } else {
-      groups.push({ group: item.group, items: [item] })
+      groups.push({ group: item.group, icon: GROUP_ICON[item.group] ?? item.icon, items: [item] })
     }
   }
 
   return groups
+}
+
+// Em que módulo a pessoa está. A tela de edição de certificado mora abaixo do
+// caminho da lista, então casar por prefixo mantém o módulo aceso nela também.
+export function activeGroup(groups: AdminNavGroup[], pathname: string): AdminNavGroup | null {
+  return (
+    groups.find((group) =>
+      group.items.some((item) => (item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`))),
+    ) ?? null
+  )
 }
 
 // Para onde cada papel vai depois de entrar. Quem cuida de dinheiro cai na
