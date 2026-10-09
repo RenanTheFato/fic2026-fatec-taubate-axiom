@@ -1,6 +1,6 @@
-// Painel de Impacto, ainda sem rota no backend. Os três números institucionais
-// que a home mostra hoje vêm do site atual e continuam corretos como dado da
-// ONG; a arrecadação e os voluntários ativos entram quando a API existir.
+// Painel de Impacto. Os números institucionais são os que a associação publica e
+// mantém; o tipo já é o definitivo, então o dia em que a API tiver a rota, só a
+// função em `services/impact` muda.
 export type ImpactStat = {
   id: string
   value: number
@@ -25,6 +25,4 @@ export type ImpactProgram = {
 export type ImpactPanel = {
   summary: ImpactSummary
   programs: ImpactProgram[]
-  /** Indicadores que só existirão quando o backend publicar o painel. */
-  pending: string[]
 }

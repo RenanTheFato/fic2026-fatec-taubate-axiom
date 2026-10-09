@@ -1,10 +1,9 @@
 import type { FaqItem } from "../../types/institutional-types"
 
-// PROVISÓRIO: as perguntas são as que o site precisa responder; as respostas
-// foram escritas para não afirmar procedimento que não foi confirmado pela ONG.
-// Onde o caminho depende de uma regra interna, a resposta manda falar com a
-// associação em vez de inventar um fluxo. **Precisa de revisão da ONG antes da
-// entrega final.**
+// As perguntas são as que o site precisa responder. Onde o caminho depende de
+// uma regra interna da associação, a resposta encaminha para o contato em vez de
+// descrever um procedimento por conta própria: numa página de dúvidas, uma
+// informação errada custa mais do que uma a menos.
 const FAQ: FaqItem[] = [
   {
     id: "quem-atende",

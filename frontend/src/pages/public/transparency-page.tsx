@@ -132,8 +132,8 @@ export default function TransparencyPage() {
           {data && data.length === 0 && (
             <div className="mt-10 max-w-2xl">
               <StateMessage
-                title="Nenhum documento publicado ainda"
-                description="Os arquivos das quatro categorias acima serão disponibilizados aqui para download assim que a associação os enviar. Enquanto isso, é possível pedir qualquer um deles diretamente pelos canais de contato."
+                title="Peça o documento que você precisa"
+                description="Estatuto, certificações, balanços e relatórios de atividades são enviados por e-mail a qualquer pessoa que solicitar, e passam a ficar nesta página conforme são publicados."
                 action={
                   <ButtonLink to="/fale-conosco" size="sm">
                     Pedir um documento

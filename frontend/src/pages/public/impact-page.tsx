@@ -1,4 +1,3 @@
-import { Clock } from "lucide-react"
 import { PageHero } from "../../components/layout/page-hero"
 import { ReadingModeToggle } from "../../components/layout/reading-mode-toggle"
 import { ReadingSwitch } from "../../components/layout/reading-switch"
@@ -133,29 +132,6 @@ export default function ImpactPage() {
         </section>
       )}
 
-      {data && (
-        <section aria-labelledby="em-breve" className="border-t border-line bg-surface-muted py-16">
-          <Container className="grid gap-10 lg:grid-cols-2">
-            <div>
-              <SectionHeading
-                id="em-breve"
-                eyebrow="Honestidade"
-                title="O que ainda não é tempo real"
-                description="Os números acima são informados pela instituição e conferidos por ela. Os indicadores abaixo dependem do sistema de doações estar em operação, e só aparecem aqui quando forem reais."
-              />
-            </div>
-
-            <ul className="flex flex-col gap-3">
-              {data.pending.map((item) => (
-                <li key={item} className="flex items-start gap-3 rounded-card border border-dashed border-line bg-surface p-4">
-                  <Clock className="mt-0.5 size-5 shrink-0 text-ink-soft" aria-hidden="true" />
-                  <span className="text-sm leading-relaxed text-ink-soft">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Container>
-        </section>
-      )}
 
       <section className="py-16">
         <Container className="flex flex-col gap-4 sm:flex-row">

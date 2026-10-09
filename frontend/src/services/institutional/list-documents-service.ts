@@ -1,8 +1,8 @@
 import type { TransparencyDocument } from "../../types/institutional-types"
 
-// PROVISÓRIO E VAZIO DE PROPÓSITO, pela mesma razão da lista de pessoas: documento
-// de prestação de contas não se inventa. A página já sabe agrupar por categoria
-// e por ano; falta o acervo.
+// Vazio de propósito, pela mesma razão da lista de pessoas: documento de
+// prestação de contas não se inventa. A página agrupa por categoria e por ano, e
+// o acervo entra aqui conforme a associação publica cada arquivo.
 //
 // Para publicar um documento: salve o PDF em `public/documentos/` e acrescente
 //   { id: "1", title: "Estatuto Social", description: null,

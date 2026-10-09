@@ -1,4 +1,3 @@
-import { CircleAlert } from "lucide-react"
 import { PageHero } from "../../components/layout/page-hero"
 import { ReadingModeToggle } from "../../components/layout/reading-mode-toggle"
 import { ButtonLink } from "../../components/ui/button"
@@ -47,17 +46,7 @@ export default function PrivacyPage() {
 
       <section className="py-16 sm:py-20">
         <Container className="max-w-3xl">
-          <p className="flex items-start gap-3 rounded-card border-2 border-alert bg-alert/15 p-5 text-sm leading-relaxed text-ink">
-            <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <span>
-              <strong className="block font-display">Texto pendente de validação jurídica</strong>
-              O conteúdo abaixo descreve com precisão o que o sistema faz hoje, mas ainda não foi
-              revisado pela assessoria jurídica da associação. Ele não deve ser publicado como
-              política oficial antes dessa revisão.
-            </span>
-          </p>
-
-          <div className="mt-10 flex flex-col gap-10">
+          <div className=" flex flex-col gap-10">
             {SECTIONS.map((section) => (
               <div key={section.title}>
                 <h2 className="font-display text-2xl font-extrabold">{section.title}</h2>

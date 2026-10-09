@@ -135,8 +135,8 @@ export function MessageForm({ id, subjects, subjectLabel, mailTo, submitLabel, n
         <p role="status" className="flex items-start gap-3 rounded-card border border-success bg-success-soft p-5 text-sm leading-relaxed text-ink">
           <CircleCheck className="size-5 shrink-0 text-success-dark" aria-hidden="true" />
           <span>
-            Abrimos o seu programa de e-mail com a mensagem preenchida. <strong>Ela ainda não foi
-            enviada</strong>. Confira e clique em enviar por lá. Se nada abriu, copie o endereço
+            Sua mensagem está pronta no seu programa de e-mail, com todos os campos preenchidos.
+            <strong> Confira e clique em enviar por lá</strong>. Se nada abriu, copie o endereço
             acima e escreva pelo e-mail que você já usa.
           </span>
         </p>

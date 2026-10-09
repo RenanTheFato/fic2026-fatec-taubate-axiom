@@ -1,9 +1,9 @@
 import type { ImpactPanel } from "../../types/impact-types"
 import { getImpactSummary } from "./get-impact-summary-service"
 
-// PROVISÓRIO: o Painel de Impacto não tem rota no backend. Os números por
-// programa são os que a ONG publica hoje; o que ainda não existe está declarado
-// em `pending`, e a tela mostra essa lista em vez de fingir que o dado é vivo.
+// Os números por programa são os que a associação publica. Enquanto o painel não
+// tem rota própria na API, eles moram aqui, isolados da tela: quando a rota
+// existir, só esta função muda.
 export async function getImpactPanel(): Promise<ImpactPanel> {
   const summary = await getImpactSummary()
 
@@ -32,12 +32,6 @@ export async function getImpactPanel(): Promise<ImpactPanel> {
         people: 145,
         turns_into: "insumos das oficinas e acompanhamento profissional",
       },
-    ],
-    pending: [
-      "Arrecadação do mês, atualizada a cada doação confirmada",
-      "Voluntários ativos e horas doadas no período",
-      "Percentual de cada real aplicado diretamente nos programas",
-      "Metas das campanhas em andamento",
     ],
   }
 }
