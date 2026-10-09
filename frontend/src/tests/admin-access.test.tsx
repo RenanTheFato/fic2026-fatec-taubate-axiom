@@ -51,6 +51,7 @@ function transaction(overrides: Partial<AdminTransaction> = {}): AdminTransactio
     gateway_payment_id: "pi_test_1",
     checkout_url: "https://checkout.stripe.com/c/pay/cs_test_1",
     notes: null,
+    public_recognition: false,
     confirmed_at: "2026-08-30T12:00:00.000Z",
     refunded_at: null,
     created_at: "2026-08-30T11:00:00.000Z",

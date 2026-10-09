@@ -7,7 +7,7 @@ import type { CreateTransactionInput, TransactionType } from "../../types/transa
 import { formatCurrency } from "../../utils/format"
 import { redirectTo } from "../../utils/redirect"
 import { Button } from "../ui/button"
-import { Field, TextInput } from "../ui/field"
+import { Checkbox, Field, TextInput } from "../ui/field"
 import { StateMessage } from "../ui/states"
 
 type CheckoutFormProps = {
@@ -68,6 +68,9 @@ export function CheckoutForm({
   const [email, setEmail] = useState("")
   const [document, setDocument] = useState("")
   const [phone, setPhone] = useState("")
+  // Desmarcado por padrão: nome em página pública só por escolha de quem
+  // contribui, e uma caixa já marcada não é escolha de ninguém.
+  const [recognition, setRecognition] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -136,6 +139,7 @@ export function CheckoutForm({
       donor_email: email.trim(),
       donor_document: document.trim().length > 0 ? onlyDigits(document) : null,
       donor_phone: phone.trim().length > 0 ? phone.trim() : null,
+      public_recognition: recognition,
     }
 
     const transaction = await checkout.mutateAsync(input).catch(() => null)
@@ -146,6 +150,7 @@ export function CheckoutForm({
   }
 
   const total = pricedByCatalogue ? fixedAmount : amount.length > 0 ? amount.replace(",", ".") : null
+  const wall = eventId ? "deste evento, " : campaignId ? "desta campanha, " : ""
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
@@ -265,6 +270,20 @@ export function CheckoutForm({
           )}
         </Field>
       </fieldset>
+
+      <div className="flex flex-col gap-2">
+        <Checkbox
+          id="checkout-public_recognition"
+          label="Quero meu nome no Mural do Bem"
+          checked={recognition}
+          onChange={(event) => setRecognition(event.target.checked)}
+          aria-describedby="checkout-public_recognition-dica"
+        />
+        <p id="checkout-public_recognition-dica" className="text-xs leading-relaxed text-ink-soft">
+          Opcional. Depois da confirmação do pagamento, o nome acima aparece no mural de agradecimento
+          {" "}{wall}e no do site, em ordem aleatória e sem o valor. Para retirar, é só pedir pelo Fale Conosco.
+        </p>
+      </div>
 
       <div className="rounded-card border border-line bg-surface-muted p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

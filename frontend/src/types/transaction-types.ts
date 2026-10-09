@@ -24,6 +24,7 @@ export type Transaction = {
   gateway_payment_id: string | null
   checkout_url: string | null
   notes: string | null
+  public_recognition: boolean
   confirmed_at: string | null
   refunded_at: string | null
   created_at: string
@@ -60,4 +61,6 @@ export type CreateTransactionInput = {
   donor_email: string
   donor_document?: string | null
   donor_phone?: string | null
+  /** Consentimento para o nome aparecer no Mural do Bem. O padrão do backend é `false`. */
+  public_recognition?: boolean
 }

@@ -7,6 +7,8 @@ export type Campaign = {
   title: string
   slug: string
   description: string | null
+  /** Caminho da foto em `public/imagens/`, gravado no banco. */
+  image_url: string | null
   goal_amount: string
   raised_amount: string
   starts_at: string

@@ -28,6 +28,7 @@ const CAMPAIGN: Campaign = {
   title: "Ambulatório: atendimento contínuo",
   slug: "ambulatorio-atendimento-continuo",
   description: "Sustenta o custo fixo da equipe do Ambulatório.",
+  image_url: null,
   goal_amount: "180000.00",
   raised_amount: "45000.00",
   starts_at: "2026-01-05T09:00:00.000Z",
@@ -51,6 +52,7 @@ function transaction(): Transaction {
     gateway_payment_id: null,
     checkout_url: "https://checkout.stripe.com/c/pay/cs_test_123",
     notes: null,
+    public_recognition: false,
     confirmed_at: null,
     refunded_at: null,
     created_at: "2026-09-03T12:00:00.000Z",
@@ -104,12 +106,34 @@ describe("jornada de doação", () => {
         campaign_id: CAMPAIGN.id,
         donor_name: "Maria Aparecida da Silva",
         donor_email: "maria@exemplo.com.br",
+        // Ninguém marcou a caixa do mural: o nome não vai para página pública.
+        public_recognition: false,
       }),
     )
 
     // O que o teste prova é que a tela manda a pessoa para o checkout do
     // gateway, e não que o jsdom navegou.
     await waitFor(() => expect(redirectTo).toHaveBeenCalledWith("https://checkout.stripe.com/c/pay/cs_test_123"))
+  })
+
+  it("só leva o nome ao Mural do Bem quando a pessoa marca a opção", async () => {
+    createTransaction.mockResolvedValue(transaction())
+
+    renderWithProviders(<DonatePage />, "/doe-agora")
+
+    const user = await settled()
+    const consent = screen.getByRole("checkbox", { name: /quero meu nome no mural do bem/i })
+
+    // Desmarcada por padrão, e a explicação está ligada à caixa, não solta na tela.
+    expect(consent).not.toBeChecked()
+    expect(consent).toHaveAccessibleDescription(/ordem aleatória e sem o valor/i)
+
+    await user.click(consent)
+    await fillDonor(user)
+    await user.click(screen.getByRole("button", { name: /ir para o pagamento/i }))
+
+    await waitFor(() => expect(createTransaction).toHaveBeenCalledTimes(1))
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ public_recognition: true }))
   })
 
   it("não chama o backend quando os dados do doador não são válidos", async () => {
