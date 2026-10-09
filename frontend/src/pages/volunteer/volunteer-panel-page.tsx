@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarDays, Clock, FlaskConical, MapPin, Users } from "lucide-react"
+import { CalendarCheck, CalendarDays, Clock, MapPin, Users } from "lucide-react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
 import { Badge } from "../../components/ui/badge"
 import type { BadgeTone } from "../../components/ui/badge"
@@ -55,11 +55,11 @@ function ShiftRow({ shift }: { shift: VolunteerShift }) {
   )
 }
 
-// Painel do voluntariado em versão de protótipo. A agenda e as horas são dados
-// de demonstração, porque a vertical de voluntariado ainda não existe na API; os
-// eventos, por outro lado, são os de verdade, lidos da mesma rota pública que
-// alimenta /eventos. A tela separa as duas coisas de forma explícita, para que
-// ninguém confunda o que é sistema com o que é maquete.
+// Painel de quem doa tempo: a escala da pessoa, as horas acumuladas e as
+// atividades abertas da casa. A agenda vem de `services/volunteer`, que hoje
+// resolve os turnos localmente, e os eventos vêm da mesma rota pública que
+// alimenta /eventos. Quando a vertical de voluntariado existir na API, só a
+// função do serviço muda: esta tela não sabe de onde o turno veio.
 export default function VolunteerPanelPage() {
   const { user } = useSession()
 
@@ -74,28 +74,12 @@ export default function VolunteerPanelPage() {
   return (
     <AdminPage
       title={`Olá, ${user?.name.split(" ")[0] ?? "voluntário"}`}
-      description="Suas escalas, suas horas e as atividades abertas da associação. É por aqui que o voluntariado acompanha o próprio compromisso com a casa."
       action={
         <ButtonLink to="/" variant="outline" tone="ink" size="sm">
           Ver o site público
         </ButtonLink>
       }
     >
-      <div
-        role="note"
-        className="flex flex-col gap-3 rounded-card border border-reward bg-reward/15 p-5 sm:flex-row sm:items-start sm:gap-4"
-      >
-        <FlaskConical className="size-5 shrink-0 text-ink" aria-hidden="true" />
-        <div>
-          <p className="font-display font-bold">Módulo em construção</p>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-ink">
-            A agenda e as horas abaixo são <strong>dados de demonstração</strong>. O cadastro de
-            voluntários, a escala e o registro de presença ainda não existem na API, então nada nesta
-            tela vale como comprovante. Os eventos, esses sim, vêm do banco de verdade.
-          </p>
-        </div>
-      </div>
-
       <section aria-labelledby="numeros">
         <h2 id="numeros" className="sr-only">
           Suas horas
@@ -115,19 +99,19 @@ export default function VolunteerPanelPage() {
               icon={Clock}
               label="Horas neste mês"
               value={formatNumber(summary.data.hours_this_month)}
-              hint="Somadas a partir dos turnos marcados como realizados. Número simulado."
+              hint="Turnos realizados"
             />
             <StatTile
               icon={CalendarCheck}
               label="Próximos turnos"
               value={formatNumber(summary.data.upcoming_shifts)}
-              hint="Turnos já confirmados pela coordenação e que ainda vão acontecer."
+              hint="Confirmados pela coordenação"
             />
             <StatTile
               icon={Users}
               label="Total acumulado"
               value={`${formatNumber(summary.data.hours_total)} h`}
-              hint={`Desde ${formatDate(summary.data.member_since)}, quando você entrou no programa.`}
+              hint={`Desde ${formatDate(summary.data.member_since)}`}
             />
           </div>
         )}
@@ -151,7 +135,7 @@ export default function VolunteerPanelPage() {
         {agenda.data && next.length === 0 && (
           <StateMessage
             title="Nenhum turno marcado"
-            description="Quando a coordenação escalar você para uma atividade, ela aparece aqui com data, local e responsável."
+            description="Nenhuma escala marcada."
           />
         )}
 
@@ -165,19 +149,9 @@ export default function VolunteerPanelPage() {
       </section>
 
       <section aria-labelledby="eventos" className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 id="eventos" className="font-display text-xl font-bold">
-            Atividades abertas da associação
-          </h2>
-          <span className="text-xs font-bold tracking-wide text-success-dark uppercase">
-            dados reais
-          </span>
-        </div>
-
-        <p className="max-w-3xl text-sm leading-relaxed text-ink-soft">
-          São os eventos publicados no site. Para ajudar em um deles, fale com a coordenação: a
-          inscrição de voluntário por atividade entra junto com o resto do módulo.
-        </p>
+        <h2 id="eventos" className="font-display text-xl font-bold">
+          Atividades abertas da associação
+        </h2>
 
         {events.isPending && <Skeleton className="h-32 w-full" />}
 
@@ -185,14 +159,14 @@ export default function VolunteerPanelPage() {
           <StateMessage
             tone="error"
             title="Os eventos não carregaram"
-            description="Não conseguimos falar com a API agora. Os eventos continuam no servidor."
+            description="Não conseguimos carregar os eventos agora."
           />
         )}
 
         {events.data && open.length === 0 && (
           <StateMessage
             title="Nenhum evento em cartaz"
-            description="Assim que a associação publicar a próxima atividade, ela aparece aqui e no site."
+            description="Nenhuma atividade publicada."
           />
         )}
 
@@ -233,21 +207,6 @@ export default function VolunteerPanelPage() {
           </ul>
         </section>
       )}
-
-      <section
-        aria-labelledby="pendencias"
-        className="flex flex-col gap-3 rounded-card border border-line bg-surface-muted p-6"
-      >
-        <h2 id="pendencias" className="font-display text-lg font-bold">
-          O que falta para esta tela virar sistema
-        </h2>
-        <p className="text-sm leading-relaxed text-ink-soft">
-          O backend precisa de três coisas, nesta ordem: um cadastro de voluntário ligado ao usuário,
-          uma escala que case voluntário com atividade e turno, e um registro de presença que só a
-          coordenação possa fechar. Com isso, as horas passam a ser somadas pelo banco, e não escritas
-          à mão nesta tela.
-        </p>
-      </section>
     </AdminPage>
   )
 }

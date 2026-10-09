@@ -1,4 +1,4 @@
-import { Clock, LinkIcon, TriangleAlert } from "lucide-react"
+import { Clock, Info, LinkIcon, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
 import { TYPE_LABEL } from "../../components/admin/transaction-labels"
@@ -6,7 +6,6 @@ import { DataList } from "../../components/admin/data-list"
 import type { Column } from "../../components/admin/data-list"
 import { TransactionActionDialog } from "../../components/admin/transaction-action-dialog"
 import { Button } from "../../components/ui/button"
-import { Prose } from "../../components/ui/prose"
 import { Skeleton, StateMessage } from "../../components/ui/states"
 import { useAdminTransactions } from "../../hooks/use-admin-transactions"
 import type { AdminTransaction } from "../../services/admin/list-transactions-service"
@@ -83,7 +82,6 @@ export default function ReconciliationPage() {
   return (
     <AdminPage
       title="Reconciliação"
-      description="Pagamentos que ficaram no meio do caminho. Nada aqui é corrigido sozinho: a tela mostra o que travou e deixa a decisão com você."
     >
       {loading && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -119,19 +117,19 @@ export default function ReconciliationPage() {
             icon={LinkIcon}
             label="Sem link de pagamento"
             value={String(orphans.length)}
-            hint="A transação foi gravada, mas o checkout nunca chegou a existir. Nada foi cobrado."
+            hint="Nada foi cobrado"
           />
           <StatTile
             icon={Clock}
             label={`Paradas há ${STALE_DAYS}+ dias`}
             value={String(stale.length)}
-            hint="Têm link de pagamento e continuam pendentes. Podem ser boletos ainda não compensados."
+            hint="Com link, ainda pendentes"
           />
           <StatTile
             icon={TriangleAlert}
             label="Aguardando gateway"
             value={String(awaiting.data.total)}
-            hint="O gateway avisou que está processando e ainda não deu a palavra final."
+            hint="O gateway ainda processa"
           />
         </div>
       )}
@@ -141,19 +139,12 @@ export default function ReconciliationPage() {
           <h2 id="orfaos" className="font-display text-xl font-bold">
             Sem link de pagamento
           </h2>
-          <Prose className="mt-2 text-sm sm:text-base">
-            <p>
-              A transação é gravada antes da chamada ao gateway, de propósito, porque uma chamada de
-              rede não pode segurar uma trava de linha no banco. Quando o gateway falha exatamente
-              nesse intervalo, sobra este registro: um pedido sem cobrança nenhuma associada.
-            </p>
-          </Prose>
         </div>
 
         {pending.data && orphans.length === 0 && (
           <StateMessage
             title="Nenhum pedido órfão"
-            description="Todo pedido pendente tem um link de pagamento associado. É o estado saudável desta lista."
+            description="Todo pedido pendente tem link de pagamento."
           />
         )}
 
@@ -176,19 +167,12 @@ export default function ReconciliationPage() {
           <h2 id="paradas" className="font-display text-xl font-bold">
             Paradas há {STALE_DAYS} dias ou mais
           </h2>
-          <Prose className="mt-2 text-sm sm:text-base">
-            <p>
-              Estas têm link de pagamento e continuam pendentes. Boleto demora a compensar, então
-              idade sozinha não é defeito, mas passar de uma semana costuma significar que o
-              pagamento não vai acontecer.
-            </p>
-          </Prose>
         </div>
 
         {pending.data && stale.length === 0 && (
           <StateMessage
             title="Nada parado"
-            description="Nenhum pedido pendente passou do prazo. Não há o que reconciliar por aqui hoje."
+            description="Nenhum pedido passou do prazo."
           />
         )}
 
@@ -206,23 +190,10 @@ export default function ReconciliationPage() {
         )}
       </section>
 
-      <section aria-labelledby="parcial" className="rounded-card border border-alert/50 bg-alert/10 p-6">
-        <h2 id="parcial" className="font-display text-lg font-bold">
-          Devolução parcial ainda não aparece aqui
-        </h2>
-        <Prose className="mt-2 text-sm sm:text-base">
-          <p>
-            Quando o gateway informa um estorno parcial, o webhook responde que aquilo precisa de
-            reconciliação manual, e ninguém lê essa resposta: ela fica no log do servidor. Tratar
-            devolução parcial como estorno total seria pior, porque devolveria à campanha um valor
-            que não voltou ao doador.
-          </p>
-          <p>
-            Até o backend registrar esse caso numa tabela, a conferência é feita no painel do Stripe.
-            É a única lacuna desta tela, e ela está declarada de propósito em vez de disfarçada.
-          </p>
-        </Prose>
-      </section>
+      <p role="note" className="flex items-start gap-2 rounded-tile border border-alert/50 bg-alert/10 px-4 py-3 text-sm">
+        <Info className="mt-0.5 size-4 shrink-0 text-alert-dark" aria-hidden="true" />
+        Devolução parcial é conferida no painel do gateway.
+      </p>
 
       {dialog && (
         <TransactionActionDialog

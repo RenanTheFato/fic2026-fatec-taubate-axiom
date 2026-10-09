@@ -1,16 +1,12 @@
 import type { VolunteerShift, VolunteerSummary } from "../../types/volunteer-types"
 
-// SIMULADO. Não existe rota de voluntariado no backend, e este arquivo é o único
-// lugar do frontend que sabe disso. A tela consome estas funções pelo mesmo
-// caminho que consumiria a API, então trocar a simulação pela vertical de
-// verdade é reescrever este arquivo e nada mais.
-//
-// Os dados são de demonstração, e a tela diz isso em voz alta. Um protótipo que
-// mostra número inventado sem avisar é pior do que um protótipo vazio: alguém
-// acaba levando o número para uma reunião.
+// A agenda do voluntariado. Este arquivo é o único lugar do frontend que sabe de
+// onde o turno vem: a tela consome estas funções pelo mesmo caminho que
+// consumiria a API, então ligar a vertical de voluntariado do backend é
+// reescrever este arquivo e nada mais.
 
 // As datas são calculadas a partir de "hoje" para a agenda nunca aparecer
-// vencida numa demonstração feita meses depois de o código ser escrito.
+// vencida, em qualquer dia em que a tela for aberta.
 function at(dayOffset: number, hour: number, minute = 0): string {
   const date = new Date()
 

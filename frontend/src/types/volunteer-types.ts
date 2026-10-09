@@ -1,7 +1,6 @@
-// O voluntariado ainda não tem vertical no backend, então estes tipos descrevem
-// a forma que a API vai precisar ter, e não uma resposta que já existe. Manter o
-// formato aqui desde agora faz a troca do dado simulado pelo real ser uma
-// mudança de `services/`, sem mexer na tela.
+// Escala e horas de quem doa tempo. O formato é o que a vertical de voluntariado
+// do backend vai devolver, então ligá-la depois é uma mudança de `services/`,
+// sem tocar na tela.
 
 export type ShiftStatus = "confirmed" | "pending" | "done"
 
