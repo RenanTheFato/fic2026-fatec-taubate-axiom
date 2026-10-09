@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom"
 import { CheckoutForm } from "../../components/checkout/checkout-form"
 import { PageHero } from "../../components/layout/page-hero"
 import { Reveal } from "../../components/motion/reveal"
+import { SupportersWall } from "../../components/supporter/supporters-wall"
 import { Badge } from "../../components/ui/badge"
 import { ButtonLink } from "../../components/ui/button"
 import { Container } from "../../components/ui/container"
 import { ImageSlot } from "../../components/ui/image-slot"
 import { Prose } from "../../components/ui/prose"
+import { SectionHeading } from "../../components/ui/section"
 import { Skeleton, StateMessage } from "../../components/ui/states"
 import { NotFoundError } from "../../config/errors"
 import { useEvent } from "../../hooks/use-event"
@@ -241,6 +243,33 @@ export default function EventPage() {
           </Reveal>
         </Container>
       </section>
+
+      {/* Evento gratuito não passa pelo caixa, então não tem contribuição para
+          agradecer: o mural só aparece onde há convite pago. */}
+      {!free && (
+        <section aria-labelledby="mural-evento" className="bg-surface-muted py-16 sm:py-20">
+          <Container>
+            <SectionHeading
+              id="mural-evento"
+              eyebrow="Mural do Bem"
+              title={event.status === "finished" ? "Quem esteve com a gente" : "Quem já garantiu o convite"}
+              description="Os nomes de quem apoiou este evento e pediu para aparecer aqui, em ordem aleatória."
+            />
+            <div className="mt-10">
+              <SupportersWall scope={{ kind: "event", slug: event.slug }} labelledBy="mural-evento" />
+            </div>
+            {event.campaign_id && (
+              <p className="mt-8 text-sm text-ink-soft">
+                Este evento faz parte de uma campanha, e quem apoiou aparece também no mural dela e no{" "}
+                <Link to="/mural-do-bem" className="font-bold text-primary underline underline-offset-4">
+                  Mural do Bem
+                </Link>
+                .
+              </p>
+            )}
+          </Container>
+        </section>
+      )}
     </>
   )
 }

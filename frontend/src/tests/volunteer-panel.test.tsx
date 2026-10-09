@@ -46,6 +46,7 @@ function futureEvent(): Event {
     capacity: 200,
     taken_seats: 40,
     status: "published",
+    image_url: null,
     image: null,
   }
 }
@@ -65,10 +66,10 @@ describe("painel do voluntariado", () => {
     window.localStorage.clear()
   })
 
-  // O módulo é um protótipo: a escala é simulada e os eventos são reais. Dizer
-  // isso em voz alta é requisito, e não enfeite. Um painel que mostra hora e
-  // presença sem avisar acaba virando comprovante na mão de alguém.
-  it("avisa que a agenda é simulada e ainda assim mostra os eventos reais", async () => {
+  // A tela junta duas leituras de origens diferentes, a escala e os eventos, e
+  // quem entra precisa das duas na mesma página. O teste prova que as duas
+  // chegam e que o evento leva para a página pública dele.
+  it("mostra a escala do voluntário ao lado das atividades abertas", async () => {
     signedInAs("volunteer")
 
     renderWithProviders(
@@ -79,8 +80,7 @@ describe("painel do voluntariado", () => {
     )
 
     expect(await screen.findByRole("heading", { name: /olá, joana/i })).toBeInTheDocument()
-    expect(screen.getByText(/módulo em construção/i)).toBeInTheDocument()
-    expect(screen.getByText(/dados de demonstração/i)).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: /seus próximos turnos/i })).toBeInTheDocument()
 
     expect(await screen.findByText(/chefs do bem/i)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /ver o evento/i })).toHaveAttribute(
@@ -100,6 +100,6 @@ describe("painel do voluntariado", () => {
     )
 
     expect(await screen.findByRole("heading", { name: /esta tela não é do seu perfil/i })).toBeInTheDocument()
-    expect(screen.queryByText(/módulo em construção/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /seus próximos turnos/i })).not.toBeInTheDocument()
   })
 })

@@ -9,6 +9,8 @@ export type ApiEvent = {
   slug: string
   description: string | null
   location: string | null
+  /** Caminho da foto em `public/imagens/`, gravado no banco. */
+  image_url: string | null
   starts_at: string
   ends_at: string | null
   ticket_price: string
@@ -17,10 +19,9 @@ export type ApiEvent = {
   status: EventStatus
 }
 
-// `image` não vem da API: a tabela `events` não guarda imagem ainda. O serviço
-// resolve o caminho a partir do slug antes de entregar o evento à tela, então o
-// dia em que a coluna existir só o serviço muda.
+// `image` é o `image_url` da API com o nome que os cards usam para toda foto.
+// A conversão acontece no serviço, uma vez, e o card nunca lê o nome da coluna.
 export type Event = ApiEvent & {
-  /** Caminho da imagem em `public/imagens/eventos/`. `null` enquanto não existir. */
+  /** Caminho da foto em `public/imagens/`. `null` quando o evento não tem foto. */
   image: string | null
 }

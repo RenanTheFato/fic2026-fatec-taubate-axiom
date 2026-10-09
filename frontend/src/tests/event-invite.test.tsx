@@ -4,9 +4,14 @@ import EventPage from "../pages/public/event-page"
 import type { Event } from "../types/event-types"
 import { renderWithProviders } from "./utils/render-with-providers"
 
-const { getEventBySlug } = vi.hoisted(() => ({ getEventBySlug: vi.fn() }))
+const { getEventBySlug, listSupporters } = vi.hoisted(() => ({ getEventBySlug: vi.fn(), listSupporters: vi.fn() }))
 
 vi.mock("../services/event/get-event-by-slug-service", () => ({ getEventBySlug }))
+
+vi.mock("../services/supporter/list-supporters-service", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  listSupporters,
+}))
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>()
@@ -29,6 +34,7 @@ function event(overrides: Partial<Event> = {}): Event {
     capacity: 300,
     taken_seats: 6,
     status: "published",
+    image_url: null,
     image: null,
     ...overrides,
   }
@@ -37,6 +43,19 @@ function event(overrides: Partial<Event> = {}): Event {
 describe("convite de evento", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    listSupporters.mockResolvedValue({ supporters: [{ name: "Ana Lima" }], total: 1, contributors: 3, seed: "abc123" })
+  })
+
+  it("agradece no mural quem apoiou o evento, pelo nome e sem valor", async () => {
+    getEventBySlug.mockResolvedValue(event())
+
+    renderWithProviders(<EventPage />, "/eventos/chefs-do-bem-6a-edicao")
+
+    const wall = await screen.findByRole("list", { name: /quem já garantiu o convite/i })
+    expect(wall).toHaveTextContent("Ana Lima")
+    expect(wall).not.toHaveTextContent(/R\$/)
+    expect(screen.getByText(/3 pessoas e empresas apoiaram, e 1 pediu para ter o nome aqui/i)).toBeInTheDocument()
+    expect(listSupporters).toHaveBeenCalledWith({ kind: "event", slug: "chefs-do-bem-6a-edicao" }, 1, null)
   })
 
   // Regra travada: `ConfirmTransactionService` debita a vaga em unidade, então

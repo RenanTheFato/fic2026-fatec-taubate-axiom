@@ -1,6 +1,5 @@
 import { api } from "../../config/api"
 import type { ApiEvent, Event } from "../../types/event-types"
-import { resolveEventImage } from "./event-image"
 
 type ListEventsResponse = {
   events: ApiEvent[]
@@ -20,7 +19,7 @@ export async function listEvents(limit = 50): Promise<EventList> {
   const { data } = await api.get<ListEventsResponse>("/event/list", { params: { limit } })
 
   return {
-    events: data.events.map((event) => ({ ...event, image: resolveEventImage(event.slug) })),
+    events: data.events.map((event) => ({ ...event, image: event.image_url })),
     total: data.total,
   }
 }
