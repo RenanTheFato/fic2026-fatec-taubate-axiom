@@ -33,7 +33,6 @@ export default function DashboardPage() {
   return (
     <AdminPage
       title={`Olá, ${user?.name.split(" ")[0] ?? "equipe"}`}
-      description="O resumo do que está acontecendo agora. Os números abaixo dizem sempre de que recorte são, porque soma de tela nunca é relatório."
       action={
         <ButtonLink to="/" variant="outline" tone="ink" size="sm">
           Ver o site público
@@ -58,7 +57,7 @@ export default function DashboardPage() {
             <StateMessage
               tone="error"
               title="Os números não carregaram"
-              description="Não conseguimos falar com a API agora. Os dados continuam no servidor: falhou só a leitura."
+              description="Não conseguimos carregar os números agora."
               action={
                 <button
                   type="button"
@@ -77,25 +76,25 @@ export default function DashboardPage() {
                 icon={ReceiptText}
                 label="Transações"
                 value={formatNumber(recent.data.total)}
-                hint="Total de transações registradas, em todos os estados e períodos."
+                hint="Todos os estados"
               />
               <StatTile
                 icon={Coins}
                 label="Soma desta página"
                 value={formatCurrency(sumConfirmed(recent.data.transactions))}
-                hint="Soma das confirmadas entre as 20 mais recentes. Não é a arrecadação do período."
+                hint="Confirmadas entre as 20 mais recentes"
               />
               <StatTile
                 icon={TriangleAlert}
                 label="Pendentes"
                 value={formatNumber(pending.data.total)}
-                hint="Aguardando confirmação do gateway. A reconciliação mostra as que travaram."
+                hint="Aguardando o gateway"
               />
               <StatTile
                 icon={Package}
                 label="Itens vendidos"
                 value={formatCurrency(items.data.totals.revenue)}
-                hint={`${formatNumber(items.data.totals.quantity)} unidades. Este vem somado pelo banco, então é o total de verdade.`}
+                hint={`${formatNumber(items.data.totals.quantity)} unidades`}
               />
             </div>
           )}
@@ -129,7 +128,7 @@ export default function DashboardPage() {
           {campaigns.data && campaigns.data.length === 0 && (
             <StateMessage
               title="Nenhuma campanha cadastrada"
-              description="Uma campanha dá destino à doação e mostra a meta subindo no site público."
+              description="Nenhuma campanha cadastrada."
             />
           )}
 
@@ -192,11 +191,7 @@ export default function DashboardPage() {
       {!canSeeMoney && (
         <section className="flex flex-col gap-4 rounded-card border border-line bg-surface p-6">
           <CalendarDays className="size-6 text-institutional-dark" aria-hidden="true" />
-          <h2 className="font-display text-xl font-bold">Seu acesso é de Comunicação</h2>
-          <p className="max-w-2xl text-sm leading-relaxed text-ink-soft">
-            Os números do caixa respondem ao perfil Financeiro. O que está no seu alcance é o que
-            aparece no site: campanhas, eventos e produtos.
-          </p>
+          <h2 className="font-display text-xl font-bold">Comunicação</h2>
           <div className="flex flex-wrap gap-3">
             <ButtonLink to="/admin/comunicacao/campanhas" size="sm">
               Campanhas

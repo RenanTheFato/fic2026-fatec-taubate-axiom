@@ -55,7 +55,6 @@ export default function DonorsPage() {
   return (
     <AdminPage
       title="Doadores"
-      description="Quem já doou, comprou ou patrocinou. Estes dados existem para emitir e conferir recibo, e não saem desta metade do sistema."
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -63,13 +62,13 @@ export default function DonorsPage() {
             icon={Users}
             label="Cadastrados"
             value={String(data.total)}
-            hint="Um cadastro por pessoa ou empresa, reaproveitado a cada nova transação."
+            hint="Pessoas e empresas"
           />
           <StatTile
             icon={ShieldAlert}
             label="Documento"
             value="Mascarado"
-            hint="A listagem nunca mostra o número inteiro. O documento completo fica no recibo emitido."
+            hint="Exibidos mascarados"
           />
         </div>
       )}
@@ -102,7 +101,7 @@ export default function DonorsPage() {
       {data && data.donors.length === 0 && (
         <StateMessage
           title="Nenhum doador cadastrado"
-          description="O cadastro nasce junto com a primeira doação: o formulário público coleta os dados antes do pagamento, porque o recibo sai no nome de quem declara."
+          description="Nenhum doador cadastrado."
         />
       )}
 
