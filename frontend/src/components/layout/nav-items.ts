@@ -13,7 +13,9 @@ export type NavItem = {
 // continuar se orientando. Eventos, Voluntariado e Loja entram como abas de
 // primeiro nível porque são as três coisas que a ONG pediu e que hoje não
 // existem; o que é leitura e transparência entra no dropdown Institucional,
-// que já é onde o visitante procura esse tipo de conteúdo.
+// que já é onde o visitante procura esse tipo de conteúdo. Campanhas é um
+// dropdown porque leva junto o Mural do Bem, que agradece quem apoiou todas
+// elas: o mural é a outra metade de uma campanha, e não uma página solta.
 export const MAIN_NAV: NavItem[] = [
   { label: "Home", to: "/" },
   {
@@ -25,9 +27,17 @@ export const MAIN_NAV: NavItem[] = [
       { label: "Transparência", to: "/transparencia" },
       { label: "Painel de Impacto", to: "/impacto" },
       { label: "Verificar documento", to: "/recibo/verificar" },
+      { label: "Meu certificado", to: "/certificado" },
     ],
   },
   { label: "Notícias", to: "/noticias" },
+  {
+    label: "Campanhas",
+    children: [
+      { label: "Todas as campanhas", to: "/campanhas" },
+      { label: "Mural do Bem", to: "/mural-do-bem" },
+    ],
+  },
   { label: "Eventos", to: "/eventos" },
   { label: "Parceiros", to: "/parceiros" },
   { label: "Voluntariado", to: "/voluntariado" },
@@ -47,5 +57,6 @@ export const MAIN_NAV: NavItem[] = [
 export const UTILITY_NAV: NavLink[] = [
   { label: "Transparência", to: "/transparencia" },
   { label: "Verificar documento", to: "/recibo/verificar" },
+  { label: "Meu certificado", to: "/certificado" },
   { label: "Perguntas Frequentes", to: "/perguntas-frequentes" },
 ]

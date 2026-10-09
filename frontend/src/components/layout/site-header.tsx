@@ -11,8 +11,10 @@ import { useSession } from "../../hooks/use-session"
 import { MAIN_NAV, UTILITY_NAV } from "./nav-items"
 import type { NavItem, NavLink } from "./nav-items"
 
+// Entre 1024 e 1279px os itens e o "Quero doar" não cabem com folga: a letra e
+// o espaçamento lateral encolhem ali e voltam ao tamanho cheio a partir de 1280px.
 const LINK_BASE =
-  "rounded-pill px-3 py-2 font-display text-[0.9375rem] font-bold transition-colors hover:text-primary"
+  "rounded-pill px-2 py-2 font-display text-[0.875rem] font-bold transition-colors hover:text-primary xl:px-3 xl:text-[0.9375rem]"
 
 function activeClasses({ isActive }: { isActive: boolean }) {
   return cn(LINK_BASE, isActive ? "text-primary" : "text-ink")
@@ -80,8 +82,19 @@ function NavDropdown({ label, links }: DropdownProps) {
 function renderItem(item: NavItem) {
   if (item.children) return <NavDropdown key={item.label} label={item.label} links={item.children} />
 
+  // "Home" não entra na barra do desktop: o logo ao lado já leva à home, e o
+  // menu do celular continua com o item. Com Campanhas na barra, ele era o que
+  // empurrava o "Quero doar" para fora da tela, e o container não passa de
+  // 1152px em nenhuma largura.
+  const home = item.to === "/"
+
   return (
-    <RouterNavLink key={item.label} to={item.to ?? "/"} end={item.to === "/"} className={activeClasses}>
+    <RouterNavLink
+      key={item.label}
+      to={item.to ?? "/"}
+      end={home}
+      className={(state) => cn(activeClasses(state), home && "hidden")}
+    >
       {item.label}
     </RouterNavLink>
   )
@@ -254,11 +267,11 @@ export function SiteHeader() {
         <Logo />
 
         <nav aria-label="Navegação principal" className="hidden lg:block">
-          <div className="flex items-center gap-1 xl:gap-2">{MAIN_NAV.map(renderItem)}</div>
+          <div className="flex items-center gap-1">{MAIN_NAV.map(renderItem)}</div>
         </nav>
 
         <div className="flex items-center gap-2">
-          <ButtonLink to="/doe-agora" size="md" className="hidden sm:inline-flex">
+          <ButtonLink to="/doe-agora" size="md" className="hidden shrink-0 whitespace-nowrap sm:inline-flex">
             <Heart className="size-5" aria-hidden="true" />
             Quero doar
           </ButtonLink>

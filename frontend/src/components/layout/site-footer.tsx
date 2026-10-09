@@ -10,9 +10,12 @@ const SITE_LINKS = [
   { label: "Institucional", to: "/institucional" },
   { label: "Parceiros", to: "/parceiros" },
   { label: "Notícias", to: "/noticias" },
+  { label: "Campanhas", to: "/campanhas" },
   { label: "Eventos", to: "/eventos" },
+  { label: "Mural do Bem", to: "/mural-do-bem" },
   { label: "Perguntas Frequentes", to: "/perguntas-frequentes" },
   { label: "Transparência", to: "/transparencia" },
+  { label: "Meu certificado", to: "/certificado" },
 ]
 
 // O lucide não publica mais marca de terceiro (Facebook, Instagram, YouTube),
