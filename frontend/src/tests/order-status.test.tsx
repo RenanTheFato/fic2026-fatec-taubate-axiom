@@ -54,6 +54,7 @@ describe("status do pedido", () => {
     // Sem confirmação não existe documento, então não pode existir link para ele.
     expect(screen.queryByRole("link", { name: /conferir o recibo/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /baixar em pdf/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /ver o certificado/i })).not.toBeInTheDocument()
   })
 
   it("só oferece o recibo depois de confirmada", async () => {
@@ -72,6 +73,7 @@ describe("status do pedido", () => {
     expect(await screen.findByRole("heading", { name: /obrigado\. sua contribuição chegou/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /conferir o recibo/i })).toBeInTheDocument()
     expect(screen.getByText(/2026\/000090/)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /ver o certificado/i })).toHaveAttribute("href", `/certificado/${"c".repeat(64)}`)
   })
 
   it("separa recusa de estorno, porque dizem coisas diferentes", async () => {

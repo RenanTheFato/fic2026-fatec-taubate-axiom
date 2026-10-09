@@ -1,4 +1,4 @@
-import { BadgeCheck, CircleSlash, Clock, Download, Loader2, RotateCcw, ShieldCheck, XCircle } from "lucide-react"
+import { Award, BadgeCheck, CircleSlash, Clock, Download, Loader2, RotateCcw, ShieldCheck, XCircle } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useState } from "react"
 import { useParams, useSearchParams } from "react-router-dom"
@@ -248,6 +248,13 @@ export default function OrderStatusPage() {
                     >
                       <Download className="size-4" aria-hidden="true" />
                       Baixar em PDF
+                    </ButtonLink>
+                    {/* O certificado é a peça para guardar e mostrar: a segunda via
+                        abre na tela, com a cara da campanha ou do evento, e de lá a
+                        pessoa baixa ou imprime. */}
+                    <ButtonLink to={`/certificado/${data.receipt_hash}`} variant="outline" tone="ink" size="sm">
+                      <Award className="size-4" aria-hidden="true" />
+                      Ver o certificado
                     </ButtonLink>
                   </div>
                 </>
