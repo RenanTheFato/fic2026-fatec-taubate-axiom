@@ -1,6 +1,7 @@
-import { CalendarDays, Clock, MapPin, Ticket, Users } from "lucide-react"
+import { CalendarDays, Clock, MapPin, Ticket, TicketCheck, Users } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { CheckoutForm } from "../../components/checkout/checkout-form"
+import { RegistrationForm } from "../../components/event/registration-form"
 import { PageHero } from "../../components/layout/page-hero"
 import { Reveal } from "../../components/motion/reveal"
 import { SupportersWall } from "../../components/supporter/supporters-wall"
@@ -64,9 +65,9 @@ function EventFacts({ event }: { event: Event }) {
 //    em unidade (`backend/corrections.md`, item E), então comprar três convites
 //    ocuparia uma vaga só, e a interface não expõe um defeito já mapeado.
 // 2. Evento gratuito não vai para o checkout: o backend recusa uma cobrança de
-//    zero, e cobrar zero não faria sentido de qualquer forma.
-// 3. Evento lotado ou encerrado não abre formulário, porque a compra seria
-//    recusada no fim e o doador teria preenchido tudo à toa.
+//    zero. Ele tem inscrição própria, que ocupa a vaga na hora.
+// 3. Evento lotado ou encerrado não abre formulário, porque a compra ou a
+//    inscrição seria recusada no fim e a pessoa teria preenchido tudo à toa.
 function EventInvite({ event }: { event: Event }) {
   const free = Number(event.ticket_price) <= 0
   const soldOut = event.capacity !== null && event.capacity - event.taken_seats <= 0
@@ -86,24 +87,10 @@ function EventInvite({ event }: { event: Event }) {
     )
   }
 
-  if (free) {
-    return (
-      <StateMessage
-        title="Entrada gratuita"
-        description="Este encontro não tem convite pago. Fale com a associação para reservar seu lugar e ajudar a organizar os grupos."
-        action={
-          <ButtonLink to="/fale-conosco" size="sm">
-            Reservar meu lugar
-          </ButtonLink>
-        }
-      />
-    )
-  }
-
   if (soldOut) {
     return (
       <StateMessage
-        title="Convites esgotados"
+        title={free ? "Vagas esgotadas" : "Convites esgotados"}
         description="Todas as vagas desta edição foram ocupadas. Você ainda pode apoiar a associação por uma doação direta."
         action={
           <ButtonLink to="/doe-agora" size="sm">
@@ -111,6 +98,25 @@ function EventInvite({ event }: { event: Event }) {
           </ButtonLink>
         }
       />
+    )
+  }
+
+  if (free) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <TicketCheck className="size-6 text-success-dark" aria-hidden="true" />
+          <h2 className="font-display text-2xl font-extrabold">Entrada gratuita, com inscrição</h2>
+        </div>
+
+        <p className="text-sm leading-relaxed text-ink-soft">
+          Uma inscrição por pessoa. Para levar alguém, faça a inscrição dela também: é assim que o
+          lugar fica garantido para cada um. Depois de inscrito, você recebe o ingresso com o QR da
+          entrada.
+        </p>
+
+        <RegistrationForm event={event} />
+      </div>
     )
   }
 

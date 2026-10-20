@@ -1,5 +1,8 @@
-import { Megaphone, Target } from "lucide-react"
+import { Megaphone, Plus, Target } from "lucide-react"
+import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
+import { CampaignEditor } from "../../components/admin/campaign-editor"
+import { ConfirmDialog } from "../../components/admin/confirm-dialog"
 import { CampaignProgress } from "../../components/campaign/campaign-progress"
 import { Badge } from "../../components/ui/badge"
 import type { BadgeTone } from "../../components/ui/badge"
@@ -7,8 +10,9 @@ import { Button, ButtonLink } from "../../components/ui/button"
 import { Skeleton, StateMessage } from "../../components/ui/states"
 import { CheckoutError } from "../../config/errors"
 import { useAllCampaigns, useCatalogAction } from "../../hooks/use-admin-catalog"
+import { useDeleteFromCatalog } from "../../hooks/use-catalog-editor"
 import { useSession } from "../../hooks/use-session"
-import type { CampaignStatus } from "../../types/campaign-types"
+import type { Campaign, CampaignStatus } from "../../types/campaign-types"
 import { formatDate } from "../../utils/format"
 
 const STATUS: Record<CampaignStatus, { label: string; tone: BadgeTone }> = {
@@ -18,18 +22,51 @@ const STATUS: Record<CampaignStatus, { label: string; tone: BadgeTone }> = {
   cancelled: { label: "Cancelada", tone: "primary" },
 }
 
+type Editing = { mode: "new" } | { mode: "edit"; campaign: Campaign } | null
+
 // Só campanha `active` recebe transação nova, porque o backend recusa as outras. Por
 // isso publicar não é detalhe de exibição: é o que liga a campanha ao caixa.
+//
+// Editar vale para rascunho e campanha no ar. Excluir é só da administração e
+// só do rascunho, que nunca esteve no site; o que já esteve sai por
+// encerramento ou cancelamento, que guardam o histórico.
 export default function CampaignsPage() {
   const { user } = useSession()
   const { data, isPending, isError, refetch } = useAllCampaigns()
   const action = useCatalogAction()
+  const removal = useDeleteFromCatalog()
+  const [editing, setEditing] = useState<Editing>(null)
+  const [removing, setRemoving] = useState<Campaign | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
-  const canCancel = user?.role === "admin"
+  const isAdmin = user?.role === "admin"
+
+  function open(next: Editing) {
+    setNotice(null)
+    setEditing(next)
+  }
+
+  function finish(message: string) {
+    setEditing(null)
+    setNotice(message)
+  }
+
+  function closeRemoval() {
+    setRemoving(null)
+    removal.reset()
+  }
 
   return (
     <AdminPage
       title="Campanhas"
+      action={
+        editing === null && (
+          <Button size="sm" onClick={() => open({ mode: "new" })}>
+            <Plus className="size-4" aria-hidden="true" />
+            Nova campanha
+          </Button>
+        )
+      }
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -46,6 +83,17 @@ export default function CampaignsPage() {
             hint="Recebendo doações"
           />
         </div>
+      )}
+
+      {notice && <StateMessage title="Pronto" description={notice} />}
+
+      {editing && (
+        <CampaignEditor
+          key={editing.mode === "edit" ? editing.campaign.id : "nova"}
+          campaign={editing.mode === "edit" ? editing.campaign : undefined}
+          onDone={finish}
+          onCancel={() => setEditing(null)}
+        />
       )}
 
       {action.isError && (
@@ -89,6 +137,11 @@ export default function CampaignsPage() {
         <StateMessage
           title="Nenhuma campanha cadastrada"
           description="Nenhuma campanha cadastrada."
+          action={
+            <Button size="sm" onClick={() => open({ mode: "new" })}>
+              Nova campanha
+            </Button>
+          }
         />
       )}
 
@@ -116,6 +169,12 @@ export default function CampaignsPage() {
               <CampaignProgress campaign={campaign} />
 
               <div className="mt-auto flex flex-wrap gap-2 border-t border-line pt-4">
+                {(campaign.status === "draft" || campaign.status === "active") && (
+                  <Button size="sm" variant="outline" tone="ink" onClick={() => open({ mode: "edit", campaign })}>
+                    Editar
+                  </Button>
+                )}
+
                 {campaign.status === "draft" && (
                   <Button
                     size="sm"
@@ -138,7 +197,15 @@ export default function CampaignsPage() {
                   </Button>
                 )}
 
-                {canCancel && campaign.status !== "cancelled" && campaign.status !== "finished" && (
+                {/* Rascunho não se cancela: ele nunca esteve no ar, então sai
+                    por exclusão e não deixa registro de algo que não houve. */}
+                {isAdmin && campaign.status === "draft" && (
+                  <Button size="sm" variant="outline" tone="primary" onClick={() => setRemoving(campaign)}>
+                    Excluir
+                  </Button>
+                )}
+
+                {isAdmin && campaign.status === "active" && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -170,6 +237,28 @@ export default function CampaignsPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title={`Excluir "${removing.title}"?`}
+          consequence="O rascunho é apagado de vez. Ele nunca esteve no site, então nenhum link deixa de funcionar."
+          confirmLabel="Excluir rascunho"
+          pending={removal.isPending}
+          error={removal.isError ? (removal.error instanceof CheckoutError ? removal.error.message : "Não conseguimos falar com o servidor. Nada foi apagado.") : null}
+          onClose={closeRemoval}
+          onConfirm={() =>
+            removal.mutate(
+              { domain: "campaign", id: removing.id },
+              {
+                onSuccess: () => {
+                  setNotice(`"${removing.title}" foi excluída.`)
+                  closeRemoval()
+                },
+              },
+            )
+          }
+        />
       )}
     </AdminPage>
   )

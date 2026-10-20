@@ -1,6 +1,7 @@
 import { FilePen, Newspaper, PenLine, Plus } from "lucide-react"
 import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
+import { ConfirmDialog } from "../../components/admin/confirm-dialog"
 import { DataList } from "../../components/admin/data-list"
 import type { Column } from "../../components/admin/data-list"
 import { PostEditor } from "../../components/admin/post-editor"
@@ -10,7 +11,8 @@ import type { BadgeTone } from "../../components/ui/badge"
 import { Button, ButtonLink } from "../../components/ui/button"
 import { Skeleton, StateMessage } from "../../components/ui/states"
 import { CheckoutError } from "../../config/errors"
-import { useAllPosts, usePostAction } from "../../hooks/use-admin-posts"
+import { useAllPosts, useDeletePost, usePostAction } from "../../hooks/use-admin-posts"
+import { useSession } from "../../hooks/use-session"
 import type { AdminPost, NewsStatus } from "../../types/news-types"
 import { formatDate } from "../../utils/format"
 
@@ -25,11 +27,22 @@ type Editing = { mode: "new" } | { mode: "edit"; post: AdminPost } | null
 // As notícias da associação. Escrever e publicar são dois atos: o texto nasce
 // rascunho, e só "Publicar" o põe no site. O que já esteve no ar sai por
 // arquivamento, e não por exclusão, porque pode ter sido lido e compartilhado.
+// Excluir é da administração, e só do rascunho.
 export default function PostsPage() {
+  const { user } = useSession()
   const { data, isPending, isError, refetch } = useAllPosts()
   const action = usePostAction()
+  const removal = useDeletePost()
   const [editing, setEditing] = useState<Editing>(null)
+  const [removing, setRemoving] = useState<AdminPost | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+
+  const isAdmin = user?.role === "admin"
+
+  function closeRemoval() {
+    setRemoving(null)
+    removal.reset()
+  }
 
   const columns: Column<AdminPost>[] = [
     { key: "title", header: "Notícia", primary: true, cell: (row) => row.title },
@@ -185,10 +198,35 @@ export default function PostsPage() {
                     Publicar
                   </Button>
                 )}
+
+                {isAdmin && row.status === "draft" && (
+                  <Button size="sm" variant="outline" tone="primary" onClick={() => setRemoving(row)}>
+                    Excluir
+                  </Button>
+                )}
               </>
             )}
           />
         </div>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title={`Excluir "${removing.title}"?`}
+          consequence="O rascunho é apagado de vez. Ele nunca esteve no site, então nenhum link deixa de funcionar."
+          confirmLabel="Excluir rascunho"
+          pending={removal.isPending}
+          error={removal.isError ? (removal.error instanceof CheckoutError ? removal.error.message : "Não conseguimos falar com o servidor. Nada foi apagado.") : null}
+          onClose={closeRemoval}
+          onConfirm={() =>
+            removal.mutate(removing.id, {
+              onSuccess: () => {
+                setNotice(`"${removing.title}" foi excluída.`)
+                closeRemoval()
+              },
+            })
+          }
+        />
       )}
     </AdminPage>
   )

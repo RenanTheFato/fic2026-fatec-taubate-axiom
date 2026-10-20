@@ -9,13 +9,6 @@ import { Container } from "../../components/ui/container"
 import { Prose } from "../../components/ui/prose"
 import { SectionHeading } from "../../components/ui/section"
 
-const SUBJECTS = [
-  { value: "elogio", label: "Elogio" },
-  { value: "sugestao", label: "Sugestão" },
-  { value: "reclamacao", label: "Reclamação" },
-  { value: "denuncia", label: "Denúncia" },
-]
-
 export default function OmbudsmanPage() {
   return (
     <>
@@ -55,8 +48,8 @@ export default function OmbudsmanPage() {
 
             <Prose className="mt-6">
               <p>
-                A mensagem chega ao endereço da ouvidoria e é lida pela coordenação da associação.
-                Você recebe uma resposta no e-mail que informar.
+                A mensagem chega direto à coordenação da associação, e só a coordenação a lê. Você
+                recebe a resposta no e-mail que informar.
               </p>
               <p>
                 Se preferir, pode enviar sem se identificar. Nesse caso, escreva direto para o
@@ -90,9 +83,8 @@ export default function OmbudsmanPage() {
               <div className="p-6 sm:p-8">
                 <MessageForm
                   id="ouvidoria"
-                  subjects={SUBJECTS}
+                  channel="ombudsman"
                   subjectLabel="Tipo de manifestação"
-                  mailTo="contato@somosdobem.org.br"
                   submitLabel="Enviar manifestação"
                   note="Descreva o que aconteceu com o máximo de detalhe possível: data, unidade e pessoas envolvidas ajudam a apurar."
                 />

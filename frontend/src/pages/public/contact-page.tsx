@@ -8,15 +8,6 @@ import { Reveal } from "../../components/motion/reveal"
 import { Container } from "../../components/ui/container"
 import { SectionHeading } from "../../components/ui/section"
 
-const SUBJECTS = [
-  { value: "atendimento", label: "Quero atendimento para alguém" },
-  { value: "doacao", label: "Dúvida sobre doação" },
-  { value: "voluntariado", label: "Quero ser voluntário" },
-  { value: "parceria", label: "Proposta de parceria ou patrocínio" },
-  { value: "documento", label: "Pedido de documento" },
-  { value: "outro", label: "Outro assunto" },
-]
-
 export default function ContactPage() {
   return (
     <>
@@ -68,20 +59,14 @@ export default function ContactPage() {
               id="mensagem"
               eyebrow="Mensagem"
               title="Escreva para a associação"
-              description="Preencha os campos e a mensagem é montada no seu programa de e-mail."
+              description="A mensagem chega à equipe da associação, que responde no e-mail informado."
             />
           </Reveal>
 
           <Reveal delay={0.08} className="mt-10">
             <Card>
               <div className="p-6 sm:p-8">
-                <MessageForm
-                  id="contato"
-                  subjects={SUBJECTS}
-                  subjectLabel="Assunto"
-                  mailTo="contato@somosdobem.org.br"
-                  submitLabel="Enviar mensagem"
-                />
+                <MessageForm id="contato" channel="contact" subjectLabel="Assunto" submitLabel="Enviar mensagem" />
               </div>
             </Card>
           </Reveal>
