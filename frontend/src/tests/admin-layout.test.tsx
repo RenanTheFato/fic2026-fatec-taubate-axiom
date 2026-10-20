@@ -54,7 +54,7 @@ describe("menu do painel", () => {
 
     const screens = screen.getByRole("navigation", { name: /telas de comunicação/i })
     const tabs = within(screens).getAllByRole("link").map((link) => link.textContent)
-    expect(tabs).toEqual(["Campanhas", "Eventos", "Produtos", "Notícias", "Certificados"])
+    expect(tabs).toEqual(["Campanhas", "Eventos", "Produtos", "Notícias", "Certificados", "Mensagens"])
     expect(within(screens).getByRole("link", { name: /eventos/i })).toHaveAttribute("aria-current", "page")
   })
 
