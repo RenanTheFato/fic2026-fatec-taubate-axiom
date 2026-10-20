@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { actOnPost, listAllPosts, savePost } from "../services/admin/posts-service"
+import { actOnPost, deletePost, listAllPosts, savePost } from "../services/admin/posts-service"
 
 export function useAllPosts(enabled = true) {
   return useQuery({ queryKey: ["news", "all"], queryFn: listAllPosts, enabled })
@@ -25,4 +25,8 @@ export function useSavePost() {
 
 export function usePostAction() {
   return useNewsMutation(actOnPost)
+}
+
+export function useDeletePost() {
+  return useNewsMutation(deletePost)
 }
