@@ -3,6 +3,7 @@ import {
   CalendarDays,
   FileCheck2,
   HandHeart,
+  Inbox,
   LayoutDashboard,
   Megaphone,
   Newspaper,
@@ -101,6 +102,15 @@ export const ADMIN_NAV: AdminNavItem[] = [
     label: "Certificados",
     to: "/admin/comunicacao/certificados",
     icon: Award,
+    roles: ["admin", "communication"],
+    group: "Comunicação",
+  },
+  // A caixa de entrada do site. Ouvidoria e candidatura chegam só à
+  // administração; a Comunicação vê o Fale Conosco e os pedidos do mural.
+  {
+    label: "Mensagens",
+    to: "/admin/comunicacao/mensagens",
+    icon: Inbox,
     roles: ["admin", "communication"],
     group: "Comunicação",
   },

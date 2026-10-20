@@ -1,4 +1,3 @@
-import { Loader2, Save, X } from "lucide-react"
 import { useRef, useState } from "react"
 import { flushSync } from "react-dom"
 import type { FormEvent } from "react"
@@ -7,9 +6,9 @@ import { useSavePost } from "../../hooks/use-admin-posts"
 import type { PostInput } from "../../services/admin/posts-service"
 import type { AdminPost, NewsCategory } from "../../types/news-types"
 import { CATEGORY_LABEL } from "../news/news-labels"
-import { Button } from "../ui/button"
-import { Field, FieldRow, SelectInput, TextArea, TextInput } from "../ui/field"
-import { StateMessage } from "../ui/states"
+import { Field, SelectInput, TextArea, TextInput } from "../ui/field"
+import { EditorPanel } from "./editor-panel"
+import { PhotoField } from "./photo-field"
 
 type PostEditorProps = {
   /** Ausente: escrever uma notícia nova. Presente: editar esta. */
@@ -31,9 +30,6 @@ function validate(input: PostInput): Errors {
   if (input.title.trim().length < 4) found.title = "Escreva um título com pelo menos 4 letras."
   if (input.excerpt.trim().length < 10) found.excerpt = "O resumo precisa de pelo menos 10 caracteres."
   if (input.body.trim().length < 20) found.body = "O texto precisa de pelo menos 20 caracteres."
-  if (input.image_url && !/^(\/\S*|https:\/\/\S+)$/.test(input.image_url)) {
-    found.image_url = "Use um caminho do site, como /imagens/noticias/foto.jpg, ou um endereço https."
-  }
 
   return found
 }
@@ -46,7 +42,7 @@ export function PostEditor({ post, onDone, onCancel }: PostEditorProps) {
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "")
   const [body, setBody] = useState(post?.body ?? "")
   const [category, setCategory] = useState<NewsCategory>(post?.category ?? "eventos")
-  const [image, setImage] = useState(post?.image_url ?? "")
+  const [image, setImage] = useState<string | null>(post?.image_url ?? null)
   const [errors, setErrors] = useState<Errors>({})
 
   const formRef = useRef<HTMLFormElement>(null)
@@ -60,7 +56,7 @@ export function PostEditor({ post, onDone, onCancel }: PostEditorProps) {
       excerpt: excerpt.trim(),
       body: body.trim(),
       category,
-      image_url: image.trim().length > 0 ? image.trim() : null,
+      image_url: image,
     }
 
     const found = validate(input)
@@ -84,55 +80,39 @@ export function PostEditor({ post, onDone, onCancel }: PostEditorProps) {
   }
 
   return (
-    <form
-      ref={formRef}
+    <EditorPanel
+      id="editor-noticia"
+      title={post ? "Editar notícia" : "Escrever notícia"}
+      formRef={formRef}
       onSubmit={handleSubmit}
-      noValidate
-      aria-labelledby="editor-noticia"
-      className="flex flex-col gap-5 rounded-card border border-line bg-surface p-5 sm:p-6"
+      onCancel={onCancel}
+      saving={save.isPending}
+      submitLabel={post ? "Salvar alterações" : "Salvar rascunho"}
+      error={
+        save.isError
+          ? save.error instanceof CheckoutError
+            ? save.error.message
+            : "Não conseguimos falar com o servidor. O texto continua aqui, é só tentar de novo."
+          : null
+      }
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="editor-noticia" className="font-display text-xl font-bold">
-            {post ? "Editar notícia" : "Escrever notícia"}
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-tile border border-line hover:bg-surface-muted"
-        >
-          <X className="size-5" aria-hidden="true" />
-          <span className="sr-only">Fechar o editor</span>
-        </button>
-      </div>
-
       <Field id="noticia-title" label="Título" error={errors.title} required>
         {(control) => <TextInput {...control} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} />}
       </Field>
 
-      <FieldRow>
-        <Field id="noticia-category" label="Assunto" hint="Vira a aba de filtro na página de notícias." required>
-          {(control) => (
-            <SelectInput {...control} value={category} onChange={(event) => setCategory(event.target.value as NewsCategory)}>
-              {CATEGORIES.map((item) => (
-                <option key={item} value={item}>
-                  {CATEGORY_LABEL[item].label}
-                </option>
-              ))}
-            </SelectInput>
-          )}
-        </Field>
+      <Field id="noticia-category" label="Assunto" hint="Vira a aba de filtro na página de notícias." required>
+        {(control) => (
+          <SelectInput {...control} value={category} onChange={(event) => setCategory(event.target.value as NewsCategory)}>
+            {CATEGORIES.map((item) => (
+              <option key={item} value={item}>
+                {CATEGORY_LABEL[item].label}
+              </option>
+            ))}
+          </SelectInput>
+        )}
+      </Field>
 
-        <Field
-          id="noticia-image_url"
-          label="Foto de capa"
-          hint="Caminho de uma foto do site, como /imagens/noticias/foto.jpg."
-          error={errors.image_url}
-        >
-          {(control) => <TextInput {...control} value={image} onChange={(event) => setImage(event.target.value)} />}
-        </Field>
-      </FieldRow>
+      <PhotoField id="noticia-foto" value={image} onChange={setImage} ratio="16/9" hint="Foto que abre a notícia" />
 
       <Field id="noticia-excerpt" label="Resumo" hint="Uma ou duas frases. Aparece no card da home e na lista." error={errors.excerpt} required>
         {(control) => (
@@ -149,32 +129,6 @@ export function PostEditor({ post, onDone, onCancel }: PostEditorProps) {
       >
         {(control) => <TextArea {...control} rows={10} value={body} onChange={(event) => setBody(event.target.value)} />}
       </Field>
-
-      {save.isError && (
-        <StateMessage
-          tone="error"
-          title="A notícia não foi salva"
-          description={
-            save.error instanceof CheckoutError
-              ? save.error.message
-              : "Não conseguimos falar com o servidor. O texto continua aqui, é só tentar de novo."
-          }
-        />
-      )}
-
-      <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
-        <Button type="submit" disabled={save.isPending}>
-          {save.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Save className="size-4" aria-hidden="true" />
-          )}
-          {post ? "Salvar alterações" : "Salvar rascunho"}
-        </Button>
-        <Button type="button" variant="outline" tone="ink" onClick={onCancel}>
-          Cancelar
-        </Button>
-      </div>
-    </form>
+    </EditorPanel>
   )
 }
