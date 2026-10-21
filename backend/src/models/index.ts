@@ -12,6 +12,9 @@ import { TransactionItem } from "./transaction-item-model.js";
 import { Post } from "./post-model.js";
 import { CertificateAsset } from "./certificate-asset-model.js";
 import { CertificateDesign } from "./certificate-design-model.js";
+import { Photo } from "./photo-model.js";
+import { ContactMessage } from "./contact-message-model.js";
+import { Registration } from "./registration-model.js";
 
 // Identity
 
@@ -44,6 +47,16 @@ TransactionItem.belongsTo(Transaction, { foreignKey: "transaction_id", as: "tran
 Product.hasMany(TransactionItem, { foreignKey: "product_id", as: "transaction_items" })
 TransactionItem.belongsTo(Product, { foreignKey: "product_id", as: "product" })
 
+// Registration
+
+Event.hasMany(Registration, { foreignKey: "event_id", as: "registrations" })
+Registration.belongsTo(Event, { foreignKey: "event_id", as: "event" })
+
+Transaction.hasOne(Registration, { foreignKey: "transaction_id", as: "registration" })
+Registration.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
+
+Registration.belongsTo(User, { foreignKey: "checked_in_by", as: "checker" })
+
 // Receipt
 
 Transaction.hasOne(Receipt, { foreignKey: "transaction_id", as: "receipt" })
@@ -69,5 +82,13 @@ Receipt.belongsTo(CertificateDesign, { foreignKey: "certificate_design_id", as: 
 
 CertificateAsset.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" })
 
+// Photo
+
+Photo.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" })
+
+// Contact
+
+ContactMessage.belongsTo(User, { foreignKey: "resolved_by", as: "resolver" })
+
 // ReceiptSequence não tem associação: é a linha única que serializa a emissão da corrente.
-export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem, Post, CertificateAsset, CertificateDesign }
+export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem, Post, CertificateAsset, CertificateDesign, Photo, ContactMessage, Registration }

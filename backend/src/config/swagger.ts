@@ -75,6 +75,19 @@ import { listIssuedCertificatesDoc } from "../docs/certificate/list-issued-certi
 import { uploadCertificateAssetDoc } from "../docs/certificate/upload-certificate-asset.doc.js";
 import { listCertificateAssetsDoc } from "../docs/certificate/list-certificate-assets.doc.js";
 import { getCertificateAssetDoc } from "../docs/certificate/get-certificate-asset.doc.js";
+import { uploadPhotoDoc } from "../docs/photo/upload-photo.doc.js";
+import { getPhotoDoc } from "../docs/photo/get-photo.doc.js";
+import { createContactMessageDoc } from "../docs/contact/create-contact-message.doc.js";
+import { requestWallRemovalDoc } from "../docs/contact/request-wall-removal.doc.js";
+import { listContactMessagesDoc } from "../docs/contact/list-contact-messages.doc.js";
+import { resolveContactMessageDoc } from "../docs/contact/resolve-contact-message.doc.js";
+import { withdrawFromWallDoc } from "../docs/contact/withdraw-from-wall.doc.js";
+import { createRegistrationDoc } from "../docs/registration/create-registration.doc.js";
+import { getTicketDoc } from "../docs/registration/get-ticket.doc.js";
+import { listEventRegistrationsDoc } from "../docs/registration/list-event-registrations.doc.js";
+import { checkInRegistrationDoc } from "../docs/registration/check-in-registration.doc.js";
+import { undoCheckInDoc } from "../docs/registration/undo-check-in.doc.js";
+import { cancelRegistrationDoc } from "../docs/registration/cancel-registration.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -202,5 +215,21 @@ export const openApiDocument = createDocument({
     "/certificate/upload-asset": { post: toOperation(uploadCertificateAssetDoc) },
     "/certificate/list-assets": { get: toOperation(listCertificateAssetsDoc) },
     "/certificate/asset/{id}": { get: toOperation(getCertificateAssetDoc) },
+
+    "/photo/upload": { post: toOperation(uploadPhotoDoc) },
+    "/photo/{id}": { get: toOperation(getPhotoDoc) },
+
+    "/contact/create": { post: toOperation(createContactMessageDoc) },
+    "/contact/wall-removal": { post: toOperation(requestWallRemovalDoc) },
+    "/contact/list": { get: toOperation(listContactMessagesDoc) },
+    "/contact/resolve/{id}": { patch: toOperation(resolveContactMessageDoc) },
+    "/contact/withdraw-from-wall/{id}": { patch: toOperation(withdrawFromWallDoc) },
+
+    "/registration/create": { post: toOperation(createRegistrationDoc) },
+    "/registration/ticket/{code}": { get: toOperation(getTicketDoc) },
+    "/registration/list/{id}": { get: toOperation(listEventRegistrationsDoc) },
+    "/registration/check-in/{code}": { patch: toOperation(checkInRegistrationDoc) },
+    "/registration/undo-check-in/{id}": { patch: toOperation(undoCheckInDoc) },
+    "/registration/cancel/{id}": { patch: toOperation(cancelRegistrationDoc) },
   },
 })
