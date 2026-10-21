@@ -1,12 +1,17 @@
-import { ShieldAlert, Users } from "lucide-react"
+import { Plus, ShieldAlert, Users } from "lucide-react"
 import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
+import { ConfirmDialog } from "../../components/admin/confirm-dialog"
 import { DataList } from "../../components/admin/data-list"
 import type { Column } from "../../components/admin/data-list"
+import { DonorEditor } from "../../components/admin/donor-editor"
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
 import { Skeleton, StateMessage } from "../../components/ui/states"
+import { CheckoutError } from "../../config/errors"
 import { useAdminDonors } from "../../hooks/use-admin-catalog"
+import { useAnonymizeDonor } from "../../hooks/use-admin-donors"
+import { useSession } from "../../hooks/use-session"
 import type { AdminDonor } from "../../services/admin/list-donors-service"
 import { formatDate } from "../../utils/format"
 
@@ -23,9 +28,35 @@ function maskDocument(document: string | null): string {
   return `${"•".repeat(document.length - 4)}${document.slice(-4)}`
 }
 
+type Editing = { mode: "new" } | { mode: "edit"; donor: AdminDonor } | null
+
+// Corrigir cadastro e cadastrar à mão são do Financeiro. Anonimizar é da
+// administração: é o atendimento a um pedido de exclusão de dados, e não volta.
 export default function DonorsPage() {
+  const { user } = useSession()
   const [page, setPage] = useState(1)
   const { data, isPending, isError, refetch } = useAdminDonors(page)
+  const anonymize = useAnonymizeDonor()
+  const [editing, setEditing] = useState<Editing>(null)
+  const [anonymizing, setAnonymizing] = useState<AdminDonor | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+
+  const isAdmin = user?.role === "admin"
+
+  function open(next: Editing) {
+    setNotice(null)
+    setEditing(next)
+  }
+
+  function finish(message: string) {
+    setEditing(null)
+    setNotice(message)
+  }
+
+  function closeAnonymize() {
+    setAnonymizing(null)
+    anonymize.reset()
+  }
 
   const columns: Column<AdminDonor>[] = [
     { key: "name", header: "Nome", primary: true, cell: (row) => row.name },
@@ -55,6 +86,14 @@ export default function DonorsPage() {
   return (
     <AdminPage
       title="Doadores"
+      action={
+        editing === null && (
+          <Button size="sm" onClick={() => open({ mode: "new" })}>
+            <Plus className="size-4" aria-hidden="true" />
+            Cadastrar doador
+          </Button>
+        )
+      }
     >
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -71,6 +110,17 @@ export default function DonorsPage() {
             hint="Exibidos mascarados"
           />
         </div>
+      )}
+
+      {notice && <StateMessage title="Pronto" description={notice} />}
+
+      {editing && (
+        <DonorEditor
+          key={editing.mode === "edit" ? editing.donor.id : "novo"}
+          donor={editing.mode === "edit" ? editing.donor : undefined}
+          onDone={finish}
+          onCancel={() => setEditing(null)}
+        />
       )}
 
       {isPending && (
@@ -106,14 +156,49 @@ export default function DonorsPage() {
       )}
 
       {data && data.donors.length > 0 && (
-        <div className="rounded-card border-line bg-surface md:border md:p-2">
+        <div className="rounded-card border-line bg-surface lg:border lg:p-2">
           <DataList
             caption="Doadores cadastrados"
             columns={columns}
             rows={data.donors}
             rowKey={(row) => row.id}
+            breakpoint="lg"
+            actions={(row) =>
+              row.anonymized_at ? null : (
+                <>
+                  <Button size="sm" variant="outline" tone="ink" onClick={() => open({ mode: "edit", donor: row })}>
+                    Editar
+                  </Button>
+
+                  {isAdmin && (
+                    <Button size="sm" variant="outline" tone="primary" onClick={() => setAnonymizing(row)}>
+                      Anonimizar
+                    </Button>
+                  )}
+                </>
+              )
+            }
           />
         </div>
+      )}
+
+      {anonymizing && (
+        <ConfirmDialog
+          title={`Anonimizar ${anonymizing.name}?`}
+          consequence="Nome, e-mail, documento e telefone são apagados e não voltam. As doações continuam na contabilidade, sem ninguém atrás delas, e o nome sai do Mural do Bem."
+          confirmLabel="Anonimizar"
+          pending={anonymize.isPending}
+          error={anonymize.isError ? (anonymize.error instanceof CheckoutError ? anonymize.error.message : "Não conseguimos falar com o servidor. Nada foi alterado.") : null}
+          onClose={closeAnonymize}
+          onConfirm={() =>
+            anonymize.mutate(anonymizing.id, {
+              onSuccess: () => {
+                setNotice("Os dados pessoais foram apagados. O histórico de doações continua, anônimo.")
+                closeAnonymize()
+              },
+            })
+          }
+        />
       )}
 
       {data && pages > 1 && (

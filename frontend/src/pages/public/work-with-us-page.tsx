@@ -10,15 +10,6 @@ import { Container } from "../../components/ui/container"
 import { Prose } from "../../components/ui/prose"
 import { SectionHeading } from "../../components/ui/section"
 
-const SUBJECTS = [
-  { value: "clinico", label: "Área clínica e terapêutica" },
-  { value: "educacao", label: "Educação" },
-  { value: "administrativo", label: "Administrativo e financeiro" },
-  { value: "comunicacao", label: "Comunicação e captação" },
-  { value: "apoio", label: "Serviços de apoio" },
-  { value: "outra", label: "Outra área" },
-]
-
 export default function WorkWithUsPage() {
   return (
     <>
@@ -33,8 +24,8 @@ export default function WorkWithUsPage() {
           <ReadingSwitch
             simple={
               <p>
-                Quer trabalhar na associação? Mande seu currículo por e-mail. A gente guarda e chama
-                quando abrir uma vaga.
+                Quer trabalhar na associação? Mande seus dados pelo formulário. A gente guarda e
+                chama quando abrir uma vaga.
               </p>
             }
           >
@@ -59,17 +50,18 @@ export default function WorkWithUsPage() {
 
             <Prose className="mt-6">
               <p>
-                Preencha o formulário ao lado escolhendo a área em que você atua e contando um pouco
-                da sua trajetória. Ao enviar, o seu programa de e-mail abre com a mensagem pronta.
+                Preencha o formulário abaixo escolhendo a área em que você atua e contando um pouco
+                da sua trajetória. A candidatura chega direto à coordenação da associação.
               </p>
             </Prose>
 
             <p className="mt-6 flex items-start gap-3 rounded-card border border-line bg-surface-muted p-5 text-sm leading-relaxed text-ink-soft">
               <Paperclip className="mt-0.5 size-5 shrink-0 text-success-dark" aria-hidden="true" />
               <span>
-                <strong className="block font-display text-ink">Não esqueça o anexo</strong>
-                O formulário monta o texto, mas não consegue anexar arquivo por você. Anexe o
-                currículo em PDF antes de enviar o e-mail.
+                <strong className="block font-display text-ink">E o currículo?</strong>
+                O formulário recebe texto, e não arquivo. Se o currículo estiver na internet, cole o
+                link na mensagem. Se for um PDF, mande para contato@somosdobem.org.br com o seu nome
+                no assunto.
               </span>
             </p>
 
@@ -111,11 +103,10 @@ export default function WorkWithUsPage() {
               <div className="p-6 sm:p-8">
                 <MessageForm
                   id="trabalhe"
-                  subjects={SUBJECTS}
+                  channel="work"
                   subjectLabel="Área de atuação"
-                  mailTo="contato@somosdobem.org.br"
                   submitLabel="Enviar candidatura"
-                  note="Conte sua formação, sua experiência e sua disponibilidade. Lembre-se de anexar o currículo ao e-mail."
+                  note="Conte sua formação, sua experiência e sua disponibilidade."
                 />
               </div>
             </Card>

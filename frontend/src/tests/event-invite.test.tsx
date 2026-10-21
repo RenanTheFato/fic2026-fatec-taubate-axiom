@@ -84,17 +84,24 @@ describe("convite de evento", () => {
     expect(screen.getByRole("link", { name: /doar para a causa/i })).toBeInTheDocument()
   })
 
-  // Evento gratuito não vai ao checkout: o backend recusa uma cobrança de zero,
-  // e cobrar zero não faria sentido de qualquer forma.
-  it("não manda um evento gratuito para o pagamento", async () => {
+  // Evento gratuito não vai ao checkout: o backend recusa uma cobrança de zero.
+  // Ele tem inscrição própria, que ocupa a vaga na hora.
+  it("troca o pagamento pela inscrição no evento gratuito", async () => {
     getEventBySlug.mockResolvedValue(event({ ticket_price: "0.00" }))
 
     renderWithProviders(<EventPage />, "/eventos/chefs-do-bem-6a-edicao")
 
-    // "Entrada gratuita" aparece duas vezes de propósito: no selo do topo e no
-    // bloco que explica por que não há checkout.
-    expect(await screen.findAllByText(/entrada gratuita/i)).not.toHaveLength(0)
-    expect(screen.getByText(/reservar seu lugar/i)).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: /entrada gratuita, com inscrição/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /fazer minha inscrição/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /ir para o pagamento/i })).not.toBeInTheDocument()
+  })
+
+  it("fecha a inscrição quando as vagas do evento gratuito acabaram", async () => {
+    getEventBySlug.mockResolvedValue(event({ ticket_price: "0.00", capacity: 80, taken_seats: 80 }))
+
+    renderWithProviders(<EventPage />, "/eventos/chefs-do-bem-6a-edicao")
+
+    expect(await screen.findByText(/vagas esgotadas/i)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /fazer minha inscrição/i })).not.toBeInTheDocument()
   })
 })

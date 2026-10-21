@@ -1,22 +1,25 @@
-import { Boxes, Package, TrendingUp } from "lucide-react"
+import { Boxes, Package, Plus, TrendingUp } from "lucide-react"
 import { useState } from "react"
 import { AdminPage, StatTile } from "../../components/admin/admin-ui"
+import { ConfirmDialog } from "../../components/admin/confirm-dialog"
 import { DataList } from "../../components/admin/data-list"
 import type { Column } from "../../components/admin/data-list"
+import { ProductEditor } from "../../components/admin/product-editor"
 import { Badge } from "../../components/ui/badge"
 import { Button, ButtonLink } from "../../components/ui/button"
 import { Field, TextInput } from "../../components/ui/field"
 import { Skeleton, StateMessage } from "../../components/ui/states"
 import { CheckoutError } from "../../config/errors"
 import { useAllProducts, useCatalogAction, useItemSummary } from "../../hooks/use-admin-catalog"
+import { useDeleteFromCatalog } from "../../hooks/use-catalog-editor"
 import { useSession } from "../../hooks/use-session"
 import { productPath } from "../../services/product/get-product-by-sku-service"
 import type { Product } from "../../types/product-types"
 import { formatCurrency, formatNumber } from "../../utils/format"
 
-// Repor estoque é a única edição de conteúdo que o painel faz hoje, e é a que a
-// loja mais precisa: o estoque é debitado na confirmação do pagamento, então a
-// prateleira esvazia sozinha e alguém tem que enchê-la de volta.
+// Repor estoque é a edição que a loja mais pede: o estoque é debitado na
+// confirmação do pagamento, então a prateleira esvazia sozinha e alguém tem que
+// enchê-la de volta. Por isso ela mora na própria linha, e não no formulário.
 //
 // O formulário mora dentro da coluna "Estoque", e não na de ações. Ali o
 // cabeçalho da tabela já diz o que o número é, então o rótulo pode ficar só para
@@ -67,8 +70,33 @@ function StockForm({ product, disabled }: { product: Product; disabled: boolean 
   )
 }
 
+type Editing = { mode: "new" } | { mode: "edit"; product: Product } | null
+
 export default function ProductsPage() {
   const { user } = useSession()
+  const [editing, setEditing] = useState<Editing>(null)
+  const [removing, setRemoving] = useState<Product | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const removal = useDeleteFromCatalog()
+
+  // Excluir é da administração, e só do produto que nunca entrou no catálogo:
+  // nenhuma venda pode depender dele. O que já foi vendido sai por desativação.
+  const isAdmin = user?.role === "admin"
+
+  function open(next: Editing) {
+    setNotice(null)
+    setEditing(next)
+  }
+
+  function finish(message: string) {
+    setEditing(null)
+    setNotice(message)
+  }
+
+  function closeRemoval() {
+    setRemoving(null)
+    removal.reset()
+  }
 
   // A receita de itens vem de `/transaction-item/summary`, que responde a
   // `admin` e `finance`. Esta tela é da Comunicação, então para ela o número não
@@ -121,6 +149,14 @@ export default function ProductsPage() {
   return (
     <AdminPage
       title="Produtos"
+      action={
+        editing === null && (
+          <Button size="sm" onClick={() => open({ mode: "new" })}>
+            <Plus className="size-4" aria-hidden="true" />
+            Novo produto
+          </Button>
+        )
+      }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data && (
@@ -148,6 +184,17 @@ export default function ProductsPage() {
           />
         )}
       </div>
+
+      {notice && <StateMessage title="Pronto" description={notice} />}
+
+      {editing && (
+        <ProductEditor
+          key={editing.mode === "edit" ? editing.product.id : "novo"}
+          product={editing.mode === "edit" ? editing.product : undefined}
+          onDone={finish}
+          onCancel={() => setEditing(null)}
+        />
+      )}
 
       {action.isError && (
         <StateMessage
@@ -190,6 +237,11 @@ export default function ProductsPage() {
         <StateMessage
           title="Nenhum produto cadastrado"
           description="Nenhum produto cadastrado."
+          action={
+            <Button size="sm" onClick={() => open({ mode: "new" })}>
+              Novo produto
+            </Button>
+          }
         />
       )}
 
@@ -203,6 +255,10 @@ export default function ProductsPage() {
             breakpoint="xl"
             actions={(row) => (
               <>
+                <Button size="sm" variant="outline" tone="ink" onClick={() => open({ mode: "edit", product: row })}>
+                  Editar
+                </Button>
+
                 {row.active ? (
                   <Button
                     size="sm"
@@ -228,10 +284,38 @@ export default function ProductsPage() {
                     Ver na loja
                   </ButtonLink>
                 )}
+
+                {isAdmin && row.activated_at === null && (
+                  <Button size="sm" variant="outline" tone="primary" onClick={() => setRemoving(row)}>
+                    Excluir
+                  </Button>
+                )}
               </>
             )}
           />
         </div>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title={`Excluir "${removing.name}"?`}
+          consequence="O produto nunca esteve no catálogo, então nenhuma venda depende dele. O cadastro é apagado de vez."
+          confirmLabel="Excluir produto"
+          pending={removal.isPending}
+          error={removal.isError ? (removal.error instanceof CheckoutError ? removal.error.message : "Não conseguimos falar com o servidor. Nada foi apagado.") : null}
+          onClose={closeRemoval}
+          onConfirm={() =>
+            removal.mutate(
+              { domain: "product", id: removing.id },
+              {
+                onSuccess: () => {
+                  setNotice(`"${removing.name}" foi excluído.`)
+                  closeRemoval()
+                },
+              },
+            )
+          }
+        />
       )}
     </AdminPage>
   )

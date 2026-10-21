@@ -7,16 +7,17 @@ import type { User } from "../types/user-types"
 import { fillField } from "./utils/fill-field"
 import { renderWithProviders } from "./utils/render-with-providers"
 
-const { getProfile, listAllPosts, savePost, actOnPost } = vi.hoisted(() => ({
+const { getProfile, listAllPosts, savePost, actOnPost, deletePost } = vi.hoisted(() => ({
   getProfile: vi.fn(),
   listAllPosts: vi.fn(),
   savePost: vi.fn(),
   actOnPost: vi.fn(),
+  deletePost: vi.fn(),
 }))
 
 vi.mock("../services/auth/get-profile-service", () => ({ getProfile }))
 
-vi.mock("../services/admin/posts-service", () => ({ listAllPosts, savePost, actOnPost }))
+vi.mock("../services/admin/posts-service", () => ({ listAllPosts, savePost, actOnPost, deletePost }))
 
 function post(overrides: Partial<AdminPost>): AdminPost {
   return {
@@ -111,5 +112,36 @@ describe("notícias no painel", () => {
     expect(await screen.findByText(/pelo menos 4 letras/i)).toBeInTheDocument()
     await waitFor(() => expect(screen.getByLabelText(/^título/i)).toHaveFocus())
     expect(savePost).not.toHaveBeenCalled()
+  })
+
+  it("deixa só a administração excluir, e só o rascunho, depois de confirmar", async () => {
+    const user = userEvent.setup()
+    getProfile.mockResolvedValue({ ...COMMUNICATION, id: "user-2", role: "admin" })
+    deletePost.mockResolvedValue(undefined)
+
+    renderWithProviders(<PostsPage />, "/admin/comunicacao/noticias")
+
+    await screen.findAllByText("Prestação de contas do semestre")
+
+    // A notícia no ar não oferece exclusão: ela sai por arquivamento.
+    const deletions = screen.getAllByRole("button", { name: /^excluir$/i })
+    await user.click(deletions[0])
+
+    const dialog = await screen.findByRole("alertdialog", { name: /excluir "prestação de contas do semestre"/i })
+    expect(dialog).toHaveTextContent(/apagado de vez/i)
+    expect(screen.getByRole("button", { name: /^voltar$/i })).toHaveFocus()
+
+    await user.click(screen.getByRole("button", { name: /excluir rascunho/i }))
+
+    await waitFor(() => expect(deletePost).toHaveBeenCalledWith("post-1", expect.anything()))
+    expect(await screen.findByText(/foi excluída/i)).toBeInTheDocument()
+  })
+
+  it("não mostra exclusão para a Comunicação", async () => {
+    renderWithProviders(<PostsPage />, "/admin/comunicacao/noticias")
+
+    await screen.findAllByText("Prestação de contas do semestre")
+
+    expect(screen.queryByRole("button", { name: /^excluir$/i })).not.toBeInTheDocument()
   })
 })

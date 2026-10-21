@@ -28,13 +28,16 @@ A API consumida por esta interface fica em `../backend`. A visão geral do proje
 O site tem duas metades que compartilham o mesmo sistema de design, mas não o mesmo layout.
 
 **O site público** é feito para ler e decidir. Qualquer pessoa conhece a associação, acompanha
-notícias, apoia uma campanha, compra um convite ou um produto, confere a autenticidade de um recibo
-e recupera o próprio certificado de agradecimento. Navegação horizontal, uma ideia por seção.
+notícias, apoia uma campanha, compra um convite ou um produto, se inscreve num evento gratuito,
+confere a autenticidade de um recibo, recupera o próprio certificado de agradecimento e escreve
+para a associação. Navegação horizontal, uma ideia por seção.
 
 **A área da equipe** é feita para trabalhar. Depois do login, cada pessoa vê apenas os módulos do
 seu papel: o financeiro acompanha transações, reconciliação, recibos e doadores; a comunicação
-cuida de campanhas, eventos, produtos, notícias e certificados; a administração enxerga tudo.
-Menu horizontal em dois andares, tabelas densas e a tarefa em primeiro lugar.
+cadastra e edita campanhas, eventos, produtos e notícias (com troca de foto), cuida dos
+certificados, da lista de presença e do check-in dos eventos e responde as mensagens do site; a
+administração enxerga tudo. Menu horizontal em dois andares, tabelas densas e a tarefa em primeiro
+lugar.
 
 Dois recursos merecem destaque:
 
@@ -177,17 +180,19 @@ conhece. Nenhuma URL pública expõe id numérico: conteúdo é endereçado por 
 | `/transparencia` `/impacto` | Transparência e painel de impacto | conteúdo |
 | `/recibo/verificar` | Verificação pública de recibo | API |
 | `/certificado` `/certificado/:hash` | Segunda via do certificado: ver, baixar e imprimir | API |
-| `/eventos` `/eventos/:slug` | Agenda e evento, com convite e Mural do Bem | API |
+| `/eventos` `/eventos/:slug` | Agenda e evento, com convite pago ou inscrição gratuita e Mural do Bem | API |
+| `/inscricao/:codigo` | Ingresso com o QR da entrada; a equipe registra a chegada daqui | API |
 | `/loja` `/loja/:produto` | Catálogo e produto | API |
 | `/doe-agora` | Doação livre ou destinada a uma campanha | API |
 | `/campanhas` `/campanhas/:slug` | Campanhas com meta, doação e o mural de quem apoiou | API |
-| `/mural-do-bem` | Mural do Bem geral | API |
+| `/mural-do-bem` | Mural do Bem geral e o pedido de retirada do nome | API |
 | `/pedido/:transacaoId/status` | Status do pedido depois do pagamento | API |
 | `/noticias` `/noticias/:slug` | Notícias e publicação | API |
 | `/assinaturas/gerenciar/:token` | Gestão da doação mensal, sem login | conteúdo |
 | `/parceiros` | Rede de parceiros | conteúdo |
 | `/voluntariado` `/seja-voluntario` | Programa de voluntariado e cadastro | conteúdo |
-| `/perguntas-frequentes` `/fale-conosco` `/ouvidoria` `/trabalhe-conosco` `/politica-de-privacidade` | Apoio | conteúdo |
+| `/fale-conosco` `/ouvidoria` `/trabalhe-conosco` | Formulários que chegam à caixa de entrada da equipe | API |
+| `/perguntas-frequentes` `/politica-de-privacidade` | Apoio | conteúdo |
 
 Onde a coluna diz "conteúdo", o dado é resolvido por um módulo de `src/services/` em vez de uma
 rota da API, porque voluntariado, parceiros, painel de impacto e doação recorrente ainda não têm
@@ -204,13 +209,15 @@ O acesso é sempre por `/entrar`, e cada pessoa é levada para a casa do seu pap
 | `/admin/financeiro/transacoes` | Transações com filtro e ações de dinheiro | admin, finance |
 | `/admin/financeiro/reconciliacao` | Reconciliação com o gateway | admin, finance |
 | `/admin/financeiro/recibos` | Recibos emitidos | admin, finance |
-| `/admin/financeiro/doadores` | Doadores | admin, finance |
-| `/admin/comunicacao/campanhas` | Campanhas | admin, communication |
-| `/admin/comunicacao/eventos` | Eventos | admin, communication |
-| `/admin/comunicacao/produtos` | Produtos | admin, communication |
+| `/admin/financeiro/doadores` | Doadores: cadastrar, corrigir e anonimizar | admin, finance |
+| `/admin/comunicacao/campanhas` | Campanhas: cadastrar, editar, publicar, encerrar e excluir rascunho | admin, communication |
+| `/admin/comunicacao/eventos` | Eventos: cadastrar, editar, lotação, publicar, encerrar e excluir rascunho | admin, communication |
+| `/admin/comunicacao/eventos/:id/inscritos` | Lista de presença e check-in | admin, communication |
+| `/admin/comunicacao/produtos` | Produtos: cadastrar, editar, catálogo, estoque e excluir | admin, communication |
 | `/admin/comunicacao/noticias` | Notícias | admin, communication |
 | `/admin/comunicacao/certificados` | Estúdio de certificados | admin, communication |
 | `/admin/comunicacao/certificados/editor` | Editor em tela inteira | admin, communication |
+| `/admin/comunicacao/mensagens` | Caixa de entrada; ouvidoria e candidaturas só para a administração | admin, communication |
 | `/voluntario/painel` | Painel do voluntário | volunteer, admin |
 
 ## Fluxos principais
@@ -243,6 +250,28 @@ A caixa "Quero meu nome no Mural do Bem" vem **desmarcada** no checkout. O mural
 nomes que a API devolve, na ordem sorteada por ela, e o hook repete a mesma semente ao carregar
 mais nomes, para nenhuma página repetir alguém. Todo nome é o mesmo chip, sem valor, data ou
 contagem: nada no mural pode ser lido como "quem deu mais".
+
+Quem quer sair do mural pede pela própria página do Mural do Bem. O site nunca diz se o e-mail é
+de quem doou, nem que o nome já saiu: a equipe vê o pedido na caixa de entrada, com a indicação de
+que aquele e-mail aparece no mural, e faz a retirada com um clique confirmado.
+
+### Cadastro pelo painel
+
+Campanha, evento, produto, notícia e doador abrem o mesmo formulário acima da lista, com o foco no
+primeiro campo, validação no envio e o foco levado ao primeiro campo com problema. Tudo nasce em
+rascunho (ou fora do catálogo, no produto): publicar continua sendo a ação própria da lista. A foto
+de capa é enviada pelo próprio formulário, com prévia na proporção do cartão do site, e reduzida a
+1600 px no navegador antes do envio. Excluir é só da administração e só do que nunca esteve no ar,
+sempre depois de um diálogo que diz o que a ação faz.
+
+### Inscrição e check-in
+
+O evento gratuito troca o checkout por uma inscrição por pessoa, que leva direto ao ingresso. O
+convite pago ganha o ingresso na confirmação do pagamento, e a tela de status do pedido mostra o
+código. O ingresso tem um QR com o endereço da própria página: a câmera do celular da equipe abre a
+página e registra a entrada dali. No painel, a lista de presença aceita o código digitado ou colado
+pelo leitor de mão, responde na hora a ingresso repetido, cancelado ou de outro evento, e devolve o
+foco ao campo para a fila andar.
 
 ### Estúdio e segunda via do certificado
 
@@ -330,7 +359,7 @@ A carga de demonstração cria um usuário por papel, todos com a senha `Somos@2
 |---|---|---|
 | `admin@somosdobem.org.br` | administração | painel geral, financeiro e comunicação |
 | `financeiro@somosdobem.org.br` | financeiro | transações, reconciliação, recibos, doadores e estorno |
-| `comunicacao@somosdobem.org.br` | comunicação | campanhas, eventos, produtos, notícias e certificados |
+| `comunicacao@somosdobem.org.br` | comunicação | campanhas, eventos e inscritos, produtos, notícias, certificados e mensagens |
 | `voluntario@somosdobem.org.br` | voluntariado | painel próprio com escala, horas e atividades abertas |
 
 O script imprime no fim um hash válido e um cancelado para testar a página de verificação de
@@ -392,13 +421,17 @@ Todo lugar do site que espera uma imagem já está reservado na proporção fina
 `<ImageSlot>` e mostra, enquanto o arquivo não existe, a descrição da foto que deve entrar ali.
 Assim o layout não se desloca quando a imagem chega.
 
+As fotos do catálogo (campanha, evento, produto e notícia) são enviadas pelo próprio painel e
+guardadas pela API. As fotos fixas das páginas institucionais continuam sendo arquivos em `public/`.
+
 | Lugar | Caminho | Proporção |
 |---|---|---|
 | Topo da home | `public/imagens/home-hero.jpg` | 4/3 |
 | Sobre nós | `public/imagens/sobre-nos.jpg` | 4/3 |
-| Evento | `public/imagens/eventos/`, apontado em `events.image_url` | 16/9 |
-| Campanha | `public/imagens/campanhas/`, apontado em `campaigns.image_url` | 16/9 |
-| Notícia | `public/imagens/noticias/`, apontado em `posts.image_url` ou no editor de notícias | 16/9 |
+| Evento | enviada pelo painel, no formulário do evento | 16/9 |
+| Campanha | enviada pelo painel, no formulário da campanha | 16/9 |
+| Notícia | enviada pelo painel, no editor de notícias | 16/9 |
+| Produto | enviada pelo painel, no formulário do produto | 1/1 |
 | Logo de parceiro | `public/parceiros/<slug>.png` | livre, fundo transparente, altura mínima de 96px |
 | Missão (Quem somos) | `public/imagens/institucional-missao.jpg` | 4/3 |
 | História (Quem somos) | `public/imagens/institucional-historia.jpg` | 4/3 |

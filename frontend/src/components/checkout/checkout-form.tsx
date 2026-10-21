@@ -281,7 +281,7 @@ export function CheckoutForm({
         />
         <p id="checkout-public_recognition-dica" className="text-xs leading-relaxed text-ink-soft">
           Opcional. Depois da confirmação do pagamento, o nome acima aparece no mural de agradecimento
-          {" "}{wall}e no do site, em ordem aleatória e sem o valor. Para retirar, é só pedir pelo Fale Conosco.
+          {" "}{wall}e no do site, em ordem aleatória e sem o valor. Para retirar, é só pedir na página do Mural do Bem.
         </p>
       </div>
 

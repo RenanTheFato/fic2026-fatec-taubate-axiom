@@ -26,6 +26,7 @@ const ProductPage = lazy(() => import("./pages/public/product-page"))
 const StorePage = lazy(() => import("./pages/public/store-page"))
 const SubscriptionPage = lazy(() => import("./pages/public/subscription-page"))
 const SupportersPage = lazy(() => import("./pages/public/supporters-page"))
+const TicketPage = lazy(() => import("./pages/public/ticket-page"))
 const VolunteeringPage = lazy(() => import("./pages/public/volunteering-page"))
 const VolunteerSignupPage = lazy(() => import("./pages/public/volunteer-signup-page"))
 const LoginPage = lazy(() => import("./pages/public/login-page"))
@@ -40,6 +41,8 @@ const CertificateEditorPage = lazy(() => import("./pages/admin/certificate-edito
 const CertificatesPage = lazy(() => import("./pages/admin/certificates-page"))
 const DashboardPage = lazy(() => import("./pages/admin/dashboard-page"))
 const DonorsPage = lazy(() => import("./pages/admin/donors-page"))
+const EventRegistrationsPage = lazy(() => import("./pages/admin/event-registrations-page"))
+const MessagesPage = lazy(() => import("./pages/admin/messages-page"))
 const PostsPage = lazy(() => import("./pages/admin/posts-page"))
 const ProductsPage = lazy(() => import("./pages/admin/products-page"))
 const ReceiptsPage = lazy(() => import("./pages/admin/receipts-page"))
@@ -59,7 +62,7 @@ const WorkWithUsPage = lazy(() => import("./pages/public/work-with-us-page"))
 
 // Único lugar com a árvore de rotas. Os caminhos são os do frontend-plan.md, em
 // pt-BR: id numérico nunca aparece em URL pública. Conteúdo publicado é :slug,
-// documento verificável é :hash, doação recorrente é :token.
+// documento verificável é :hash, doação recorrente é :token, ingresso é :codigo.
 export default function App() {
   return (
     <>
@@ -156,6 +159,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/comunicacao/eventos/:id/inscritos"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <EventRegistrationsPage />
+              </RequireRole>
+            }
+          />
+          <Route
             path="/admin/comunicacao/produtos"
             element={
               <RequireRole roles={["admin", "communication"]}>
@@ -176,6 +187,14 @@ export default function App() {
             element={
               <RequireRole roles={["admin", "communication"]}>
                 <CertificatesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/comunicacao/mensagens"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <MessagesPage />
               </RequireRole>
             }
           />
@@ -215,6 +234,7 @@ export default function App() {
 
           <Route path="/eventos" element={<EventsPage />} />
           <Route path="/eventos/:slug" element={<EventPage />} />
+          <Route path="/inscricao/:codigo" element={<TicketPage />} />
           <Route path="/loja" element={<StorePage />} />
           <Route path="/loja/:produto" element={<ProductPage />} />
           <Route path="/doe-agora" element={<DonatePage />} />

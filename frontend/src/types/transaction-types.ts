@@ -44,6 +44,8 @@ export type TransactionStatusView = {
   /** Só existe depois de `confirmed`: antes disso não há documento nenhum. */
   receipt_hash: string | null
   receipt_number: string | null
+  /** Só no convite confirmado: abre a página do ingresso, com o QR da portaria. */
+  ticket_code: string | null
 }
 
 // O corpo de `POST /transaction/create`. Doação e patrocínio mandam `amount`;

@@ -4,7 +4,9 @@ import { ReadingModeToggle } from "../../components/layout/reading-mode-toggle"
 import { ReadingSwitch } from "../../components/layout/reading-switch"
 import { Reveal } from "../../components/motion/reveal"
 import { SupportersWall } from "../../components/supporter/supporters-wall"
+import { WallRemovalForm } from "../../components/supporter/wall-removal-form"
 import { ButtonLink } from "../../components/ui/button"
+import { Card } from "../../components/ui/card"
 import { Container } from "../../components/ui/container"
 import { SectionHeading } from "../../components/ui/section"
 
@@ -104,7 +106,7 @@ export default function SupportersPage() {
             <h2 className="font-display text-xl font-bold">Quer ver o seu nome aqui?</h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
               Ao doar, marque a opção do Mural do Bem. O nome entra depois que o pagamento é confirmado,
-              e você pode pedir a retirada a qualquer momento pelo Fale Conosco.
+              e você pode pedir a retirada a qualquer momento, no formulário abaixo.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -113,6 +115,30 @@ export default function SupportersPage() {
               Ver campanhas
             </ButtonLink>
           </div>
+        </Container>
+      </section>
+
+      {/* O caminho de volta do consentimento. Ficar no mural foi escolha da
+          pessoa, e sair também é: o pedido chega à equipe, que faz a retirada. */}
+      <section id="retirar-nome" aria-labelledby="retirar" className="border-t border-line bg-surface-muted py-16 sm:py-20">
+        <Container className="max-w-3xl">
+          <Reveal>
+            <SectionHeading
+              id="retirar"
+              eyebrow="Sua escolha"
+              title="Tirar o meu nome do mural"
+              description="O nome sai do mural do site, da campanha e do evento. A doação, o recibo e o certificado continuam valendo."
+              tone="partner"
+            />
+          </Reveal>
+
+          <Reveal delay={0.08} className="mt-10">
+            <Card>
+              <div className="p-6 sm:p-8">
+                <WallRemovalForm />
+              </div>
+            </Card>
+          </Reveal>
         </Container>
       </section>
     </>

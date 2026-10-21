@@ -33,6 +33,7 @@ function status(overrides: Partial<TransactionStatusView> = {}): TransactionStat
     created_at: "2026-09-03T12:00:00.000Z",
     receipt_hash: null,
     receipt_number: null,
+    ticket_code: null,
     ...overrides,
   }
 }
@@ -74,6 +75,34 @@ describe("status do pedido", () => {
     expect(screen.getByRole("link", { name: /conferir o recibo/i })).toBeInTheDocument()
     expect(screen.getByText(/2026\/000090/)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /ver o certificado/i })).toHaveAttribute("href", `/certificado/${"c".repeat(64)}`)
+  })
+
+  it("leva o convite confirmado ao ingresso, e a doação não ganha ingresso", async () => {
+    getTransactionStatus.mockResolvedValue(
+      status({
+        type: "ticket",
+        status: "confirmed",
+        confirmed_at: "2026-09-03T12:20:00.000Z",
+        receipt_hash: "d".repeat(64),
+        receipt_number: "2026/000091",
+        ticket_code: "7KQ2M-X9D4R",
+      }),
+    )
+
+    const { unmount } = renderWithProviders(<OrderStatusPage />, `/pedido/${TX_ID}/status`)
+
+    expect(await screen.findByRole("heading", { name: /seu convite/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /abrir o ingresso/i })).toHaveAttribute("href", "/inscricao/7KQ2M-X9D4R")
+    unmount()
+
+    getTransactionStatus.mockResolvedValue(
+      status({ status: "confirmed", confirmed_at: "2026-09-03T12:20:00.000Z", receipt_hash: "c".repeat(64), receipt_number: "2026/000090" }),
+    )
+
+    renderWithProviders(<OrderStatusPage />, `/pedido/${TX_ID}/status`)
+
+    expect(await screen.findByRole("link", { name: /conferir o recibo/i })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /abrir o ingresso/i })).not.toBeInTheDocument()
   })
 
   it("separa recusa de estorno, porque dizem coisas diferentes", async () => {

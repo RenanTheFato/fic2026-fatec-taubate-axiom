@@ -49,6 +49,16 @@ export async function actOnPost({ action, id }: PostAction): Promise<void> {
   }
 }
 
+// Apagar responde só a `admin`, e só rascunho: o que esteve no ar sai por
+// arquivamento, porque pode ter sido lido e compartilhado.
+export async function deletePost(id: string): Promise<void> {
+  try {
+    await api.delete(`/post/delete/${encodeURIComponent(id)}`)
+  } catch (error: unknown) {
+    throw refusal(error)
+  }
+}
+
 function refusal(error: unknown): unknown {
   if (axios.isAxiosError(error) && error.response) {
     const data = error.response.data as { error?: string; errors?: { message: string }[] } | undefined

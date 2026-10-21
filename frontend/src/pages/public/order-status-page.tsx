@@ -1,4 +1,4 @@
-import { Award, BadgeCheck, CircleSlash, Clock, Download, Loader2, RotateCcw, ShieldCheck, XCircle } from "lucide-react"
+import { Award, BadgeCheck, CircleSlash, Clock, Download, Loader2, RotateCcw, ShieldCheck, TicketCheck, XCircle } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useState } from "react"
 import { useParams, useSearchParams } from "react-router-dom"
@@ -257,6 +257,24 @@ export default function OrderStatusPage() {
                       Ver o certificado
                     </ButtonLink>
                   </div>
+
+                  {/* O convite pago nasce inscrito na confirmação, e é o código
+                      dele que abre o ingresso com o QR da entrada. */}
+                  {data.ticket_code && (
+                    <div className="mt-6 border-t border-line pt-6">
+                      <div className="flex items-center gap-3">
+                        <TicketCheck className="size-6 text-success-dark" aria-hidden="true" />
+                        <h2 className="font-display text-xl font-bold">Seu convite</h2>
+                      </div>
+                      <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                        Código <strong className="font-mono text-ink">{data.ticket_code}</strong>. O ingresso
+                        tem o QR que a equipe lê na entrada do evento.
+                      </p>
+                      <ButtonLink to={`/inscricao/${data.ticket_code}`} size="sm" tone="success" className="mt-4">
+                        Abrir o ingresso
+                      </ButtonLink>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
