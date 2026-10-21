@@ -10,6 +10,7 @@ import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
 import { TransactionItem } from "../../models/transaction-item-model.js";
 import { IssueReceiptService } from "../receipt/issue-receipt-service.js";
+import { IssueTicketRegistrationService } from "../registration/issue-ticket-registration-service.js";
 
 interface ConfirmTransactionProps {
   transaction_id: TransactionInterface['id'],
@@ -127,6 +128,15 @@ export class ConfirmTransactionService {
         transaction,
         database_transaction: t,
       })
+
+      // A vaga debitada acima ganha o nome de quem pagou na lista de presença, aqui dentro pelo
+      // mesmo motivo do recibo: vaga ocupada sem inscrito é estado parcial.
+      if (transaction.type === "ticket" && transaction.event_id) {
+        await new IssueTicketRegistrationService().execute({
+          transaction,
+          database_transaction: t,
+        })
+      }
 
       await TransactionAuditLog.create({
         transaction_id,

@@ -10,6 +10,9 @@ import { transactionItemRoutes } from "./transaction-item-routes.js";
 import { postRoutes } from "./post-routes.js";
 import { supporterRoutes } from "./supporter-routes.js";
 import { certificateRoutes } from "./certificate-routes.js";
+import { photoRoutes } from "./photo-routes.js";
+import { contactRoutes } from "./contact-routes.js";
+import { registrationRoutes } from "./registration-routes.js";
 
 export const routes = Router()
 
@@ -30,3 +33,6 @@ routes.use("/transaction-item", transactionItemRoutes)
 routes.use("/post", postRoutes)
 routes.use("/supporter", supporterRoutes)
 routes.use("/certificate", certificateRoutes)
+routes.use("/photo", photoRoutes)
+routes.use("/contact", contactRoutes)
+routes.use("/registration", registrationRoutes)

@@ -24,6 +24,7 @@ export const getTransactionStatusDoc = {
         receipt_hash: z.string().nullable()
           .describe("Null until the transaction is confirmed. It is what /receipt/verify/{hash} and the PDF download take."),
         receipt_number: z.string().nullable().describe("Human readable number printed on the document."),
+        ticket_code: z.string().nullable().describe("Code of the event registration, only for a confirmed ticket. It opens the ticket page with the check-in QR."),
       }),
     }).describe("Status fetched. A 200 says the order exists, not that it was paid: read status."),
 

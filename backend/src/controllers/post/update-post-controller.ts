@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { NotFoundError } from "../../config/errors.js";
 import { POST_CATEGORIES } from "../../models/post-model.js";
 import { UpdatePostService } from "../../services/post/update-post-service.js";
+import { isImageUrl } from "../../utils/image-url.js";
 
 export class UpdatePostController {
   async handle(req: Request, res: Response) {
@@ -29,7 +30,7 @@ export class UpdatePostController {
       image_url: z.string({ error: "The image url must be a string" })
         .trim()
         .max(512, { error: "The image url has exceeded the character limit (512)." })
-        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .refine(isImageUrl, { error: "The image url must be a site path, an https address or a photo uploaded to this API" })
         .nullish(),
     }).refine((post) => Object.keys(post).length > 0, {
       error: "At least one field must be provided to update the post.",

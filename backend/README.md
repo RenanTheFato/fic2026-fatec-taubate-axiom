@@ -37,7 +37,12 @@ Em linguagem direta, a API permite:
 - **Emitir recibos** numerados que qualquer pessoa consegue conferir pela internet, sem login.
 - **Desenhar certificados** de agradecimento por campanha ou evento, guardando cada versão.
 - **Publicar notícias** com rascunho, publicação e arquivamento.
-- **Manter o Mural do Bem**, que mostra o nome de quem pediu para aparecer, sem nunca revelar valores.
+- **Manter o Mural do Bem**, que mostra o nome de quem pediu para aparecer, sem nunca revelar valores,
+  e atender o pedido de quem quer sair dele.
+- **Receber inscrições em eventos**, gratuitos ou pagos, com ingresso em QR e check-in na porta.
+- **Receber as mensagens do site** (Fale Conosco, Ouvidoria, Trabalhe Conosco) numa caixa de entrada
+  da equipe, com a ouvidoria e as candidaturas restritas à administração.
+- **Guardar as fotos de capa** de campanha, evento, produto e notícia enviadas pelo painel.
 
 ## Stack
 
@@ -99,7 +104,7 @@ src/
 ├── middlewares/           autenticação e autorização por papel
 ├── interfaces/            formas das entidades, consumidas via Pick<> nos serviços
 ├── docs/<domínio>/        documentação OpenAPI como código
-├── utils/                 helpers puros e templates de PDF
+├── utils/                 helpers puros, templates de PDF, código de ingresso, regra de foto
 ├── assets/                logos, fontes livres do certificado e imagens de demonstração
 ├── scripts/               seed de demonstração e gerador da tabela de larguras de fonte
 └── tests/                 testes unitários em formato de jornada
@@ -220,6 +225,24 @@ Legenda de acesso: **público** (sem login), **autenticado** (qualquer papel) ou
 | GET | `/supporter/list` | público | Mural geral |
 | GET | `/supporter/campaign/:slug` · `/supporter/event/:slug` | público | Mural de uma campanha ou evento |
 
+### Inscrições, contato e fotos
+
+| Método | Caminho | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/registration/create` | público | Inscrição em evento gratuito; ocupa a vaga na hora |
+| GET | `/registration/ticket/:code` | público | Página do ingresso; o código é a credencial |
+| GET | `/registration/list/:id` | admin, communication | Lista de presença do evento |
+| PATCH | `/registration/check-in/:code` | admin, communication | Registra a entrada, conferindo o evento |
+| PATCH | `/registration/undo-check-in/:id` | admin, communication | Desfaz uma entrada marcada por engano |
+| PATCH | `/registration/cancel/:id` | admin, communication | Cancela inscrição gratuita e devolve a vaga |
+| POST | `/contact/create` | público | Mensagem do Fale Conosco, da Ouvidoria ou do Trabalhe Conosco |
+| POST | `/contact/wall-removal` | público | Pedido de retirada do nome do Mural do Bem |
+| GET | `/contact/list` | admin, communication | Caixa de entrada; ouvidoria e candidatura só para admin |
+| PATCH | `/contact/resolve/:id` | admin, communication | Marca a mensagem como resolvida |
+| PATCH | `/contact/withdraw-from-wall/:id` | admin, communication | Atende o pedido: tira o nome do mural |
+| POST | `/photo/upload` | admin, communication | Envio de foto de capa crua (PNG ou JPEG) |
+| GET | `/photo/:id` | público | Foto de capa, imutável |
+
 A documentação interativa completa, com corpos, parâmetros e respostas, está no Swagger UI em
 `http://localhost:3333/api-docs`, e a especificação OpenAPI bruta em
 `http://localhost:3333/openapi.json`.
@@ -314,6 +337,32 @@ Uma vitrine pública de agradecimento com garantias de privacidade por construç
 - A ordem é `SHA2(CONCAT(seed, donor_id))`: aleatória a cada visita e estável dentro da mesma
   semente, então a paginação nunca repete um nome e ninguém aparece na frente por ter doado mais.
 
+### Inscrição e check-in
+
+O evento gratuito recebe inscrição direta pelo site; o convite pago ganha a inscrição na confirmação
+do pagamento, na mesma transação de banco que debita a vaga e emite o recibo, com quem pagou como
+participante. Nos dois casos a vaga é decidida por `UPDATE` condicional, e o estorno do convite
+cancela a inscrição junto com a vaga.
+
+- **O ingresso é público e magro.** O código de dez caracteres (alfabeto de Crockford, 50 bits) é a
+  credencial: a página mostra o nome, que a portaria confere, e nunca o e-mail ou o telefone.
+- **O QR carrega o endereço da página do ingresso.** A câmera do celular da equipe abre a página e
+  registra a entrada dali; o leitor de mão digita o endereço no painel, que extrai o código.
+- **A porta trabalha um evento por vez.** O check-in recebe o evento junto com o código e recusa
+  ingresso de outro evento, inscrição cancelada e entrada repetida, com trava na linha da inscrição.
+- **Cancelar é só da inscrição gratuita.** O convite pago sai por estorno, que devolve o dinheiro.
+
+### Caixa de entrada e retirada do mural
+
+As mensagens do site ficam abertas até alguém da equipe marcá-las como resolvidas, com autor e data.
+A ouvidoria e as candidaturas só chegam à administração: a crítica não passa por quem está sendo
+criticado, e um papel que não lê o canal recebe 404, como se a mensagem não existisse.
+
+O pedido de retirada do Mural do Bem é público e nunca diz se o e-mail é de quem doou. No painel, a
+lista mostra se aquele e-mail tem nome no mural, e a retirada desmarca o consentimento em toda
+contribuição dos cadastros com o e-mail e resolve o pedido, numa transação só. Doação, recibo e
+certificado continuam valendo.
+
 ## Segurança
 
 - **Autenticação stateless** por JWT HS256 com validade de 2 horas; o middleware recarrega o usuário
@@ -386,7 +435,9 @@ O seed cria um usuário por papel, todos com a senha `Somos@2026`:
 | `voluntario@somosdobem.org.br` | `volunteer` |
 
 No fim da execução, o script imprime um hash de recibo válido e um cancelado para testar a
-verificação pública. Eles mudam a cada carga.
+verificação pública, e um código de ingresso para testar a página `/inscricao/:codigo`. Eles mudam
+a cada carga. A carga também traz inscrições coerentes com os convites confirmados, inscrições nos
+dois eventos gratuitos e mensagens nos quatro canais da caixa de entrada.
 
 > O seed executa `TRUNCATE` em todas as tabelas. Nunca o rode contra um banco com dados reais.
 

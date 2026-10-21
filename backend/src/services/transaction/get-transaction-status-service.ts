@@ -1,7 +1,9 @@
 import { NotFoundError } from "../../config/errors.js";
 import { TransactionInterface } from "../../interfaces/transaction-interface.js";
 import { Receipt } from "../../models/receipt-model.js";
+import { Registration } from "../../models/registration-model.js";
 import { Transaction } from "../../models/transaction-model.js";
+import { formatTicketCode } from "../../utils/ticket-code.js";
 
 interface GetTransactionStatusProps {
   id: TransactionInterface['id'],
@@ -32,6 +34,15 @@ export class GetTransactionStatusService {
       })
       : null
 
+    // O convite confirmado leva o código da inscrição: é por ele que o comprador chega à página do
+    // ingresso, com o QR que a portaria lê.
+    const registration = transaction.status === "confirmed" && transaction.type === "ticket"
+      ? await Registration.findOne({
+        where: { transaction_id: id },
+        attributes: ["ticket_code"],
+      })
+      : null
+
     return {
       id: transaction.id,
       type: transaction.type,
@@ -42,6 +53,7 @@ export class GetTransactionStatusService {
       created_at: transaction.created_at,
       receipt_hash: receipt ? receipt.hash : null,
       receipt_number: receipt ? receipt.number : null,
+      ticket_code: registration ? formatTicketCode(registration.ticket_code) : null,
     }
   }
 }

@@ -46,7 +46,7 @@ export const updateEventDoc = {
       .meta({ example: "Salão Paroquial, Rua das Flores 120, Sorocaba" }),
     image_url: z.string()
       .nullish()
-      .describe("Site path (/imagens/...) or https address of the cover photo.")
+      .describe("Site path (/imagens/...), https address, or the url of a photo uploaded through /photo/upload.")
       .meta({ example: "/imagens/eventos/chefs-do-bem-6a-edicao.jpg" }),
     starts_at: z.iso.datetime()
       .optional()

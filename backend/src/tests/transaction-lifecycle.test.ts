@@ -15,6 +15,7 @@ import { TransactionItem } from "../models/transaction-item-model.js";
 import { Product } from "../models/product-model.js";
 import { ReceiptSequence } from "../models/receipt-sequence-model.js";
 import { CertificateDesign } from "../models/certificate-design-model.js";
+import { Registration } from "../models/registration-model.js";
 
 const transactionId = "transaction-123"
 const userId = "user-123"
@@ -67,6 +68,9 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
     jest.spyOn(Receipt, "create").mockImplementation((async (values: Record<string, unknown>) => ({
       get: () => values,
     })) as never)
+    // O convite confirmado ganha a inscrição na mesma transação de banco, e o estorno a cancela.
+    jest.spyOn(Registration, "create").mockImplementation((async (values: Record<string, unknown>) => values) as never)
+    jest.spyOn(Registration, "update").mockResolvedValue([1] as never)
   })
 
   it("confirms a pending donation, raises the campaign total and writes the audit record", async () => {
@@ -118,6 +122,48 @@ describe("Transaction status lifecycle (pending to confirmed to refunded)", () =
       expect.objectContaining({ where: expect.objectContaining({ id: "event-1" }) })
     )
     expect(Campaign.increment).not.toHaveBeenCalled()
+
+    // A vaga paga vira nome na lista de presença, e quem pagou é quem entra.
+    expect(Registration.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_id: "event-1",
+        transaction_id: transactionId,
+        participant_name: "Maria Oliveira",
+        status: "confirmed",
+        ticket_code: expect.stringMatching(/^[0-9A-HJKMNP-TV-Z]{10}$/),
+      }),
+      expect.anything()
+    )
+  })
+
+  it("never creates a registration when the seat could not be taken", async () => {
+    foundTransaction({ status: "pending", type: "ticket", event_id: "event-1", campaign_id: null })
+    jest.spyOn(Event, "update").mockResolvedValue([0] as never)
+
+    await expect(new ConfirmTransactionService().execute({
+      transaction_id: transactionId,
+      source: "webhook",
+      performed_by: null,
+      reason: null,
+    })).rejects.toBeInstanceOf(BadRequestError)
+
+    expect(Registration.create).not.toHaveBeenCalled()
+  })
+
+  it("cancels the registration together with the seat when a ticket is refunded", async () => {
+    foundTransaction({ status: "confirmed", type: "ticket", event_id: "event-1", campaign_id: null, gateway_payment_id: "payment-abc" })
+
+    await new RefundTransactionService().execute({
+      transaction_id: transactionId,
+      source: "manual",
+      performed_by: userId,
+      reason: "Comprador não poderá ir",
+    })
+
+    expect(Registration.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "cancelled", cancelled_at: expect.any(Date) }),
+      expect.objectContaining({ where: { transaction_id: transactionId, status: "confirmed" } })
+    )
   })
 
   it("refuses the confirmation when the conditional seat update touched no row", async () => {

@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { CreateEventService } from "../../services/event/create-event-service.js";
 import { hasAtMostTwoDecimals } from "../../utils/money.js";
+import { isImageUrl } from "../../utils/image-url.js";
 
 export class CreateEventController {
   async handle(req: Request, res: Response) {
@@ -24,7 +25,7 @@ export class CreateEventController {
       image_url: z.string({ error: "The image url must be a string" })
         .trim()
         .max(512, { error: "The image url has exceeded the character limit (512)." })
-        .regex(/^(\/\S*|https:\/\/\S+)$/, { error: "The image url must be a site path or an https address" })
+        .refine(isImageUrl, { error: "The image url must be a site path, an https address or a photo uploaded to this API" })
         .nullish()
         .default(null),
       starts_at: z.coerce.date({ error: "The start date isn't a valid date." }),

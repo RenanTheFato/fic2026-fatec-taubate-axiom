@@ -46,7 +46,7 @@ export const createPostDoc = {
       .describe("Subject of the post, used by the filter tabs."),
     image_url: z.string()
       .nullish()
-      .describe("Site path (/imagens/noticias/...) or https address of the cover photo.")
+      .describe("Site path (/imagens/noticias/...), https address, or the url of a photo uploaded through /photo/upload.")
       .meta({ example: "/imagens/noticias/chefs-do-bem.png" }),
   }),
   response: {

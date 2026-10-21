@@ -38,7 +38,7 @@ export const updateCampaignDoc = {
       .meta({ example: "Arrecadação de cestas básicas para 200 famílias." }),
     image_url: z.string()
       .nullish()
-      .describe("Site path (/imagens/...) or https address of the cover photo.")
+      .describe("Site path (/imagens/...), https address, or the url of a photo uploaded through /photo/upload.")
       .meta({ example: "/imagens/campanhas/natal-do-bem-2026.jpg" }),
     goal_amount: z.number()
       .optional()

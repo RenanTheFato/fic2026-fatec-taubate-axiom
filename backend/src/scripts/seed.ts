@@ -25,6 +25,10 @@ import type { CertificateDesignSpec, CertificateElement, CertificateText } from 
 import { readImageInfo } from "../utils/image-size.js";
 import { buildReceiptHash, buildReceiptNumber, truncateToSecond } from "../utils/receipt-hash.js";
 import type { PaymentMethod, TransactionStatus, TransactionType } from "../models/transaction-model.js";
+import { Registration } from "../models/registration-model.js";
+import { ContactMessage } from "../models/contact-message-model.js";
+import type { ContactChannel, ContactStatus } from "../models/contact-message-model.js";
+import { formatTicketCode, generateTicketCode } from "../utils/ticket-code.js";
 
 // Carga de demonstração. Não é migration e não é fixture de teste: é o conteúdo com que a
 // interface é avaliada, então precisa sair do banco com as mesmas invariantes que os serviços
@@ -87,6 +91,9 @@ function money(value: number) {
 // continua sendo a das dependências para o dia em que isto virar DELETE.
 async function wipe() {
   const tables = [
+    "registrations",
+    "contact_messages",
+    "photos",
     "transaction_audit_logs",
     "receipts",
     "certificate_designs",
@@ -1328,6 +1335,239 @@ async function applySideEffects(planned: PlannedTransaction[]) {
   }
 }
 
+// Inscrições. Cada convite confirmado ganha a sua, como a confirmação real faz, com quem pagou como
+// participante; o convite estornado fica com a inscrição cancelada. Nos eventos que já aconteceram,
+// a maior parte de quem comprou passou pela porta, e é isso que a lista de presença mostra. Os dois
+// eventos gratuitos recebem inscrições diretas, que não passam pelo caixa, e a vaga é contada a
+// partir delas, como o serviço de inscrição faz.
+const FREE_REGISTRATIONS: { slug: string, count: number }[] = [
+  { slug: "dia-de-portas-abertas", count: 34 },
+  { slug: "bazar-solidario-de-primavera", count: 57 },
+]
+
+function emailFor(name: string, index: number) {
+  const local = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".")
+
+  return `${local}${index > 0 ? index : ""}@exemplo.com.br`
+}
+
+async function seedRegistrations(planned: PlannedTransaction[], events: Event[], doorkeeper: string) {
+  const rows: {
+    event_id: string,
+    transaction_id: string | null,
+    ticket_code: string,
+    participant_name: string,
+    participant_email: string,
+    participant_phone: string | null,
+    status: "confirmed" | "cancelled",
+    checked_in_at: Date | null,
+    checked_in_by: string | null,
+    cancelled_at: Date | null,
+    created_at: Date,
+    updated_at: Date,
+  }[] = []
+
+  const byId = new Map(events.map((event) => [event.id, event]))
+
+  for (const transaction of planned) {
+    if (transaction.type !== "ticket" || !transaction.event_id || !transaction.confirmed_at) {
+      continue
+    }
+
+    const event = byId.get(transaction.event_id) as Event
+    const happened = event.starts_at < NOW
+    const cameIn = !transaction.refunded_at && happened && random() < 0.88
+    const entry = new Date(event.starts_at)
+    entry.setUTCMinutes(entry.getUTCMinutes() + Math.floor(random() * 50) + 5)
+
+    rows.push({
+      event_id: event.id,
+      transaction_id: transaction.id,
+      ticket_code: generateTicketCode(),
+      participant_name: transaction.donor.name,
+      participant_email: transaction.donor.email,
+      participant_phone: transaction.donor.phone,
+      status: transaction.refunded_at ? "cancelled" : "confirmed",
+      checked_in_at: cameIn ? entry : null,
+      checked_in_by: cameIn ? doorkeeper : null,
+      cancelled_at: transaction.refunded_at,
+      created_at: transaction.confirmed_at,
+      updated_at: transaction.refunded_at ?? (cameIn ? entry : transaction.confirmed_at),
+    })
+  }
+
+  for (const free of FREE_REGISTRATIONS) {
+    const event = events.find((item) => item.slug === free.slug) as Event
+    const used = new Map<string, number>()
+    let confirmed = 0
+
+    for (let index = 0; index < free.count; index += 1) {
+      const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`
+      const repeat = used.get(name) ?? 0
+      used.set(name, repeat + 1)
+
+      const created = daysAgo(Math.floor(random() * 21) + 1, 8 + Math.floor(random() * 13))
+      const cancelled = index === 7
+
+      if (!cancelled) {
+        confirmed += 1
+      }
+
+      rows.push({
+        event_id: event.id,
+        transaction_id: null,
+        ticket_code: generateTicketCode(),
+        participant_name: name,
+        participant_email: emailFor(name, repeat),
+        participant_phone: random() < 0.6 ? `19 9${buildDocument(4)}-${buildDocument(4)}` : null,
+        status: cancelled ? "cancelled" : "confirmed",
+        checked_in_at: null,
+        checked_in_by: null,
+        cancelled_at: cancelled ? daysAgo(1, 15) : null,
+        created_at: created,
+        updated_at: cancelled ? daysAgo(1, 15) : created,
+      })
+    }
+
+    await Event.update({ taken_seats: confirmed }, { where: { id: event.id } })
+  }
+
+  await Registration.bulkCreate(rows)
+
+  return rows
+}
+
+// Mensagens. A caixa de entrada precisa mostrar os quatro canais e as duas situações: dúvida de
+// doação, pedido de atendimento, proposta de parceria já respondida, uma sugestão e um elogio na
+// ouvidoria, uma candidatura e dois pedidos de retirada do Mural do Bem, um de quem de fato aparece
+// no mural e outro de um e-mail que nunca doou. Os nomes são fictícios, como os dos doadores.
+async function seedContactMessages(planned: PlannedTransaction[], communication: string, admin: string) {
+  const listed = planned.find((transaction) =>
+    transaction.confirmed_at && !transaction.refunded_at && transaction.public_recognition && transaction.donor.document_type === "cpf"
+  )
+
+  const messages: {
+    channel: ContactChannel,
+    subject: string | null,
+    name: string,
+    email: string,
+    phone: string | null,
+    message: string | null,
+    status: ContactStatus,
+    resolved_by: string | null,
+    days: number,
+  }[] = [
+    {
+      channel: "contact",
+      subject: "doacao",
+      name: "Roberta Campos",
+      email: "roberta.campos@exemplo.com.br",
+      phone: null,
+      message: "Boa tarde. A empresa onde trabalho quer doar para o Natal do Bem e precisa do recibo com o CNPJ dela. Posso fazer a doação pelo site informando o CNPJ no lugar do CPF?",
+      status: "open",
+      resolved_by: null,
+      days: 1,
+    },
+    {
+      channel: "contact",
+      subject: "atendimento",
+      name: "Luciana Prado",
+      email: "luciana.prado@exemplo.com.br",
+      phone: "19 99712-4408",
+      message: "Meu filho tem 6 anos e foi diagnosticado com TEA no ano passado. Gostaria de saber como funciona a triagem para o Ambulatório e se há fila de espera neste momento.",
+      status: "open",
+      resolved_by: null,
+      days: 2,
+    },
+    {
+      channel: "contact",
+      subject: "voluntariado",
+      name: "Caio Mendes",
+      email: "caio.mendes@exemplo.com.br",
+      phone: null,
+      message: "Sou estudante de Educação Física e tenho as manhãs de sábado livres. Vocês aceitam voluntários para as atividades esportivas da Escola?",
+      status: "open",
+      resolved_by: null,
+      days: 4,
+    },
+    {
+      channel: "contact",
+      subject: "parceria",
+      name: "Fernanda Lobo",
+      email: "fernanda.lobo@exemplo.com.br",
+      phone: "19 3825-1190",
+      message: "Represento uma rede de padarias de Indaiatuba e queremos patrocinar a Cantata de Natal com os lanches do intervalo. Com quem posso conversar?",
+      status: "resolved",
+      resolved_by: communication,
+      days: 9,
+    },
+    {
+      channel: "ombudsman",
+      subject: "sugestao",
+      name: "Marcos Tavares",
+      email: "marcos.tavares@exemplo.com.br",
+      phone: null,
+      message: "Sugiro que o horário do Dia de Portas Abertas tenha uma sessão no fim da tarde. Muitos pais trabalham de manhã e acabam não conseguindo conhecer a sede.",
+      status: "open",
+      resolved_by: null,
+      days: 3,
+    },
+    {
+      channel: "ombudsman",
+      subject: "elogio",
+      name: "Helena Duarte",
+      email: "helena.duarte@exemplo.com.br",
+      phone: null,
+      message: "Quero agradecer a equipe da Oficina Terapêutica pelo cuidado com a minha filha durante todo o semestre. A evolução dela foi visível para a família inteira.",
+      status: "resolved",
+      resolved_by: admin,
+      days: 15,
+    },
+    {
+      channel: "work",
+      subject: "clinico",
+      name: "Juliana Faria",
+      email: "juliana.faria@exemplo.com.br",
+      phone: "19 99654-2231",
+      message: "Sou fonoaudióloga, formada há quatro anos, com experiência em atendimento infantil e comunicação alternativa. Tenho disponibilidade às terças e quintas à tarde. O currículo está em https://exemplo.com.br/juliana-faria.",
+      status: "open",
+      resolved_by: null,
+      days: 6,
+    },
+    {
+      channel: "wall_removal",
+      subject: null,
+      name: listed?.donor.name ?? "Ana Almeida",
+      email: listed?.donor.email ?? "ana.almeida@exemplo.com.br",
+      phone: null,
+      message: "Marquei a opção do mural sem perceber. Prefiro que o meu nome não apareça.",
+      status: "open",
+      resolved_by: null,
+      days: 1,
+    },
+    {
+      channel: "wall_removal",
+      subject: null,
+      name: "Paulo Henrique Rocha",
+      email: "paulo.rocha@exemplo.com.br",
+      phone: null,
+      message: null,
+      status: "open",
+      resolved_by: null,
+      days: 5,
+    },
+  ]
+
+  await ContactMessage.bulkCreate(messages.map(({ days, ...message }) => {
+    const created = daysAgo(days, 10 + Math.floor(random() * 8))
+    const resolved = message.status === "resolved" ? new Date(created.getTime() + 26 * 60 * 60 * 1000) : null
+
+    return { ...message, resolved_at: resolved, created_at: created, updated_at: resolved ?? created }
+  }))
+
+  return messages
+}
+
 // Notícias. As três primeiras são as do site atual da associação, com a data em que foram
 // publicadas lá. As outras contam os programas e as campanhas desta carga sem inventar resultado:
 // número de atendimento é dado que só a associação tem. Uma em rascunho e uma arquivada existem
@@ -1550,6 +1790,10 @@ async function run() {
   const logs = await seedAuditLogs(planned, users[1].id)
   await applySideEffects(planned)
 
+  const admin = users.find((user) => user.role === "admin") as User
+  const registrations = await seedRegistrations(planned, events, communication.id)
+  const messages = await seedContactMessages(planned, communication.id, admin.id)
+
   const listed = new Set(planned
     .filter((transaction) => transaction.confirmed_at && !transaction.refunded_at && transaction.public_recognition)
     .map((transaction) => transaction.donor.id))
@@ -1571,12 +1815,17 @@ async function run() {
   console.log(`  imagens ............. ${assets.size} na biblioteca de certificados`)
   console.log(`  certificados ........ ${designs.length} versões`)
   console.log(`  Mural do Bem ........ ${listed.size} nomes`)
+  console.log(`  inscrições .......... ${registrations.length} (${registrations.filter((row) => row.checked_in_at).length} com entrada registrada)`)
+  console.log(`  mensagens ........... ${messages.length} na caixa de entrada`)
   console.log("")
   console.log(`  senha de todos os acessos: ${PASSWORD}`)
   console.log("")
   console.log("  hashes para testar /recibo/verificar:")
   console.log(`    válido ...... ${valid[valid.length - 1]?.hash}`)
   console.log(`    cancelado ... ${cancelled[0]?.hash}`)
+  console.log("")
+  console.log("  código de inscrição para testar /inscricao/:codigo:")
+  console.log(`    ${formatTicketCode(registrations.find((row) => row.status === "confirmed" && !row.checked_in_at)?.ticket_code ?? "")}`)
   console.log("")
 
   await sequelize.close()
