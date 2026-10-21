@@ -44,10 +44,10 @@ export const updateProductDoc = {
       .optional()
       .describe("Unit price, with at most two decimal places.")
       .meta({ example: 89.90 }),
-    image_url: z.url()
+    image_url: z.string()
       .nullish()
-      .describe("Absolute url of the product image.")
-      .meta({ example: "https://cdn.somosdobem.org/produtos/camiseta.jpg" }),
+      .describe("Site path (/imagens/...), https address, or the url of a photo uploaded through /photo/upload.")
+      .meta({ example: "/imagens/loja/camiseta-branca.jpg" }),
   }),
   response: {
     200: z.object({

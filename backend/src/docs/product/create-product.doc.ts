@@ -45,10 +45,10 @@ export const createProductDoc = {
       .optional()
       .describe("Units available. Defaults to zero.")
       .meta({ example: 50 }),
-    image_url: z.url()
+    image_url: z.string()
       .nullish()
-      .describe("Absolute url of the product image.")
-      .meta({ example: "https://cdn.somosdobem.org/produtos/camiseta.jpg" }),
+      .describe("Site path (/imagens/...), https address, or the url of a photo uploaded through /photo/upload.")
+      .meta({ example: "/imagens/loja/camiseta-branca.jpg" }),
   }),
   response: {
     201: z.object({
