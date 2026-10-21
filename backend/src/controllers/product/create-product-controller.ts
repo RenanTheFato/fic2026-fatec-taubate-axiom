@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
 import { CreateProductService } from "../../services/product/create-product-service.js";
 import { hasAtMostTwoDecimals } from "../../utils/money.js";
+import { isImageUrl } from "../../utils/image-url.js";
 
 export class CreateProductController {
   async handle(req: Request, res: Response) {
@@ -31,8 +32,10 @@ export class CreateProductController {
         .max(4294967295, { error: "The stock has exceeded the allowed limit (4294967295)." })
         .optional()
         .default(0),
-      image_url: z.url({ error: "The image url isn't a valid url." })
+      image_url: z.string({ error: "The image url must be a string" })
+        .trim()
         .max(255, { error: "The image url has exceeded the character limit (255)." })
+        .refine(isImageUrl, { error: "The image url must be a site path, an https address or a photo uploaded to this API" })
         .nullish()
         .default(null),
     })
