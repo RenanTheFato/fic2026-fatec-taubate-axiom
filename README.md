@@ -34,11 +34,15 @@ A plataforma organiza esse trabalho em duas frentes que conversam entre si.
 notícias, apoiar uma campanha, comprar um convite ou um produto e pagar por PIX, cartão ou boleto.
 Depois do pagamento, a pessoa recebe um recibo que pode ser conferido pela internet e um
 certificado de agradecimento que pode ser recuperado a qualquer momento. Quem quiser pode ter o
-nome no Mural do Bem, sem que nenhum valor seja exibido.
+nome no Mural do Bem, sem que nenhum valor seja exibido, e pedir para sair dele quando quiser. O
+evento gratuito recebe inscrição pelo site, e todo participante, pagante ou não, ganha um ingresso
+com QR para a entrada. As mensagens do Fale Conosco, da Ouvidoria e do Trabalhe Conosco chegam
+direto à equipe.
 
 **Para a equipe**, um painel em que cada pessoa vê apenas o que é do seu papel. O financeiro
-acompanha transações, reconciliação, recibos e doadores. A comunicação cuida de campanhas,
-eventos, produtos, notícias e certificados. A administração enxerga tudo.
+acompanha transações, reconciliação, recibos e doadores. A comunicação cadastra e edita campanhas,
+eventos, produtos e notícias, com troca de foto, cuida dos certificados, faz o check-in dos
+eventos e responde as mensagens do site. A administração enxerga tudo, inclusive a ouvidoria.
 
 A ideia central que torna o sistema simples de manter é esta: **toda entrada de dinheiro é uma
 transação**. Doação, patrocínio, convite e produto passam pelo mesmo caminho, pelo mesmo checkout e
