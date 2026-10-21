@@ -10,6 +10,7 @@ import { Product } from "../../models/product-model.js";
 import { Transaction } from "../../models/transaction-model.js";
 import { TransactionAuditLog } from "../../models/transaction-audit-log-model.js";
 import { TransactionItem } from "../../models/transaction-item-model.js";
+import { Registration } from "../../models/registration-model.js";
 import { CancelReceiptService } from "../receipt/cancel-receipt-service.js";
 
 interface RefundTransactionProps {
@@ -64,6 +65,13 @@ export class RefundTransactionService {
         await Event.update(
           { taken_seats: literal("GREATEST(taken_seats - 1, 0)") },
           { where: { id: locked.event_id }, transaction: t }
+        )
+
+        // A inscrição sai da lista de presença junto com a vaga. É cancelada, nunca apagada,
+        // para a portaria saber por que aquele ingresso não entra.
+        await Registration.update(
+          { status: "cancelled", cancelled_at: new Date() },
+          { where: { transaction_id, status: "confirmed" }, transaction: t }
         )
       }
 
