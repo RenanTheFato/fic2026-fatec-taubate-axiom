@@ -8,6 +8,7 @@ export function mockResponse() {
   return res
 }
 
+// O Express sempre entrega `query` como objeto, mesmo sem nenhum parâmetro na URL.
 export function mockRequest(overrides: Partial<Request> = {}): Request {
-  return { body: {}, headers: {}, ...overrides } as Request
+  return { body: {}, headers: {}, query: {}, ...overrides } as Request
 }
