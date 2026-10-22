@@ -16,6 +16,7 @@ const versionSchema = z.object({
   campaign_id: z.string().nullable(),
   event_id: z.string().nullable(),
   folder: z.string().meta({ example: "campaign:0b7f5a12-9c4e-4f8a-9d2b-6a1f3e5c7d90" }),
+  variant: z.enum(["amount", "message"]).describe("amount shows the value; message carries a message in its place."),
   version: z.number(),
   label: z.string(),
   design: certificateDesignShape,
@@ -26,8 +27,8 @@ const versionSchema = z.object({
 
 export const listCertificateDesignsDoc = {
   tags: ["certificate"],
-  summary: "List the version history of a folder",
-  description: "Every version ever saved in the folder, newest first, with its author and the number of receipts issued with it. Versions are never edited: the history is complete.",
+  summary: "List the version history of one variant of a folder",
+  description: "Every version ever saved in the variant of the folder, newest first, with its author and the number of receipts issued with it. Each folder has two variants, numbered apart: amount (the certificate shows the value) and message (a message in place of the value). Versions are never edited: the history is complete.",
   security: [
     {
       bearerAuth: [],
@@ -36,6 +37,7 @@ export const listCertificateDesignsDoc = {
   query: z.object({
     scope: z.enum(["default", "campaign", "event"]).describe("Which kind of folder."),
     target_id: z.uuid().optional().describe("The campaign or event id. Omitted for the default folder."),
+    variant: z.enum(["amount", "message"]).optional().describe("Which variant. Defaults to amount."),
   }),
   response: {
     200: z.object({

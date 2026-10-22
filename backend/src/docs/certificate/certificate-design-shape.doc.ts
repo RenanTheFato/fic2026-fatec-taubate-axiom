@@ -85,7 +85,7 @@ export const certificateDesignShape = z.object({
     z.object({
       ...base,
       type: z.literal("qr"),
-      color: color.describe("Needs 4.5:1 against white. Exactly one QR per design, at least 56 points wide."),
+      color: color.describe("Recommended: 4.5:1 against white, one QR per design, at least 56 points wide. The editor warns otherwise, the API accepts it."),
     }),
-  ])).describe("Drawn in order, from the back to the front. A design needs the QR code and a text with {{codigo}}."),
+  ])).describe("Drawn in order, from the back to the front. The QR code and a text with {{codigo}} are what make the certificate verifiable; without them the editor warns, and the design is still accepted."),
 })

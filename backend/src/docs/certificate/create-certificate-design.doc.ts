@@ -16,6 +16,7 @@ const versionSchema = z.object({
   campaign_id: z.string().nullable(),
   event_id: z.string().nullable(),
   folder: z.string().meta({ example: "campaign:0b7f5a12-9c4e-4f8a-9d2b-6a1f3e5c7d90" }),
+  variant: z.enum(["amount", "message"]),
   version: z.number(),
   label: z.string(),
   design: certificateDesignShape,
@@ -27,7 +28,7 @@ const versionSchema = z.object({
 export const createCertificateDesignDoc = {
   tags: ["certificate"],
   summary: "Save a new certificate version",
-  description: "Appends the next version to the folder. Nothing is overwritten: receipts issued with an earlier version keep rendering with it. A receipt takes, when issued, the newest version of the most specific folder that has one: event, then campaign, then default.",
+  description: "Appends the next version to the variant of the folder (amount or message, numbered apart). Nothing is overwritten: receipts issued with an earlier version keep rendering with it. A receipt takes, when issued, the newest version of the most specific folder that has one: event, then campaign, then default.",
   security: [
     {
       bearerAuth: [],
@@ -37,6 +38,8 @@ export const createCertificateDesignDoc = {
     scope: z.enum(["default", "campaign", "event"]),
     target_id: z.uuid().nullish().describe("The campaign or event id. Null for the default folder."),
     label: z.string().describe("Short name of the version.").meta({ example: "Natal com enfeites dourados" }),
+    variant: z.enum(["amount", "message"]).optional()
+      .describe("Which variant the version belongs to. Defaults to amount. The editor warns when the amount variant has no {{valor}} or the message variant has one, and the version is saved either way."),
     design: certificateDesignShape,
   }),
   response: {
@@ -48,7 +51,7 @@ export const createCertificateDesignDoc = {
     400: z.union([validationErrorSchema, z.object({
       error: z.string(),
     })])
-      .describe("Bad Request: invalid design (no QR, no {{codigo}}, unreadable text over its backdrop, unknown field or character), missing image, unknown target or a concurrent save."),
+      .describe("Bad Request: malformed design (wrong shape or two elements with the same id), missing image, unknown target or a concurrent save. What the editor only warns about (contrast, the QR, {{codigo}}, {{valor}}, unknown fields or characters) never refuses a version."),
 
     401: z.object({
       error: z.string(),

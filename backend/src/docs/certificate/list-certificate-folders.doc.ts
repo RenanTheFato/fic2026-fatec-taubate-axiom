@@ -1,10 +1,20 @@
 import { z } from "zod/v4";
 import { certificateDesignShape } from "./certificate-design-shape.doc.js";
 
+const variantSummary = z.object({
+  versions: z.number(),
+  current: z.object({
+    id: z.string(),
+    version: z.number(),
+    label: z.string(),
+    created_at: z.iso.datetime(),
+  }).nullable(),
+})
+
 export const listCertificateFoldersDoc = {
   tags: ["certificate"],
   summary: "List the certificate folders",
-  description: "The default folder plus one folder per campaign and per event, whether customized or not, each with its number of versions, the current version and how many receipts were issued with any of them. Also returns the factory design, the one a receipt takes when no folder was ever customized.",
+  description: "The default folder plus one folder per campaign and per event, whether customized or not. Each folder has two variants, the certificate that shows the amount and the one with a message in its place, each with its own number of versions and current version, plus how many receipts were issued with the folder. Also returns the factory design of each variant, the one a receipt takes when no folder was ever customized.",
   security: [
     {
       bearerAuth: [],
@@ -19,16 +29,17 @@ export const listCertificateFoldersDoc = {
         target_id: z.string().nullable(),
         title: z.string(),
         status: z.string().nullable(),
-        versions: z.number(),
+        versions: z.number().describe("Versions of the two variants together."),
         issued: z.number(),
-        current: z.object({
-          id: z.string(),
-          version: z.number(),
-          label: z.string(),
-          created_at: z.iso.datetime(),
-        }).nullable(),
+        variants: z.object({
+          amount: variantSummary,
+          message: variantSummary,
+        }),
       })),
-      factory: certificateDesignShape.describe("The factory design, starting point of a folder with no version."),
+      factory: z.object({
+        amount: certificateDesignShape,
+        message: certificateDesignShape,
+      }).describe("The factory design of each variant, starting point of a variant with no version."),
     }).describe("Folders fetched."),
 
     401: z.object({
