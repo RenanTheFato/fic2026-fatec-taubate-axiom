@@ -8,7 +8,7 @@ import { TYPE_LABEL } from "../../components/admin/transaction-labels"
 import { CertificateArtboard } from "../../components/certificate/certificate-artboard"
 import type { CanvasAsset } from "../../components/certificate/certificate-artboard"
 import { sampleFields } from "../../components/certificate/certificate-design"
-import { SCOPE_LABEL, fallbackLine, folderDestination } from "../../components/certificate/certificate-labels"
+import { SCOPE_LABEL, VARIANTS, VARIANT_LABEL, fallbackLine, folderDestination, variantFromParam } from "../../components/certificate/certificate-labels"
 import { Badge } from "../../components/ui/badge"
 import { Button, ButtonLink } from "../../components/ui/button"
 import { Field, SelectInput } from "../../components/ui/field"
@@ -17,7 +17,7 @@ import { useCertificateAssets, useCertificateDesigns, useCertificateFolders, use
 import { useSession } from "../../hooks/use-session"
 import { assetUrl, issuedCertificateUrl } from "../../services/certificate/certificate-assets-service"
 import { previewCertificateVersion } from "../../services/certificate/certificate-designs-service"
-import type { CertificateFolder, CertificateVersion, IssuedCertificate } from "../../types/certificate-types"
+import type { CertificateFolder, CertificateVariant, CertificateVersion, IssuedCertificate } from "../../types/certificate-types"
 import { cn } from "../../utils/cn"
 import { formatDate, formatNumber } from "../../utils/format"
 import { openPdf } from "../../utils/open-pdf"
@@ -33,8 +33,8 @@ function folderMeta(folder: CertificateFolder): string {
   return `${versions} · ${issued}`
 }
 
-function editorLink(folder: CertificateFolder, base?: string): string {
-  return `${EDITOR}?pasta=${encodeURIComponent(folder.folder)}${base ? `&base=${base}` : ""}`
+function editorLink(folder: CertificateFolder, variant: CertificateVariant, base?: string): string {
+  return `${EDITOR}?pasta=${encodeURIComponent(folder.folder)}&variante=${VARIANT_LABEL[variant].param}${base ? `&base=${base}` : ""}`
 }
 
 type FolderListProps = {
@@ -93,12 +93,13 @@ type VersionCardProps = {
   version: CertificateVersion
   current: boolean
   folder: CertificateFolder
+  variant: CertificateVariant
   assets: Map<string, CanvasAsset>
   fields: Record<string, string>
   onPreview: (version: CertificateVersion) => void
 }
 
-function VersionCard({ version, current, folder, assets, fields, onPreview }: VersionCardProps) {
+function VersionCard({ version, current, folder, variant, assets, fields, onPreview }: VersionCardProps) {
   const issued = version.issued === 1 ? "1 recibo" : `${formatNumber(version.issued)} recibos`
 
   return (
@@ -128,7 +129,7 @@ function VersionCard({ version, current, folder, assets, fields, onPreview }: Ve
             <FileDown className="size-4" aria-hidden="true" />
             PDF
           </Button>
-          <ButtonLink to={editorLink(folder, version.id)} size="sm" variant="outline" tone="ink" ariaLabel={`Editar a partir da versão ${version.version}`}>
+          <ButtonLink to={editorLink(folder, variant, version.id)} size="sm" variant="outline" tone="ink" ariaLabel={`Editar a partir da versão ${version.version}`}>
             <Paintbrush className="size-4" aria-hidden="true" />
             Editar a partir desta
           </ButtonLink>
@@ -222,9 +223,11 @@ function IssuedList({ folder }: { folder: CertificateFolder }) {
 }
 
 // O estúdio de certificados. Cada campanha e cada evento tem uma pasta, e cada
-// pasta guarda todas as versões que o certificado dela já teve. Nada é editado
-// por cima: personalizar cria a próxima versão, e todo recibo continua saindo
-// com a versão com que nasceu.
+// pasta tem duas variações: o certificado que mostra o valor e o que leva uma
+// mensagem no lugar dele, que quem contribuiu escolhe na segunda via. Cada
+// variação guarda todas as versões que já teve. Nada é editado por cima:
+// personalizar cria a próxima versão, e todo recibo continua saindo com as
+// versões com que nasceu.
 export default function CertificatesPage() {
   const { user } = useSession()
   const [params, setParams] = useSearchParams()
@@ -234,9 +237,10 @@ export default function CertificatesPage() {
 
   const list = folders.data?.folders
   const requested = params.get("pasta") ?? "default"
+  const variant = variantFromParam(params.get("variante"))
   const folder = list?.find((item) => item.folder === requested) ?? list?.[0] ?? null
-  const designs = useCertificateDesigns(folder?.folder ?? null)
-  const defaults = useCertificateDesigns("default")
+  const designs = useCertificateDesigns(folder?.folder ?? null, variant)
+  const defaults = useCertificateDesigns("default", variant)
   const savedVersion = params.get("salvo")
 
   // Só a Administração vê a lista de emitidos: ela traz nome de doador, e esta
@@ -256,7 +260,11 @@ export default function CertificatesPage() {
   const fields = useMemo(() => sampleFields("donation", folder ? folderDestination(folder) : null), [folder])
 
   function select(next: string) {
-    setParams({ pasta: next })
+    setParams({ pasta: next, variante: VARIANT_LABEL[variant].param })
+  }
+
+  function selectVariant(next: CertificateVariant) {
+    setParams({ pasta: folder?.folder ?? "default", variante: VARIANT_LABEL[next].param })
   }
 
   async function preview(version: CertificateVersion) {
@@ -268,7 +276,8 @@ export default function CertificatesPage() {
   const totalVersions = list ? list.reduce((total, item) => total + item.versions, 0) : 0
   const totalIssued = list ? list.reduce((total, item) => total + item.issued, 0) : 0
   const current = designs.data?.[0] ?? null
-  const shown = current?.design ?? (folder?.scope === "default" ? null : defaults.data?.[0]?.design) ?? folders.data?.factory ?? null
+  const shown = current?.design ?? (folder?.scope === "default" ? null : defaults.data?.[0]?.design) ?? folders.data?.factory[variant] ?? null
+  const variantCurrent = folder?.variants[variant].current ?? null
 
   return (
     <AdminPage title="Certificados">
@@ -281,7 +290,10 @@ export default function CertificatesPage() {
       )}
 
       {savedVersion && folder && (
-        <StateMessage title={`Versão ${savedVersion} salva em ${folder.title}`} description="Vale para os próximos recibos desta pasta." />
+        <StateMessage
+          title={`Versão ${savedVersion} ${variant === "amount" ? "com valor" : "com mensagem"} salva em ${folder.title}`}
+          description="Vale para os próximos recibos desta pasta."
+        />
       )}
 
       {previewError && <StateMessage tone="error" title="A prévia não abriu" description="Tente de novo em instantes." />}
@@ -332,20 +344,45 @@ export default function CertificatesPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone={SCOPE_LABEL[folder.scope].tone}>{SCOPE_LABEL[folder.scope].label}</Badge>
-                    {folder.current && <Badge tone="success">Versão {folder.current.version} em uso</Badge>}
+                    {variantCurrent && <Badge tone="success">Versão {variantCurrent.version} em uso</Badge>}
                   </div>
                   <h2 id="pasta-atual" className="mt-3 font-display text-2xl font-extrabold break-words">
                     {folder.title}
                   </h2>
                   <p className="mt-1 text-sm text-ink-soft">
-                    {folder.current ? `"${folder.current.label}", desde ${formatDate(folder.current.created_at)}` : fallbackLine(folder.scope)}
+                    {variantCurrent ? `"${variantCurrent.label}", desde ${formatDate(variantCurrent.created_at)}` : fallbackLine(folder.scope)}
                   </p>
                 </div>
 
-                <ButtonLink to={editorLink(folder)} size="sm" className="shrink-0">
+                <ButtonLink to={editorLink(folder, variant)} size="sm" className="shrink-0">
                   <Paintbrush className="size-4" aria-hidden="true" />
-                  {folder.current ? "Personalizar" : "Criar a primeira versão"}
+                  {variantCurrent ? "Personalizar" : "Criar a primeira versão"}
                 </ButtonLink>
+              </div>
+
+              <div role="group" aria-label="Variação do certificado" className="grid gap-2 sm:grid-cols-2">
+                {VARIANTS.map((item) => {
+                  const selected = item === variant
+                  const versions = folder.variants[item].versions
+
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => selectVariant(item)}
+                      className={cn(
+                        "flex flex-col items-start gap-0.5 rounded-tile border-2 px-4 py-3 text-left transition-colors",
+                        selected ? "border-primary bg-primary-soft" : "border-line hover:border-ink-soft/40",
+                      )}
+                    >
+                      <span className="font-display text-sm font-bold">{VARIANT_LABEL[item].label}</span>
+                      <span className="text-xs text-ink-soft">
+                        {versions === 0 ? "sem personalização" : versions === 1 ? "1 versão" : `${versions} versões`}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
 
               {designs.isPending || !shown ? (
@@ -356,7 +393,7 @@ export default function CertificatesPage() {
                     design={shown}
                     assets={assets}
                     fields={fields}
-                    label={`Como o certificado de ${folder.title} sai hoje`}
+                    label={`Como o certificado ${variant === "amount" ? "com valor" : "com mensagem"} de ${folder.title} sai hoje`}
                     className="mx-auto h-auto w-full max-w-4xl rounded-tile shadow-lg"
                   />
                 </div>
@@ -365,7 +402,7 @@ export default function CertificatesPage() {
 
             <section aria-labelledby="historico" className="flex flex-col gap-4">
               <h2 id="historico" className="font-display text-xl font-bold">
-                Histórico de versões
+                Histórico de versões {variant === "amount" ? "com valor" : "com mensagem"}
               </h2>
 
               {designs.isError && (
@@ -391,6 +428,7 @@ export default function CertificatesPage() {
                       version={version}
                       current={index === 0}
                       folder={folder}
+                      variant={variant}
                       assets={assets}
                       fields={fields}
                       onPreview={preview}

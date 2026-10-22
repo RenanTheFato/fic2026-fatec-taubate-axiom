@@ -21,9 +21,9 @@ import type { FormEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPoi
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import type { CanvasAsset } from "../../components/certificate/certificate-artboard"
 import { TYPE_OPTIONS, elementLabel, problemIndex, problemMessage, sampleFields } from "../../components/certificate/certificate-design"
-import { designProblems } from "../../components/certificate/certificate-layout"
+import { designProblems, variantProblems } from "../../components/certificate/certificate-layout"
 import type { DesignProblem } from "../../components/certificate/certificate-layout"
-import { SCOPE_LABEL, folderDestination } from "../../components/certificate/certificate-labels"
+import { SCOPE_LABEL, VARIANT_LABEL, folderDestination, variantFromParam } from "../../components/certificate/certificate-labels"
 import { PopoverPanel, ToolButton } from "../../components/certificate/editor/editor-controls"
 import { usePopover } from "../../components/certificate/editor/use-popover"
 import { EditorCanvas } from "../../components/certificate/editor/editor-canvas"
@@ -49,7 +49,7 @@ import { assetUrl } from "../../services/certificate/certificate-assets-service"
 import { previewCertificate } from "../../services/certificate/certificate-designs-service"
 import { parseFolder } from "../../services/certificate/certificate-folders-service"
 import { CERTIFICATE_PAGE } from "../../types/certificate-types"
-import type { CertificateAsset, CertificateDesign, CertificateFolder } from "../../types/certificate-types"
+import type { CertificateAsset, CertificateDesign, CertificateFolder, CertificateVariant } from "../../types/certificate-types"
 import type { TransactionType } from "../../types/transaction-types"
 import { cn } from "../../utils/cn"
 import { openPdf } from "../../utils/open-pdf"
@@ -110,11 +110,12 @@ type CheckButtonProps = {
   onSelect: (id: string) => void
 }
 
-// O que impede de salvar, contado na barra e listado ao abrir, com atalho para
-// selecionar o elemento que precisa de ajuste.
+// Os avisos do desenho, contados na barra e listados ao abrir, com atalho para
+// selecionar o elemento. Avisam e não impedem: salvar continua livre.
 function CheckButton({ problems, design, assets, onSelect }: CheckButtonProps) {
   const { open, setOpen, anchor, panel, toggle } = usePopover()
   const count = problems.length
+  const summary = count === 0 ? "Sem avisos" : count === 1 ? "1 aviso" : `${count} avisos`
 
   return (
     <div className="relative">
@@ -129,12 +130,12 @@ function CheckButton({ problems, design, assets, onSelect }: CheckButtonProps) {
         )}
       >
         {count > 0 ? <TriangleAlert className="size-4" aria-hidden="true" /> : <CircleCheck className="size-4" aria-hidden="true" />}
-        <span className="hidden md:inline">{count > 0 ? `${count} a corrigir` : "Pronto"}</span>
-        <span className="sr-only md:hidden">{count > 0 ? `${count} a corrigir` : "Pronto para salvar"}</span>
+        <span className="hidden md:inline">{summary}</span>
+        <span className="sr-only md:hidden">{summary}</span>
       </button>
       <PopoverPanel open={open} panelRef={panel} label="Verificação do certificado" align="end" className="w-80">
         {count === 0 ? (
-          <p className="text-sm">O certificado pode ser salvo.</p>
+          <p className="text-sm">Nenhum aviso neste desenho.</p>
         ) : (
           <ul className="flex max-h-80 flex-col gap-2 overflow-y-auto">
             {problems.map((problem, index) => {
@@ -232,8 +233,9 @@ function SaveButton({ nextVersion, problems, saving, error, onSave }: SaveButton
             </p>
           )}
           {problems > 0 && (
-            <p className="text-xs font-semibold text-primary">
-              Corrija {problems === 1 ? "o problema apontado" : `os ${problems} problemas apontados`} antes de salvar.
+            <p className="flex items-center gap-1.5 text-xs text-ink-soft">
+              <TriangleAlert className="size-3.5 shrink-0" aria-hidden="true" />
+              {problems === 1 ? "A verificação tem 1 aviso." : `A verificação tem ${problems} avisos.`}
             </p>
           )}
           {error && (
@@ -243,7 +245,7 @@ function SaveButton({ nextVersion, problems, saving, error, onSave }: SaveButton
           )}
           <button
             type="submit"
-            disabled={saving || problems > 0}
+            disabled={saving}
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-pill bg-primary px-4 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-50"
           >
             {saving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Save className="size-4" aria-hidden="true" />}
@@ -257,13 +259,14 @@ function SaveButton({ nextVersion, problems, saving, error, onSave }: SaveButton
 
 type EditorProps = {
   folder: CertificateFolder
+  variant: CertificateVariant
   initial: CertificateDesign
   baseLabel: string
   nextVersion: number
   library: CertificateAsset[]
 }
 
-function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProps) {
+function Editor({ folder, variant, initial, baseLabel, nextVersion, library }: EditorProps) {
   const navigate = useNavigate()
   const [type, setType] = useState<TransactionType>("donation")
   const destination = folderDestination(folder)
@@ -292,7 +295,9 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
   const upload = useUploadCertificateAsset()
 
   const zoom = zoomMode === "fit" ? fit : zoomMode
-  const problems = useMemo(() => designProblems(design), [design])
+  // A variação acrescenta o aviso do valor: esperado no certificado com valor e
+  // fora do que leva a mensagem. Como os outros avisos, não impede salvar.
+  const problems = useMemo(() => [...designProblems(design), ...variantProblems(design, variant)], [design, variant])
   const target = parseFolder(folder.folder)
 
   const assets = useMemo(() => {
@@ -538,10 +543,10 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
   }
 
   async function handleSave(label: string) {
-    const saved = await save.mutateAsync({ ...target, label, design }).catch(() => null)
+    const saved = await save.mutateAsync({ ...target, variant, label, design }).catch(() => null)
 
     if (saved) {
-      navigate(`${STUDIO}?pasta=${encodeURIComponent(folder.folder)}&salvo=${saved.version}`)
+      navigate(`${STUDIO}?pasta=${encodeURIComponent(folder.folder)}&variante=${VARIANT_LABEL[variant].param}&salvo=${saved.version}`)
     }
   }
 
@@ -600,7 +605,7 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
     <div className="flex h-dvh flex-col overflow-hidden bg-surface text-ink">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-3">
         <Link
-          to={`${STUDIO}?pasta=${encodeURIComponent(folder.folder)}`}
+          to={`${STUDIO}?pasta=${encodeURIComponent(folder.folder)}&variante=${VARIANT_LABEL[variant].param}`}
           onClick={leave}
           className="inline-flex min-h-9 items-center gap-1.5 rounded-tile px-2 text-sm font-semibold hover:bg-surface-muted"
         >
@@ -610,6 +615,7 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
 
         <div className="hidden min-w-0 items-center gap-2 border-l border-line pl-3 md:flex">
           {folder.scope !== "default" && <Badge tone={SCOPE_LABEL[folder.scope].tone}>{SCOPE_LABEL[folder.scope].label}</Badge>}
+          <Badge tone={variant === "amount" ? "success" : "reward"}>{VARIANT_LABEL[variant].label}</Badge>
           <h1 className="min-w-0 truncate font-display text-sm font-bold" title={`${folder.title}, a partir de ${baseLabel}`}>
             {folder.title}
           </h1>
@@ -673,7 +679,7 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
             label="Prévia em PDF"
             showLabel
             iconClassName={previewing ? "animate-spin" : undefined}
-            disabled={previewing || problems.length > 0}
+            disabled={previewing}
             onClick={handlePreview}
           />
         </span>
@@ -757,11 +763,12 @@ function Editor({ folder, initial, baseLabel, nextVersion, library }: EditorProp
 export default function CertificateEditorPage() {
   const [params] = useSearchParams()
   const folderKey = params.get("pasta") ?? "default"
+  const variant = variantFromParam(params.get("variante"))
   const baseId = params.get("base")
 
   const folders = useCertificateFolders()
-  const designs = useCertificateDesigns(folderKey)
-  const defaults = useCertificateDesigns("default")
+  const designs = useCertificateDesigns(folderKey, variant)
+  const defaults = useCertificateDesigns("default", variant)
   const library = useCertificateAssets()
 
   const folder = folders.data?.folders.find((item) => item.folder === folderKey) ?? null
@@ -826,9 +833,10 @@ export default function CertificateEditorPage() {
 
   return (
     <Editor
-      key={`${folder.folder}-${start?.id ?? "fabrica"}`}
+      key={`${folder.folder}-${variant}-${start?.id ?? "fabrica"}`}
       folder={folder}
-      initial={start?.design ?? folders.data.factory}
+      variant={variant}
+      initial={start?.design ?? folders.data.factory[variant]}
       baseLabel={baseLabel}
       nextVersion={(designs.data[0]?.version ?? 0) + 1}
       library={library.data}

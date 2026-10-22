@@ -1,5 +1,5 @@
 import type { BadgeTone } from "../ui/badge"
-import type { CertificateFolder, CertificateScope } from "../../types/certificate-types"
+import type { CertificateFolder, CertificateScope, CertificateVariant } from "../../types/certificate-types"
 
 // Rótulos do estúdio de certificados, num lugar só, como os de transação e os
 // de notícia: a lista de pastas, o cabeçalho da pasta e o editor dizem a mesma
@@ -8,6 +8,19 @@ export const SCOPE_LABEL: Record<CertificateScope, { label: string; tone: BadgeT
   default: { label: "Modelo padrão", tone: "institutional" },
   campaign: { label: "Campanha", tone: "primary" },
   event: { label: "Evento", tone: "partner" },
+}
+
+// As duas variações de cada pasta. A palavra da URL é em português, como toda
+// rota do site; o valor da API é o do backend.
+export const VARIANT_LABEL: Record<CertificateVariant, { label: string; param: string; description: string }> = {
+  amount: { label: "Com valor", param: "valor", description: "O certificado mostra o valor da contribuição." },
+  message: { label: "Com mensagem", param: "mensagem", description: "Uma mensagem no lugar do valor, para quem prefere não mostrar quanto deu." },
+}
+
+export const VARIANTS: CertificateVariant[] = ["amount", "message"]
+
+export function variantFromParam(value: string | null): CertificateVariant {
+  return value === VARIANT_LABEL.message.param ? "message" : "amount"
 }
 
 // O complemento de "destinada" que o certificado imprime. É o mesmo texto que o

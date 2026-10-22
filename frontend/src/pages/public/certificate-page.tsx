@@ -14,7 +14,8 @@ import { NotFoundError } from "../../config/errors"
 import { useCertificateView } from "../../hooks/use-certificate-view"
 import { assetUrl } from "../../services/certificate/certificate-assets-service"
 import { downloadCertificatePdf } from "../../services/receipt/certificate-view-service"
-import type { CertificateView } from "../../types/certificate-types"
+import type { CertificateChoice, CertificateVariant, CertificateView } from "../../types/certificate-types"
+import { cn } from "../../utils/cn"
 import { formatDate } from "../../utils/format"
 import { downloadFile, printPdf } from "../../utils/pdf-file"
 
@@ -54,31 +55,48 @@ function Verdict({ certificate }: { certificate: CertificateView }) {
   )
 }
 
+const CHOICES: { value: CertificateChoice; label: string; description: string }[] = [
+  { value: "amount", label: "Com o valor", description: "O certificado mostra quanto foi a contribuição." },
+  { value: "message", label: "Com uma mensagem", description: "Uma mensagem de agradecimento no lugar do valor." },
+  { value: "both", label: "Os dois", description: "As duas versões, uma em cada página." },
+]
+
+const VARIANT_CAPTION: Record<CertificateVariant, string> = {
+  amount: "Com o valor",
+  message: "Com a mensagem",
+}
+
 function CertificateResult({ certificate }: { certificate: CertificateView }) {
   const [busy, setBusy] = useState<"download" | "print" | null>(null)
   const [failed, setFailed] = useState(false)
+  const [choice, setChoice] = useState<CertificateChoice>("amount")
 
-  // As imagens do certificado vêm da biblioteca pública do estúdio.
+  const shown: CertificateVariant[] = choice === "both" ? ["amount", "message"] : [choice]
+
+  // As imagens do certificado vêm da biblioteca pública do estúdio, e as duas
+  // variações podem usar imagens diferentes.
   const assets = useMemo(() => {
     const map = new Map<string, CanvasAsset>()
-    const ids = [
-      ...certificate.design.elements.flatMap((element) => (element.type === "image" ? [element.asset_id] : [])),
-      ...(certificate.design.background.asset_id ? [certificate.design.background.asset_id] : []),
-    ]
+    const designs = [certificate.variants.amount.design, certificate.variants.message.design]
+    const ids = designs.flatMap((design) => [
+      ...design.elements.flatMap((element) => (element.type === "image" ? [element.asset_id] : [])),
+      ...(design.background.asset_id ? [design.background.asset_id] : []),
+    ])
 
     for (const id of ids) map.set(id, { url: assetUrl(id), name: "Imagem" })
 
     return map
-  }, [certificate.design])
+  }, [certificate.variants])
 
   async function withPdf(action: "download" | "print") {
     setBusy(action)
     setFailed(false)
 
     try {
-      const blob = await downloadCertificatePdf(certificate.hash)
+      const blob = await downloadCertificatePdf(certificate.hash, choice)
+      const suffix = choice === "message" ? "-mensagem" : choice === "both" ? "-completo" : ""
 
-      if (action === "download") downloadFile(blob, `certificado-${certificate.number.replace("/", "-")}.pdf`)
+      if (action === "download") downloadFile(blob, `certificado-${certificate.number.replace("/", "-")}${suffix}.pdf`)
       else printPdf(blob)
     } catch {
       setFailed(true)
@@ -115,16 +133,52 @@ function CertificateResult({ certificate }: { certificate: CertificateView }) {
 
       {failed && <StateMessage tone="error" title="O PDF não abriu" description="Tente de novo em instantes." />}
 
-      <div className="rounded-card bg-surface-muted p-2 sm:p-6">
-        <CertificateArtboard
-          design={certificate.design}
-          assets={assets}
-          fields={certificate.fields}
-          qr={certificate.qr}
-          stamp={certificate.status === "cancelled" ? "CANCELADO" : null}
-          label={`Certificado de ${certificate.fields.nome ?? "contribuição"}, recibo ${certificate.number}`}
-          className="mx-auto h-auto w-full max-w-5xl rounded-tile bg-surface shadow-xl"
-        />
+      {/* Quem contribuiu decide se o certificado mostra o valor: a associação
+          desenha as duas variações no estúdio, e a escolha vale para a tela,
+          para o PDF e para a impressão. */}
+      <fieldset className="flex flex-col gap-3">
+        <legend className="font-display text-sm font-bold">Como você quer o certificado</legend>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {CHOICES.map((option) => (
+            <label
+              key={option.value}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-tile border-2 bg-surface px-4 py-3 transition-colors",
+                choice === option.value ? "border-institutional bg-institutional-soft" : "border-line hover:border-ink-soft/40",
+              )}
+            >
+              <input
+                type="radio"
+                name="variacao-certificado"
+                value={option.value}
+                checked={choice === option.value}
+                onChange={() => setChoice(option.value)}
+                className="mt-1 size-4 shrink-0 accent-primary"
+              />
+              <span className="min-w-0">
+                <span className="block font-display text-sm font-bold">{option.label}</span>
+                <span className="block text-xs text-ink-soft">{option.description}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="flex flex-col gap-6">
+        {shown.map((variant) => (
+          <figure key={variant} className="flex flex-col gap-2 rounded-card bg-surface-muted p-2 sm:p-6">
+            <CertificateArtboard
+              design={certificate.variants[variant].design}
+              assets={assets}
+              fields={certificate.fields}
+              qr={certificate.variants[variant].qr}
+              stamp={certificate.status === "cancelled" ? "CANCELADO" : null}
+              label={`Certificado ${variant === "amount" ? "com o valor" : "com a mensagem"} de ${certificate.fields.nome ?? "contribuição"}, recibo ${certificate.number}`}
+              className="mx-auto h-auto w-full max-w-5xl rounded-tile bg-surface shadow-xl"
+            />
+            {choice === "both" && <figcaption className="text-center text-xs font-semibold text-ink-soft">{VARIANT_CAPTION[variant]}</figcaption>}
+          </figure>
+        ))}
       </div>
     </div>
   )

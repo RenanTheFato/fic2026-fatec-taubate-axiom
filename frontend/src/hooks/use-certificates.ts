@@ -2,15 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { listCertificateAssets, uploadCertificateAsset } from "../services/certificate/certificate-assets-service"
 import { createCertificateDesign, listCertificateDesigns } from "../services/certificate/certificate-designs-service"
 import { listCertificateFolders, listIssuedCertificates } from "../services/certificate/certificate-folders-service"
+import type { CertificateVariant } from "../types/certificate-types"
 
 export function useCertificateFolders() {
   return useQuery({ queryKey: ["certificates", "folders"], queryFn: listCertificateFolders })
 }
 
-export function useCertificateDesigns(folder: string | null) {
+export function useCertificateDesigns(folder: string | null, variant: CertificateVariant) {
   return useQuery({
-    queryKey: ["certificates", "designs", folder],
-    queryFn: () => listCertificateDesigns(folder as string),
+    queryKey: ["certificates", "designs", folder, variant],
+    queryFn: () => listCertificateDesigns(folder as string, variant),
     enabled: Boolean(folder),
   })
 }

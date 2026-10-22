@@ -1,14 +1,14 @@
 import axios from "axios"
 import { api } from "../../config/api"
 import { CheckoutError } from "../../config/errors"
-import type { CertificateDesign, CertificateScope, CertificateVersion, CreateCertificateDesignInput } from "../../types/certificate-types"
+import type { CertificateDesign, CertificateScope, CertificateVariant, CertificateVersion, CreateCertificateDesignInput } from "../../types/certificate-types"
 import type { TransactionType } from "../../types/transaction-types"
 import { parseFolder } from "./certificate-folders-service"
 
 type ListDesignsResponse = { designs: CertificateVersion[] }
 
-export async function listCertificateDesigns(folder: string): Promise<CertificateVersion[]> {
-  const { data } = await api.get<ListDesignsResponse>("/certificate/list-designs", { params: parseFolder(folder) })
+export async function listCertificateDesigns(folder: string, variant: CertificateVariant): Promise<CertificateVersion[]> {
+  const { data } = await api.get<ListDesignsResponse>("/certificate/list-designs", { params: { ...parseFolder(folder), variant } })
 
   return data.designs
 }

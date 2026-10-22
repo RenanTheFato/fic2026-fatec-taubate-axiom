@@ -8,6 +8,16 @@ export const CERTIFICATE_PAGE = { width: 841.89, height: 595.28 } as const
 
 export type CertificateScope = "default" | "campaign" | "event"
 
+/**
+ * As duas variações de cada pasta: a que mostra o valor e a que leva uma
+ * mensagem no lugar dele. Quem contribuiu escolhe na segunda via qual quer, ou
+ * as duas.
+ */
+export type CertificateVariant = "amount" | "message"
+
+/** O que a pessoa pede na segunda via: uma variação ou as duas, uma por página. */
+export type CertificateChoice = CertificateVariant | "both"
+
 export type CertificateFont = "helvetica" | "times" | "courier" | "nunito" | "cormorant" | "cinzel" | "caveat" | "greatvibes"
 
 export type CertificatePalette = {
@@ -96,6 +106,8 @@ export type CertificateDesign = {
   elements: CertificateElement[]
 }
 
+export type CertificateVersionSummary = { id: string; version: number; label: string; created_at: string }
+
 export type CertificateFolder = {
   /** "default", "campaign:<id>" ou "event:<id>". */
   folder: string
@@ -103,9 +115,10 @@ export type CertificateFolder = {
   target_id: string | null
   title: string
   status: string | null
+  /** As versões das duas variações juntas. */
   versions: number
   issued: number
-  current: { id: string; version: number; label: string; created_at: string } | null
+  variants: Record<CertificateVariant, { versions: number; current: CertificateVersionSummary | null }>
 }
 
 export type CertificateVersion = {
@@ -114,6 +127,7 @@ export type CertificateVersion = {
   campaign_id: string | null
   event_id: string | null
   folder: string
+  variant: CertificateVariant
   version: number
   label: string
   design: CertificateDesign
@@ -154,6 +168,7 @@ export type IssuedCertificate = {
 export type CreateCertificateDesignInput = {
   scope: CertificateScope
   target_id: string | null
+  variant: CertificateVariant
   label: string
   design: CertificateDesign
 }
@@ -168,8 +183,10 @@ export type CertificateView = {
   hash: string
   authentic: boolean
   valid: boolean
-  version: { version: number; label: string } | null
-  design: CertificateDesign
+  variants: Record<CertificateVariant, {
+    version: { version: number; label: string } | null
+    design: CertificateDesign
+    qr: string
+  }>
   fields: Record<string, string>
-  qr: string
 }

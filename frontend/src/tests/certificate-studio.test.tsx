@@ -4,7 +4,7 @@ import { Route, Routes } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import CertificateEditorPage from "../pages/admin/certificate-editor-page"
 import CertificatesPage from "../pages/admin/certificates-page"
-import type { CertificateAsset, CertificateDesign, CertificateFolder, CertificateVersion } from "../types/certificate-types"
+import type { CertificateAsset, CertificateDesign, CertificateFolder, CertificateText, CertificateVersion } from "../types/certificate-types"
 import type { User, UserRole } from "../types/user-types"
 import { fillField } from "./utils/fill-field"
 import { renderWithProviders } from "./utils/render-with-providers"
@@ -44,7 +44,31 @@ const STAR = "24242424-2424-4242-8242-242424242424"
 
 const BASE = { rotation: 0, opacity: 1, locked: false }
 
-// Um certificado mínimo e válido: o nome, a linha com o código e o QR.
+// O texto que carrega o valor. É ele que separa as duas variações: o
+// certificado com valor precisa dele, o com mensagem não pode tê-lo.
+const AMOUNT: CertificateText = {
+  ...BASE,
+  id: "valor",
+  type: "text",
+  content: "{{valor}}",
+  x: 290,
+  y: 280,
+  width: 260,
+  height: 25.2,
+  font: "helvetica",
+  size: 21,
+  bold: true,
+  italic: false,
+  underline: false,
+  color: "@ink",
+  align: "center",
+  letter_spacing: 0,
+  line_height: 1.2,
+  uppercase: false,
+  fit: "shrink",
+}
+
+// Um certificado mínimo e válido: o nome, o valor, a linha com o código e o QR.
 const DESIGN: CertificateDesign = {
   palette: { paper: "#FFFBF2", primary: "#7F1D1D", secondary: "#B91C1C", accent: "#B98A2E", ink: "#2B1B17", muted: "#6E5A50" },
   background: { color: "@paper", asset_id: null, opacity: 1 },
@@ -92,12 +116,23 @@ const DESIGN: CertificateDesign = {
       fit: "shrink",
     },
     { ...BASE, id: "qr", type: "qr", x: 383, y: 420, width: 76, height: 76, color: "@ink" },
+    AMOUNT,
   ],
 }
 
+// A mesma página com uma mensagem no lugar do valor.
+const MESSAGE_DESIGN: CertificateDesign = {
+  ...DESIGN,
+  elements: DESIGN.elements.map((element) => (element.id === "valor" ? { ...AMOUNT, content: "Obrigado por fazer o bem" } : element)),
+}
+
+function variants(amount: CertificateFolder["variants"]["amount"]): CertificateFolder["variants"] {
+  return { amount, message: { versions: 0, current: null } }
+}
+
 const FOLDERS: CertificateFolder[] = [
-  { folder: "default", scope: "default", target_id: null, title: "Modelo padrão", status: null, versions: 1, issued: 40, current: { id: "d1", version: 1, label: "Modelo institucional", created_at: "2025-08-01T12:00:00.000Z" } },
-  { folder: FOLDER, scope: "campaign", target_id: CAMPAIGN_ID, title: "Natal do Bem 2025", status: "finished", versions: 2, issued: 37, current: { id: "v2", version: 2, label: "Natal 2025 com neve", created_at: "2025-11-27T12:00:00.000Z" } },
+  { folder: "default", scope: "default", target_id: null, title: "Modelo padrão", status: null, versions: 1, issued: 40, variants: variants({ versions: 1, current: { id: "d1", version: 1, label: "Modelo institucional", created_at: "2025-08-01T12:00:00.000Z" } }) },
+  { folder: FOLDER, scope: "campaign", target_id: CAMPAIGN_ID, title: "Natal do Bem 2025", status: "finished", versions: 2, issued: 37, variants: variants({ versions: 2, current: { id: "v2", version: 2, label: "Natal 2025 com neve", created_at: "2025-11-27T12:00:00.000Z" } }) },
 ]
 
 function version(overrides: Partial<CertificateVersion>): CertificateVersion {
@@ -107,6 +142,7 @@ function version(overrides: Partial<CertificateVersion>): CertificateVersion {
     campaign_id: CAMPAIGN_ID,
     event_id: null,
     folder: FOLDER,
+    variant: "amount",
     version: 1,
     label: "Natal 2025 vermelho e dourado",
     design: DESIGN,
@@ -137,13 +173,13 @@ function signedInAs(role: UserRole) {
   getProfile.mockResolvedValue(user)
 }
 
-function renderEditor() {
+function renderEditor(variant = "valor") {
   return renderWithProviders(
     <Routes>
       <Route path="/admin/comunicacao/certificados/editor" element={<CertificateEditorPage />} />
       <Route path="/admin/comunicacao/certificados" element={<p>estúdio</p>} />
     </Routes>,
-    `/admin/comunicacao/certificados/editor?pasta=${encodeURIComponent(FOLDER)}`,
+    `/admin/comunicacao/certificados/editor?pasta=${encodeURIComponent(FOLDER)}&variante=${variant}`,
   )
 }
 
@@ -156,13 +192,15 @@ function pressOnPage(key: string, options: Partial<KeyboardEventInit> = {}) {
 describe("estúdio de certificados", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    listCertificateFolders.mockResolvedValue({ folders: FOLDERS, factory: DESIGN })
+    listCertificateFolders.mockResolvedValue({ folders: FOLDERS, factory: { amount: DESIGN, message: MESSAGE_DESIGN } })
     listCertificateAssets.mockResolvedValue(ASSETS)
-    listCertificateDesigns.mockImplementation(async (folder: string) =>
-      folder === "default"
+    listCertificateDesigns.mockImplementation(async (folder: string, variant: string) => {
+      if (variant === "message") return []
+
+      return folder === "default"
         ? [version({ id: "d1", scope: "default", campaign_id: null, folder: "default", label: "Modelo institucional", issued: 40 })]
-        : [version({ id: "v2", version: 2, label: "Natal 2025 com neve", issued: 19 }), version({})],
-    )
+        : [version({ id: "v2", version: 2, label: "Natal 2025 com neve", issued: 19 }), version({})]
+    })
     listIssuedCertificates.mockResolvedValue({
       certificates: [
         {
@@ -242,13 +280,13 @@ describe("estúdio de certificados", () => {
 
     await waitFor(() => expect(createCertificateDesign).toHaveBeenCalledTimes(1))
     const input = createCertificateDesign.mock.calls[0][0]
-    expect(input).toEqual(expect.objectContaining({ scope: "campaign", target_id: CAMPAIGN_ID, label: "Natal com mensagem" }))
-    expect(input.design.elements).toHaveLength(4)
-    expect(input.design.elements[3]).toEqual(expect.objectContaining({ type: "text", content: "Feliz Natal", x: 281, y: 291 }))
+    expect(input).toEqual(expect.objectContaining({ scope: "campaign", target_id: CAMPAIGN_ID, variant: "amount", label: "Natal com mensagem" }))
+    expect(input.design.elements).toHaveLength(5)
+    expect(input.design.elements[4]).toEqual(expect.objectContaining({ type: "text", content: "Feliz Natal", x: 281, y: 291 }))
     expect(await screen.findByText("estúdio")).toBeInTheDocument()
   })
 
-  it("aponta o que falta, não deixa salvar e desfaz com Ctrl+Z", async () => {
+  it("aponta o que falta sem travar o salvar, e desfaz com Ctrl+Z", async () => {
     signedInAs("communication")
     const user = userEvent.setup()
 
@@ -258,17 +296,57 @@ describe("estúdio de certificados", () => {
     await user.click(screen.getByRole("button", { name: /^qr de verificação$/i }))
     pressOnPage("Delete")
 
-    expect(await screen.findByRole("button", { name: /1 a corrigir/i })).toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: /1 aviso/i })).toBeInTheDocument()
 
-    await user.click(screen.getByRole("button", { name: /1 a corrigir/i }))
+    await user.click(screen.getByRole("button", { name: /1 aviso/i }))
     expect(screen.getByText(/falta o qr de verificação/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: /^salvar$/i }))
-    expect(screen.getByRole("button", { name: /salvar versão 3/i })).toBeDisabled()
+    expect(screen.getByText("A verificação tem 1 aviso.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /salvar versão 3/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /prévia em pdf/i })).toBeEnabled()
 
     pressOnPage("z", { ctrlKey: true })
 
-    expect(await screen.findByRole("button", { name: /pronto/i })).toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: /sem avisos/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /^qr de verificação$/i })).toBeInTheDocument()
+  })
+
+  it("separa as duas variações da pasta, e o certificado com mensagem parte do modelo sem valor", async () => {
+    signedInAs("communication")
+    const user = userEvent.setup()
+
+    renderWithProviders(<CertificatesPage />, `/admin/comunicacao/certificados?pasta=${encodeURIComponent(FOLDER)}`)
+
+    const message = await screen.findByRole("button", { name: /com mensagem/i })
+    expect(screen.getByRole("button", { name: /com valor/i })).toHaveAttribute("aria-pressed", "true")
+
+    await user.click(message)
+
+    expect(await screen.findByRole("heading", { name: /histórico de versões com mensagem/i })).toBeInTheDocument()
+    expect(listCertificateDesigns).toHaveBeenCalledWith(FOLDER, "message")
+    expect(screen.getByRole("link", { name: /criar a primeira versão/i })).toHaveAttribute("href", expect.stringContaining("variante=mensagem"))
+  })
+
+  it("avisa quando o certificado com mensagem mostra o valor, e salva se a equipe quiser", async () => {
+    signedInAs("communication")
+    const user = userEvent.setup()
+    createCertificateDesign.mockResolvedValue(version({ id: "m1", variant: "message", label: "Natal com mensagem" }))
+    listCertificateDesigns.mockImplementation(async (_folder: string, variant: string) =>
+      variant === "message" ? [version({ id: "m0", variant: "message", design: DESIGN })] : [version({})],
+    )
+
+    renderEditor("mensagem")
+
+    expect(await screen.findByRole("button", { name: /1 aviso/i })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /1 aviso/i }))
+    expect(screen.getByText(/mostra o valor \(\{\{valor\}\}\) no certificado com mensagem/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /^salvar$/i }))
+    await fillField(user, /nome desta versão/i, "Mensagem com o valor")
+    await user.click(screen.getByRole("button", { name: /salvar versão 2/i }))
+
+    await waitFor(() => expect(createCertificateDesign).toHaveBeenCalledTimes(1))
+    expect(createCertificateDesign.mock.calls[0][0]).toEqual(expect.objectContaining({ variant: "message", label: "Mensagem com o valor" }))
   })
 })

@@ -1,11 +1,11 @@
 import { api } from "../../config/api"
-import type { CertificateDesign, CertificateFolder, CertificateScope, IssuedCertificate } from "../../types/certificate-types"
+import type { CertificateDesign, CertificateFolder, CertificateScope, CertificateVariant, IssuedCertificate } from "../../types/certificate-types"
 
-export type CertificateFolders = { folders: CertificateFolder[]; factory: CertificateDesign }
+export type CertificateFolders = { folders: CertificateFolder[]; factory: Record<CertificateVariant, CertificateDesign> }
 
 // As pastas do estúdio: o modelo padrão, cada campanha e cada evento, com as
-// contagens já somadas pelo banco, e o modelo de fábrica, de onde parte uma
-// pasta que nunca teve versão. Responde a admin e comunicação.
+// contagens já somadas pelo banco, e o modelo de fábrica de cada variação, de
+// onde parte uma variação que nunca teve versão. Responde a admin e comunicação.
 export async function listCertificateFolders(): Promise<CertificateFolders> {
   const { data } = await api.get<CertificateFolders>("/certificate/list-folders")
 

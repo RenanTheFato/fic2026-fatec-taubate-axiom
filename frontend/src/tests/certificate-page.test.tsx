@@ -9,12 +9,19 @@ import type { CertificateText, CertificateView } from "../types/certificate-type
 import { fillField } from "./utils/fill-field"
 import { renderWithProviders } from "./utils/render-with-providers"
 
-const { getCertificateView } = vi.hoisted(() => ({ getCertificateView: vi.fn() }))
+const { getCertificateView, downloadCertificatePdf, downloadFile } = vi.hoisted(() => ({
+  getCertificateView: vi.fn(),
+  downloadCertificatePdf: vi.fn(),
+  downloadFile: vi.fn(),
+}))
 
 vi.mock("../services/receipt/certificate-view-service", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   getCertificateView,
+  downloadCertificatePdf,
 }))
+
+vi.mock("../utils/pdf-file", () => ({ downloadFile, printPdf: vi.fn() }))
 
 const HASH = "c".repeat(64)
 const BASE = { rotation: 0, opacity: 1, locked: false }
@@ -41,6 +48,9 @@ const NAME: CertificateText = {
   fit: "shrink",
 }
 
+const PALETTE = { paper: "#FFFBF2", primary: "#7F1D1D", secondary: "#B91C1C", accent: "#B98A2E", ink: "#2B1B17", muted: "#6E5A50" }
+const QR = { ...BASE, id: "qr", type: "qr" as const, x: 383, y: 420, width: 76, height: 76, color: "@ink" }
+
 function view(overrides: Partial<CertificateView> = {}): CertificateView {
   return {
     number: "2025/000043",
@@ -51,14 +61,27 @@ function view(overrides: Partial<CertificateView> = {}): CertificateView {
     hash: HASH,
     authentic: true,
     valid: true,
-    version: { version: 2, label: "Natal 2025 com neve" },
-    design: {
-      palette: { paper: "#FFFBF2", primary: "#7F1D1D", secondary: "#B91C1C", accent: "#B98A2E", ink: "#2B1B17", muted: "#6E5A50" },
-      background: { color: "@paper", asset_id: null, opacity: 1 },
-      elements: [NAME, { ...BASE, id: "qr", type: "qr", x: 383, y: 420, width: 76, height: 76, color: "@ink" }],
+    variants: {
+      amount: {
+        version: { version: 2, label: "Natal 2025 com neve" },
+        design: {
+          palette: PALETTE,
+          background: { color: "@paper", asset_id: null, opacity: 1 },
+          elements: [NAME, { ...NAME, id: "valor", y: 280, content: "{{valor}}" }, QR],
+        },
+        qr: "data:image/svg+xml;base64,PHN2Zy8+",
+      },
+      message: {
+        version: null,
+        design: {
+          palette: PALETTE,
+          background: { color: "@paper", asset_id: null, opacity: 1 },
+          elements: [NAME, { ...NAME, id: "valor", y: 280, content: "Obrigado por fazer o bem" }, QR],
+        },
+        qr: "data:image/svg+xml;base64,PHN2Zy8+",
+      },
     },
-    fields: { nome: "Marcelo Oliveira", codigo: HASH },
-    qr: "data:image/svg+xml;base64,PHN2Zy8+",
+    fields: { nome: "Marcelo Oliveira", valor: "R$ 100,00", codigo: HASH },
     ...overrides,
   }
 }
@@ -107,6 +130,36 @@ describe("segunda via do certificado", () => {
     vi.clearAllMocks()
   })
 
+  // Quem contribuiu decide se o certificado mostra o valor. A escolha muda o que
+  // a tela desenha e o PDF que sai.
+  it("deixa escolher o certificado com o valor, com a mensagem ou os dois", async () => {
+    const user = userEvent.setup()
+    getCertificateView.mockResolvedValue(view())
+    downloadCertificatePdf.mockResolvedValue(new Blob(["%PDF"]))
+
+    renderAt(`/certificado/${HASH}`)
+
+    const amount = await screen.findByRole("img", { name: /certificado com o valor/i })
+    expect(amount).toHaveTextContent("R$ 100,00")
+
+    await user.click(screen.getByRole("radio", { name: /com uma mensagem/i }))
+
+    const message = screen.getByRole("img", { name: /certificado com a mensagem/i })
+    expect(message).toHaveTextContent("Obrigado por fazer o bem")
+    expect(message).not.toHaveTextContent("R$ 100,00")
+    expect(screen.queryByRole("img", { name: /certificado com o valor/i })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /baixar pdf/i }))
+    expect(downloadCertificatePdf).toHaveBeenLastCalledWith(HASH, "message")
+
+    await user.click(screen.getByRole("radio", { name: /os dois/i }))
+    expect(screen.getAllByRole("img", { name: /certificado com/i })).toHaveLength(2)
+
+    await user.click(screen.getByRole("button", { name: /baixar pdf/i }))
+    expect(downloadCertificatePdf).toHaveBeenLastCalledWith(HASH, "both")
+    expect(downloadFile).toHaveBeenLastCalledWith(expect.any(Blob), "certificado-2025-000043-completo.pdf")
+  })
+
   it("mostra o certificado do código, com o nome escrito e o veredito da corrente", async () => {
     getCertificateView.mockResolvedValue(view())
 
@@ -114,7 +167,7 @@ describe("segunda via do certificado", () => {
 
     expect(await screen.findByText(/certificado autêntico e válido/i)).toBeInTheDocument()
     expect(getCertificateView).toHaveBeenCalledWith(HASH)
-    expect(screen.getByRole("img", { name: /certificado de marcelo oliveira/i })).toHaveTextContent("Marcelo Oliveira")
+    expect(screen.getByRole("img", { name: /certificado com o valor de marcelo oliveira/i })).toHaveTextContent("Marcelo Oliveira")
     expect(screen.getByRole("button", { name: /baixar pdf/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /imprimir/i })).toBeInTheDocument()
   })
@@ -125,7 +178,7 @@ describe("segunda via do certificado", () => {
     renderAt(`/certificado/${HASH}`)
 
     expect(await screen.findByText(/autêntico, mas cancelado/i)).toBeInTheDocument()
-    expect(screen.getByRole("img", { name: /certificado de marcelo oliveira/i })).toHaveTextContent("CANCELADO")
+    expect(screen.getByRole("img", { name: /certificado com o valor de marcelo oliveira/i })).toHaveTextContent("CANCELADO")
   })
 
   it("aceita o código colado com espaços ou dentro do endereço do QR", async () => {

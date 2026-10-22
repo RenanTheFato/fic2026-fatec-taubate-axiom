@@ -2,7 +2,7 @@ import axios from "axios"
 import { api } from "../../config/api"
 import { env } from "../../config/env"
 import { NotFoundError } from "../../config/errors"
-import type { CertificateView } from "../../types/certificate-types"
+import type { CertificateChoice, CertificateView } from "../../types/certificate-types"
 
 type CertificateViewResponse = { certificate: CertificateView }
 
@@ -23,14 +23,15 @@ export async function getCertificateView(hash: string): Promise<CertificateView>
   }
 }
 
-// O PDF do certificado, para baixar ou imprimir. Vem como arquivo, e a tela
-// decide o que fazer com ele.
-export async function downloadCertificatePdf(hash: string): Promise<Blob> {
-  const { data } = await api.get<Blob>(`/receipt/certificate/${encodeURIComponent(hash)}`, { responseType: "blob" })
+// O PDF do certificado, na variação que a pessoa escolheu: com o valor, com a
+// mensagem no lugar dele, ou os dois no mesmo arquivo, um por página. Vem como
+// arquivo, e a tela decide o que fazer com ele.
+export async function downloadCertificatePdf(hash: string, variant: CertificateChoice = "amount"): Promise<Blob> {
+  const { data } = await api.get<Blob>(`/receipt/certificate/${encodeURIComponent(hash)}`, { params: { variant }, responseType: "blob" })
 
   return data
 }
 
-export function certificatePdfUrl(hash: string): string {
-  return `${env.apiUrl}/receipt/certificate/${encodeURIComponent(hash)}`
+export function certificatePdfUrl(hash: string, variant: CertificateChoice = "amount"): string {
+  return `${env.apiUrl}/receipt/certificate/${encodeURIComponent(hash)}?variant=${variant}`
 }
