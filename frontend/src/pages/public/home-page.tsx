@@ -5,10 +5,12 @@ import { ImpactNumbers } from "../../components/home/impact-numbers"
 import { LatestNews } from "../../components/home/latest-news"
 import { PartnerCta } from "../../components/home/partner-cta"
 import { PartnersSection } from "../../components/home/partners-section"
+import { SocialFeed } from "../../components/home/social-feed"
 
 // A ordem das seções é a mesma do site atual de propósito: quem já conhece a
 // Somos do Bem precisa continuar se orientando. O que muda é a origem do dado
-// e a entrada de Eventos, que a ONG pediu e o site de hoje não tem.
+// e a entrada de Eventos e das redes sociais, que a ONG pediu e o site de hoje
+// não tem.
 export default function HomePage() {
   return (
     <>
@@ -18,6 +20,7 @@ export default function HomePage() {
       <ImpactNumbers />
       <EventsAgenda />
       <LatestNews />
+      <SocialFeed />
       <PartnerCta />
     </>
   )
