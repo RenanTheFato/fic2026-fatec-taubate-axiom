@@ -1,7 +1,7 @@
 import { ExternalLink, LogOut, Menu, X } from "lucide-react"
 import { Suspense, useState } from "react"
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
-import { activeGroup, navFor } from "../components/admin/admin-nav"
+import { HOME_BY_ROLE, activeGroup, navFor } from "../components/admin/admin-nav"
 import { Logo } from "../components/layout/logo"
 import { Skeleton } from "../components/ui/states"
 import { useSession } from "../hooks/use-session"
@@ -13,7 +13,7 @@ import { cn } from "../utils/cn"
 // duas coisas não pedem a mesma tela.
 //
 // A navegação é horizontal e tem dois andares. Em cima ficam os módulos
-// (Início, Financeiro, Comunicação, Voluntariado); embaixo, as telas do módulo
+// (Início, Financeiro, Comunicação, Voluntariado, Parcerias); embaixo, as telas do módulo
 // em que a pessoa está. A largura inteira fica para as tabelas, que são o que
 // mais precisa de espaço aqui, e quem trabalha num módulo só vê as abas dele em
 // vez de uma coluna com todas as telas do sistema.
@@ -53,7 +53,7 @@ export default function AdminLayout() {
 
       <header className="sticky top-0 z-40 border-b border-line bg-surface">
         <div className="mx-auto flex h-16 w-full max-w-[90rem] items-center gap-4 px-5 sm:px-8">
-          <Logo to="/admin" alt="Somos do Bem, painel" className="h-9 shrink-0" />
+          <Logo to={HOME_BY_ROLE[user.role]} alt="Somos do Bem, painel" className="h-9 shrink-0" />
 
           <nav aria-label="Módulos do painel" className="hidden min-w-0 flex-1 lg:block">
             <ul className="flex items-center gap-1">

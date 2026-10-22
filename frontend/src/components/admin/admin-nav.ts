@@ -1,8 +1,11 @@
 import {
   Award,
+  Building2,
+  CalendarClock,
   CalendarDays,
   FileCheck2,
   HandHeart,
+  Handshake,
   Inbox,
   LayoutDashboard,
   Megaphone,
@@ -10,6 +13,8 @@ import {
   Package,
   ReceiptText,
   Scale,
+  Share2,
+  UserCheck,
   Users,
   Wallet,
 } from "lucide-react"
@@ -114,15 +119,70 @@ export const ADMIN_NAV: AdminNavItem[] = [
     roles: ["admin", "communication"],
     group: "Comunicação",
   },
-  // A Administração também alcança o painel do voluntariado, porque é ela quem
-  // apresenta o sistema inteiro e precisa ver o que o voluntário vê.
+  // As publicações das redes que o site mostra em /redes-sociais e na home.
+  {
+    label: "Redes sociais",
+    to: "/admin/comunicacao/redes-sociais",
+    icon: Share2,
+    roles: ["admin", "communication"],
+    group: "Comunicação",
+  },
+  // A coordenação do voluntariado: os cadastros que chegam pelo site e a escala,
+  // onde os turnos são abertos e a presença é registrada.
+  {
+    label: "Cadastros",
+    to: "/admin/voluntariado/cadastros",
+    icon: UserCheck,
+    roles: ["admin", "communication"],
+    group: "Voluntariado",
+  },
+  {
+    label: "Escala",
+    to: "/admin/voluntariado/escala",
+    icon: CalendarClock,
+    roles: ["admin", "communication"],
+    group: "Voluntariado",
+  },
+  // Os pedidos de parceria e as propostas das empresas aprovadas.
+  {
+    label: "Pedidos",
+    to: "/admin/parcerias/pedidos",
+    icon: Building2,
+    roles: ["admin", "communication"],
+    group: "Parcerias",
+  },
+  {
+    label: "Propostas",
+    to: "/admin/parcerias/propostas",
+    icon: Handshake,
+    roles: ["admin", "communication"],
+    group: "Parcerias",
+  },
+  // O painel de quem doa tempo. Ele é da própria pessoa: a equipe acompanha o
+  // voluntariado pela coordenação, acima, e não por um painel pessoal vazio.
   {
     label: "Meu painel",
     to: "/voluntario/painel",
     icon: HandHeart,
-    roles: ["volunteer", "admin"],
+    roles: ["volunteer"],
     group: "Voluntariado",
     end: true,
+  },
+  // O painel da empresa parceira, que só ela alcança.
+  {
+    label: "Painel",
+    to: "/parceiro/painel",
+    icon: LayoutDashboard,
+    roles: ["partner"],
+    group: "Parceria",
+    end: true,
+  },
+  {
+    label: "Propostas",
+    to: "/parceiro/propostas",
+    icon: Handshake,
+    roles: ["partner"],
+    group: "Parceria",
   },
 ]
 
@@ -139,6 +199,8 @@ const GROUP_ICON: Record<string, LucideIcon> = {
   Financeiro: Wallet,
   Comunicação: Megaphone,
   Voluntariado: HandHeart,
+  Parcerias: Handshake,
+  Parceria: Building2,
 }
 
 export function navFor(role: UserRole): AdminNavGroup[] {
@@ -179,4 +241,5 @@ export const HOME_BY_ROLE: Record<UserRole, string> = {
   finance: "/admin/financeiro/transacoes",
   communication: "/admin/comunicacao/campanhas",
   volunteer: "/voluntario/painel",
+  partner: "/parceiro/painel",
 }

@@ -54,7 +54,7 @@ describe("menu do painel", () => {
 
     const screens = screen.getByRole("navigation", { name: /telas de comunicação/i })
     const tabs = within(screens).getAllByRole("link").map((link) => link.textContent)
-    expect(tabs).toEqual(["Campanhas", "Eventos", "Produtos", "Notícias", "Certificados", "Mensagens"])
+    expect(tabs).toEqual(["Campanhas", "Eventos", "Produtos", "Notícias", "Certificados", "Mensagens", "Redes sociais"])
     expect(within(screens).getByRole("link", { name: /eventos/i })).toHaveAttribute("aria-current", "page")
   })
 
@@ -73,6 +73,29 @@ describe("menu do painel", () => {
     const modules = await screen.findByRole("navigation", { name: /módulos do painel/i })
     expect(within(modules).queryByRole("link", { name: /comunicação/i })).not.toBeInTheDocument()
     expect(within(modules).queryByRole("link", { name: /meu painel/i })).not.toBeInTheDocument()
+  })
+
+  it("dá à equipe os módulos de voluntariado e de parcerias", async () => {
+    signedInAs("communication")
+    renderAt("/admin/parcerias/pedidos")
+
+    const modules = await screen.findByRole("navigation", { name: /módulos do painel/i })
+    expect(within(modules).getByRole("link", { name: /voluntariado/i })).toHaveAttribute("href", "/admin/voluntariado/cadastros")
+    expect(within(modules).getByRole("link", { name: /parcerias/i })).toHaveAttribute("aria-current", "page")
+
+    const screens = screen.getByRole("navigation", { name: /telas de parcerias/i })
+    expect(within(screens).getAllByRole("link").map((link) => link.textContent)).toEqual(["Pedidos", "Propostas"])
+  })
+
+  it("mostra à empresa parceira só o painel dela", async () => {
+    signedInAs("partner")
+    renderAt("/parceiro/propostas")
+
+    const modules = await screen.findByRole("navigation", { name: /módulos do painel/i })
+    expect(within(modules).getAllByRole("link").map((link) => link.textContent)).toEqual(["Parceria"])
+
+    const screens = screen.getByRole("navigation", { name: /telas de parceria/i })
+    expect(within(screens).getAllByRole("link").map((link) => link.textContent)).toEqual(["Painel", "Propostas"])
   })
 
   it("não desenha a segunda faixa quando o módulo tem uma tela só", async () => {
