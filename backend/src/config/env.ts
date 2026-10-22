@@ -15,6 +15,10 @@ const envSchema = z.object({
   // não para uma rota REST. O QR do certificado também aponta para cá (a página de segunda via),
   // enquanto o do recibo institucional continua na conferência da API.
   WEB_URL: z.url().default("http://localhost:5173"),
+  // Token de longa duração da conta do Instagram da associação. Sem ele, a página de redes sociais
+  // continua funcionando com o que a Comunicação cadastra à mão; com ele, o painel importa as
+  // publicações mais recentes direto da rede.
+  INSTAGRAM_ACCESS_TOKEN: z.string().min(1).optional(),
 })
 
 export const env = envSchema.parse(process.env)
