@@ -3,7 +3,7 @@ import { CertificateDesign } from "../models/certificate-design-model.js";
 import { Receipt } from "../models/receipt-model.js";
 import { Transaction } from "../models/transaction-model.js";
 import { VerifyReceiptService } from "../services/receipt/verify-receipt-service.js";
-import { classicDesign } from "../utils/certificate-classic.js";
+import { FACTORY_MESSAGE_DESIGN, classicDesign } from "../utils/certificate-classic.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
 
 const christmas = classicDesign({
@@ -18,7 +18,7 @@ describe("Certificate second copy (the site draws an issued certificate by its c
     jest.restoreAllMocks()
   })
 
-  it("hands the site an issued certificate to draw, with its design, its fields and no donor document", async () => {
+  it("hands the site both variants of an issued certificate, with its fields and no donor document", async () => {
     jest.spyOn(Receipt, "findOne").mockResolvedValue({
       get: () => ({
         number: "2025/000043",
@@ -33,10 +33,11 @@ describe("Certificate second copy (the site draws an issued certificate by its c
         hash: "c".repeat(64),
         transaction_id: "transaction-1",
         certificate_design_id: "design-natal",
+        certificate_message_design_id: null,
       }),
     } as never)
     jest.spyOn(VerifyReceiptService.prototype, "execute").mockResolvedValue({ authentic: true, valid: true } as never)
-    jest.spyOn(CertificateDesign, "findByPk").mockResolvedValue({ design: christmas, version: 2, label: "Natal com neve" } as never)
+    jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([{ id: "design-natal", design: christmas, version: 2, label: "Natal com neve" }] as never)
     jest.spyOn(Transaction, "findByPk").mockResolvedValue({ campaign: { title: "Natal do Bem 2025" }, event: null } as never)
 
     const res = mockResponse()
@@ -45,9 +46,12 @@ describe("Certificate second copy (the site draws an issued certificate by its c
     expect(res.status).toHaveBeenCalledWith(200)
     const { certificate } = (res.json as jest.Mock).mock.calls[0][0]
     expect(certificate.valid).toBe(true)
-    expect(certificate.version).toEqual({ version: 2, label: "Natal com neve" })
-    expect(certificate.fields).toMatchObject({ nome: "Marcelo Oliveira", destino: "à campanha Natal do Bem 2025", codigo: "c".repeat(64) })
-    expect(certificate.qr).toMatch(/^data:image\/svg\+xml;base64,/)
+    expect(certificate.variants.amount.version).toEqual({ version: 2, label: "Natal com neve" })
+    // A variação com mensagem nunca foi personalizada quando este recibo nasceu: sai a de fábrica.
+    expect(certificate.variants.message.version).toBeNull()
+    expect(certificate.variants.message.design).toEqual(FACTORY_MESSAGE_DESIGN)
+    expect(certificate.fields).toMatchObject({ nome: "Marcelo Oliveira", destino: "à campanha Natal do Bem 2025", codigo: "c".repeat(64), gesto: "contribuiu com uma doação" })
+    expect(certificate.variants.amount.qr).toMatch(/^data:image\/svg\+xml;base64,/)
     expect(JSON.stringify(certificate)).not.toContain("12345678909")
   })
 

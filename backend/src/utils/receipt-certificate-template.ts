@@ -25,6 +25,10 @@ export type { CertificateReceipt } from "./certificate-fields.js";
 
 export interface CertificateOptions {
   design?: CertificateDesignSpec | null,
+  // Uma página por desenho, na ordem da lista. É como sai o certificado "com valor e com mensagem"
+  // que o doador pode pedir na segunda via: as duas variações no mesmo arquivo. Ausente, vale o
+  // `design`, numa página só.
+  designs?: CertificateDesignSpec[],
   // As imagens de fundo e dos elementos, já lidas do banco pelo service. Uma imagem que falte aqui
   // é pulada, e não um erro: o certificado continua válido sem o enfeite.
   assets?: Map<string, Buffer>,
@@ -138,111 +142,136 @@ function drawText(
   }
 }
 
+interface PageContext {
+  assets: Map<string, Buffer>,
+  fields: ReturnType<typeof certificateFields>,
+  faces: Set<string>,
+  logo: Buffer | null,
+  qrCodes: Map<string, Buffer>,
+  stamp: string | null,
+}
+
+function drawPage(document: PDFKit.PDFDocument, design: CertificateDesignSpec, { assets, fields, faces, logo, qrCodes, stamp }: PageContext) {
+  const width = document.page.width
+  const height = document.page.height
+  const { palette } = design
+
+  document.rect(0, 0, width, height).fillColor(resolveColor(design.background.color, palette)).fill()
+
+  const background = design.background.asset_id ? assets.get(design.background.asset_id) : undefined
+
+  if (background) {
+    document.save()
+    document.opacity(design.background.opacity)
+    drawCover(document, background, width, height)
+    document.restore()
+  }
+
+  const draw = (element: CertificateElement) => {
+    const center = elementCenter(element)
+
+    document.save()
+
+    // Cada elemento gira em torno do próprio centro, que é como o editor o mostra.
+    if (element.rotation) {
+      document.rotate(element.rotation, { origin: [center.x, center.y] })
+    }
+
+    if (element.opacity < 1) {
+      document.opacity(element.opacity)
+    }
+
+    switch (element.type) {
+      case "shape":
+        drawShape(document, element, palette)
+        break
+      case "text":
+        drawText(document, element, palette, fields, faces)
+        break
+      case "image": {
+        const image = assets.get(element.asset_id)
+
+        if (!image) break
+
+        if (element.flip_x) document.transform(-1, 0, 0, 1, 2 * center.x, 0)
+        if (element.flip_y) document.transform(1, 0, 0, -1, 0, 2 * center.y)
+
+        document.image(image, element.x, element.y, { width: element.width, height: element.height })
+        break
+      }
+      case "logo":
+        if (logo) {
+          document.image(logo, element.x, element.y, { width: element.width, height: element.height })
+        }
+        break
+      case "qr": {
+        const code = qrCodes.get(resolveColor(element.color, palette))
+        const inset = element.width * 0.05
+
+        document.roundedRect(element.x, element.y, element.width, element.height, element.width * 0.05).fillColor("#FFFFFF").fill()
+
+        if (code) {
+          document.image(code, element.x + inset, element.y + inset, { width: element.width - inset * 2, height: element.height - inset * 2 })
+        }
+        break
+      }
+    }
+
+    document.restore()
+  }
+
+  design.elements.forEach(draw)
+
+  // Tarja por cima de tudo, para não haver como confundir um documento estornado (ou uma prévia
+  // do editor) com um válido, mas sem apagar o conteúdo, que continua legível por baixo.
+  if (stamp) {
+    document.save()
+    document.rotate(-22, { origin: [width / 2, height / 2] })
+    document.font("Helvetica-Bold").fontSize(96).fillColor("#B91C1C").fillOpacity(stamp === "MODELO" ? 0.08 : 0.13)
+      .text(stamp, 0, height / 2 - 62, { width, align: "center", characterSpacing: 6, lineBreak: false })
+    document.fillOpacity(1)
+    document.restore()
+  }
+}
+
 export async function buildReceiptCertificate(receipt: CertificateReceipt, verificationUrl: string, options: CertificateOptions = {}) {
-  const design = options.design ?? FACTORY_DESIGN
+  const designs = options.designs && options.designs.length > 0 ? options.designs : [options.design ?? FACTORY_DESIGN]
   const assets = options.assets ?? new Map<string, Buffer>()
   const fields = certificateFields(receipt, options.destination ?? null)
-  const { palette } = design
 
   // O QR sai na cor que o desenho pede, sobre branco, que é o que a câmera precisa.
   const qrCodes = new Map<string, Buffer>()
 
-  for (const element of design.elements) {
-    if (element.type !== "qr") {
-      continue
-    }
+  for (const design of designs) {
+    for (const element of design.elements) {
+      if (element.type !== "qr") {
+        continue
+      }
 
-    const color = resolveColor(element.color, palette)
+      const color = resolveColor(element.color, design.palette)
 
-    if (!qrCodes.has(color)) {
-      qrCodes.set(color, await toBuffer(verificationUrl, { margin: 1, width: 360, color: { dark: color, light: "#FFFFFF" } }))
+      if (!qrCodes.has(color)) {
+        qrCodes.set(color, await toBuffer(verificationUrl, { margin: 1, width: 360, color: { dark: color, light: "#FFFFFF" } }))
+      }
     }
   }
 
-  const logo = loadLogo("color")
+  const context: PageContext = {
+    assets,
+    fields,
+    faces: new Set<string>(),
+    logo: loadLogo("color"),
+    qrCodes,
+    stamp: receipt.status === "cancelled" ? "CANCELADO" : options.sample ? "MODELO" : null,
+  }
 
   return await renderPdf({ title: `Certificado ${receipt.number}`, landscape: true, margin: 0 }, (document) => {
-    const width = document.page.width
-    const height = document.page.height
-    const faces = new Set<string>()
-
-    document.rect(0, 0, width, height).fillColor(resolveColor(design.background.color, palette)).fill()
-
-    const background = design.background.asset_id ? assets.get(design.background.asset_id) : undefined
-
-    if (background) {
-      document.save()
-      document.opacity(design.background.opacity)
-      drawCover(document, background, width, height)
-      document.restore()
-    }
-
-    const draw = (element: CertificateElement) => {
-      const center = elementCenter(element)
-
-      document.save()
-
-      // Cada elemento gira em torno do próprio centro, que é como o editor o mostra.
-      if (element.rotation) {
-        document.rotate(element.rotation, { origin: [center.x, center.y] })
+    designs.forEach((design, page) => {
+      if (page > 0) {
+        document.addPage({ size: "A4", layout: "landscape", margin: 0 })
       }
 
-      if (element.opacity < 1) {
-        document.opacity(element.opacity)
-      }
-
-      switch (element.type) {
-        case "shape":
-          drawShape(document, element, palette)
-          break
-        case "text":
-          drawText(document, element, palette, fields, faces)
-          break
-        case "image": {
-          const image = assets.get(element.asset_id)
-
-          if (!image) break
-
-          if (element.flip_x) document.transform(-1, 0, 0, 1, 2 * center.x, 0)
-          if (element.flip_y) document.transform(1, 0, 0, -1, 0, 2 * center.y)
-
-          document.image(image, element.x, element.y, { width: element.width, height: element.height })
-          break
-        }
-        case "logo":
-          if (logo) {
-            document.image(logo, element.x, element.y, { width: element.width, height: element.height })
-          }
-          break
-        case "qr": {
-          const code = qrCodes.get(resolveColor(element.color, palette))
-          const inset = element.width * 0.05
-
-          document.roundedRect(element.x, element.y, element.width, element.height, element.width * 0.05).fillColor("#FFFFFF").fill()
-
-          if (code) {
-            document.image(code, element.x + inset, element.y + inset, { width: element.width - inset * 2, height: element.height - inset * 2 })
-          }
-          break
-        }
-      }
-
-      document.restore()
-    }
-
-    design.elements.forEach(draw)
-
-    // Tarja por cima de tudo, para não haver como confundir um documento estornado (ou uma prévia
-    // do editor) com um válido, mas sem apagar o conteúdo, que continua legível por baixo.
-    const stamp = receipt.status === "cancelled" ? "CANCELADO" : options.sample ? "MODELO" : null
-
-    if (stamp) {
-      document.save()
-      document.rotate(-22, { origin: [width / 2, height / 2] })
-      document.font("Helvetica-Bold").fontSize(96).fillColor("#B91C1C").fillOpacity(stamp === "MODELO" ? 0.08 : 0.13)
-        .text(stamp, 0, height / 2 - 62, { width, align: "center", characterSpacing: 6, lineBreak: false })
-      document.fillOpacity(1)
-      document.restore()
-    }
+      drawPage(document, design, context)
+    })
   })
 }

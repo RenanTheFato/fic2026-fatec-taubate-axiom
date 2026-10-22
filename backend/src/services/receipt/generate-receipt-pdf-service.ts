@@ -9,16 +9,21 @@ import { LoadReceiptCertificateService } from "../certificate/load-receipt-certi
 
 export type ReceiptPdfFormat = "document" | "certificate"
 
+// O que o doador escolhe na segunda via: o certificado com o valor, o que leva a mensagem no lugar
+// dele, ou os dois no mesmo arquivo, um por página.
+export type CertificateChoice = "amount" | "message" | "both"
+
 interface GenerateReceiptPdfProps {
   hash: ReceiptInterface['hash'],
   format: ReceiptPdfFormat,
+  variant?: CertificateChoice,
 }
 
 // O service lê o recibo, monta o endereço de verificação e entrega o desenho ao template. O QR do
 // recibo institucional aponta para a conferência da API; o do certificado, que é a peça que o
 // doador mostra, aponta para a página de segunda via do site, onde quem lê o QR vê o certificado.
 export class GenerateReceiptPdfService {
-  async execute({ hash, format }: GenerateReceiptPdfProps) {
+  async execute({ hash, format, variant = "amount" }: GenerateReceiptPdfProps) {
 
     const receipt = await Receipt.findOne({ where: { hash } })
 
@@ -29,18 +34,29 @@ export class GenerateReceiptPdfService {
     const data = receipt.get({ plain: true })
 
     const pdf = format === "certificate"
-      ? await this.certificate(data)
+      ? await this.certificate(data, variant)
       : await buildReceiptDocument(data, `${env.APP_URL}/api/v1/receipt/verify/${data.hash}`)
 
-    const prefix = format === "certificate" ? "certificado" : "recibo"
+    const prefix = format === "document" ? "recibo" : variant === "message" ? "certificado-mensagem" : "certificado"
 
     return { receipt: data, pdf, filename: `${prefix}-${data.number.replace("/", "-")}.pdf`}
   }
 
-  private async certificate(receipt: ReceiptInterface) {
-    const { design, destination } = await new LoadReceiptCertificateService().execute({ receipt })
-    const assets = await new LoadCertificateAssetsService().execute({ design })
+  private async certificate(receipt: ReceiptInterface, variant: CertificateChoice) {
+    const { variants, destination } = await new LoadReceiptCertificateService().execute({ receipt })
 
-    return await buildReceiptCertificate(receipt, `${env.WEB_URL}/certificado/${receipt.hash}`, { design, assets, destination })
+    const designs = variant === "both"
+      ? [variants.amount.design, variants.message.design]
+      : [variants[variant].design]
+
+    const assets = new Map<string, Buffer>()
+
+    for (const design of designs) {
+      for (const [id, data] of await new LoadCertificateAssetsService().execute({ design })) {
+        assets.set(id, data)
+      }
+    }
+
+    return await buildReceiptCertificate(receipt, `${env.WEB_URL}/certificado/${receipt.hash}`, { designs, assets, destination })
   }
 }
