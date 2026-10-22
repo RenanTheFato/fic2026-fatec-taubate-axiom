@@ -18,8 +18,8 @@ import { Post } from "../models/post-model.js";
 import type { PostCategory, PostStatus } from "../models/post-model.js";
 import { CertificateAsset } from "../models/certificate-asset-model.js";
 import { CertificateDesign, folderKey } from "../models/certificate-design-model.js";
-import type { CertificateScope } from "../models/certificate-design-model.js";
-import { FACTORY_DESIGN, classicDesign } from "../utils/certificate-classic.js";
+import type { CertificateScope, CertificateVariant } from "../models/certificate-design-model.js";
+import { FACTORY_DESIGN, FACTORY_MESSAGE, FACTORY_MESSAGE_DESIGN, FACTORY_PALETTE, classicDesign } from "../utils/certificate-classic.js";
 import type { ClassicOptions, ClassicSticker } from "../utils/certificate-classic.js";
 import type { CertificateDesignSpec, CertificateElement, CertificateText } from "../utils/certificate-design.js";
 import { readImageInfo } from "../utils/image-size.js";
@@ -29,6 +29,17 @@ import { Registration } from "../models/registration-model.js";
 import { ContactMessage } from "../models/contact-message-model.js";
 import type { ContactChannel, ContactStatus } from "../models/contact-message-model.js";
 import { formatTicketCode, generateTicketCode } from "../utils/ticket-code.js";
+import { Partner } from "../models/partner-model.js";
+import type { PartnerInterest, PartnerStatus } from "../models/partner-model.js";
+import { PartnerProposal } from "../models/partner-proposal-model.js";
+import type { ProposalKind, ProposalStatus } from "../models/partner-proposal-model.js";
+import { Volunteer } from "../models/volunteer-model.js";
+import type { VolunteerArea, VolunteerPeriod, VolunteerStatus } from "../models/volunteer-model.js";
+import { VolunteerShift } from "../models/volunteer-shift-model.js";
+import { VolunteerAssignment } from "../models/volunteer-assignment-model.js";
+import type { AssignmentStatus } from "../models/volunteer-assignment-model.js";
+import { SocialPost } from "../models/social-post-model.js";
+import type { SocialNetwork } from "../models/social-post-model.js";
 
 // Carga de demonstração. Não é migration e não é fixture de teste: é o conteúdo com que a
 // interface é avaliada, então precisa sair do banco com as mesmas invariantes que os serviços
@@ -87,10 +98,35 @@ function money(value: number) {
   return value.toFixed(2)
 }
 
+// As cargas acrescentadas depois da primeira (parceiros, voluntariado, redes sociais e a variação
+// com mensagem do certificado) não sorteiam nada: uma chamada a mais ao `random()` deslocaria o
+// sorteio de todas as transações, e a carga deixaria de ser a mesma de antes.
+function fixedDaysAgo(days: number, hour = 13, minute = 0) {
+  const date = new Date(NOW)
+  date.setUTCDate(date.getUTCDate() - days)
+  date.setUTCHours(hour, minute, 0, 0)
+  return date
+}
+
+// A escala do voluntariado é a exceção à data fixa: ela é contada a partir do dia em que a carga
+// roda, no horário local, para o painel nunca abrir com todos os turnos já vencidos.
+function fromToday(days: number, hour: number, minute = 0) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  date.setHours(hour, minute, 0, 0)
+  return date
+}
+
 // Truncate ignora chave estrangeira, então a checagem é desligada só para a limpeza. A ordem
 // continua sendo a das dependências para o dia em que isto virar DELETE.
 async function wipe() {
   const tables = [
+    "social_posts",
+    "volunteer_assignments",
+    "volunteer_shifts",
+    "volunteers",
+    "partner_proposals",
+    "partners",
     "registrations",
     "contact_messages",
     "photos",
@@ -916,14 +952,31 @@ async function seedAssets(uploadedBy: string) {
   return new Map(ASSET_FILES.map((asset, index) => [asset.key, created[index].id]))
 }
 
+// A variação com mensagem de um desenho livre: o texto que carregava o valor passa a dizer o gesto
+// sem o número, e nenhum outro elemento muda.
+function withoutAmount(design: CertificateDesignSpec): CertificateDesignSpec {
+  return {
+    ...design,
+    elements: design.elements.map((element) =>
+      element.type === "text" && element.content.includes("{{valor}}")
+        ? { ...element, content: element.content.replace("{{acao}} {{valor}}", "{{gesto}}") }
+        : element
+    ),
+  }
+}
+
 // Versões de certificado. Cada pasta conta uma história: o modelo padrão mudou para as cores da
 // marca; a Páscoa ganhou ovos e coelho; o Natal de 2025 nasceu vermelho e dourado e ganhou neve no
 // meio da campanha; o de 2026 foi desenhado do zero no editor livre, com letra caligráfica e
-// enfeites espalhados; o Chefs do Bem ganhou chapéu e talheres.
+// enfeites espalhados; o Chefs do Bem ganhou chapéu e talheres. A variação com mensagem no lugar do
+// valor acompanha o modelo padrão desde o começo e foi personalizada no Natal de 2026; as outras
+// pastas herdam a do modelo padrão.
 
 type PlannedDesign = {
   scope: CertificateScope,
   target_id: string | null,
+  // Ausente é a variação com valor, que era a única até a segunda existir.
+  variant?: CertificateVariant,
   label: string,
   created_at: Date,
   design: CertificateDesignSpec,
@@ -1111,6 +1164,39 @@ async function seedCertificateDesigns(assets: Map<string, string>, campaigns: Ca
       design: christmas2026(asset),
     },
     {
+      scope: "default",
+      target_id: null,
+      variant: "message",
+      label: "Modelo institucional com mensagem",
+      created_at: fixedDaysAgo(420, 13, 5),
+      design: FACTORY_MESSAGE_DESIGN,
+    },
+    {
+      scope: "default",
+      target_id: null,
+      variant: "message",
+      label: "Cores da marca com mensagem",
+      created_at: fixedDaysAgo(75, 18, 10),
+      design: classicDesign({
+        palette: { paper: "#FFFFFF", primary: "#0A7A73", secondary: "#00B3A6", accent: "#BB2DD7", ink: "#343937", muted: "#5C6260" },
+        font: "nunito",
+        insteadOfAmount: FACTORY_MESSAGE,
+        message: "Obrigado por fazer parte da Somos do Bem.",
+        stickers: [
+          sticker(asset("coracao"), 66, 60, 44, -10, 0.9),
+          sticker(asset("coracao"), 732, 60, 44, 10, 0.9),
+        ],
+      }),
+    },
+    {
+      scope: "campaign",
+      target_id: campaign("natal-do-bem-2026"),
+      variant: "message",
+      label: "Natal 2026 com mensagem, sem valor",
+      created_at: fixedDaysAgo(21, 17, 30),
+      design: withoutAmount(christmas2026(asset)),
+    },
+    {
       scope: "event",
       target_id: event("chefs-do-bem-6a-edicao"),
       label: "Chefs do Bem com chapéu e talheres",
@@ -1129,18 +1215,21 @@ async function seedCertificateDesigns(assets: Map<string, string>, campaigns: Ca
 
   const versions = new Map<string, number>()
 
+  // A numeração corre por pasta e por variação, como no serviço que grava.
   const rows = planned
     .sort((left, right) => left.created_at.getTime() - right.created_at.getTime())
     .map((item) => {
       const folder = folderKey(item.scope, item.target_id)
-      const version = (versions.get(folder) ?? 0) + 1
-      versions.set(folder, version)
+      const variant = item.variant ?? "amount"
+      const version = (versions.get(`${folder}|${variant}`) ?? 0) + 1
+      versions.set(`${folder}|${variant}`, version)
 
       return {
         scope: item.scope,
         campaign_id: item.scope === "campaign" ? item.target_id : null,
         event_id: item.scope === "event" ? item.target_id : null,
         folder,
+        variant,
         version,
         label: item.label,
         design: item.design,
@@ -1155,8 +1244,8 @@ async function seedCertificateDesigns(assets: Map<string, string>, campaigns: Ca
 
 // A mesma decisão da emissão real (ResolveCertificateDesignService), aplicada no instante em que
 // cada recibo da carga nasceu: evento, campanha e modelo padrão, nessa ordem, e dentro da pasta a
-// versão mais nova que já existia naquele dia.
-function designAt(designs: CertificateDesign[], transaction: PlannedTransaction, issuedAt: Date) {
+// versão mais nova daquela variação que já existia naquele dia.
+function designAt(designs: CertificateDesign[], transaction: PlannedTransaction, issuedAt: Date, variant: CertificateVariant) {
   const priority = [
     ...(transaction.event_id ? [folderKey("event", transaction.event_id)] : []),
     ...(transaction.campaign_id ? [folderKey("campaign", transaction.campaign_id)] : []),
@@ -1165,7 +1254,7 @@ function designAt(designs: CertificateDesign[], transaction: PlannedTransaction,
 
   for (const folder of priority) {
     const available = designs
-      .filter((design) => design.folder === folder && design.created_at.getTime() <= issuedAt.getTime())
+      .filter((design) => design.folder === folder && design.variant === variant && design.created_at.getTime() <= issuedAt.getTime())
       .sort((left, right) => right.version - left.version)
 
     if (available[0]) {
@@ -1219,7 +1308,8 @@ async function seedReceipts(planned: PlannedTransaction[], designs: CertificateD
       cancelled_at: transaction.refunded_at,
       previous_hash: previousHash,
       hash,
-      certificate_design_id: designAt(designs, transaction, issuedAt),
+      certificate_design_id: designAt(designs, transaction, issuedAt, "amount"),
+      certificate_message_design_id: designAt(designs, transaction, issuedAt, "message"),
       created_at: issuedAt,
       updated_at: transaction.refunded_at ?? issuedAt,
     }
@@ -1767,6 +1857,778 @@ async function seedPosts(author: string) {
   })))
 }
 
+// Parceiros. Os catorze que já estavam na rede antes da plataforma entram aprovados, na rede pública
+// e sem conta: nunca pediram acesso ao painel. As empresas que pediram pelo site são fictícias,
+// como os doadores, e mostram as três situações do pedido. A Horizonte Embalagens é a conta de
+// demonstração do painel do parceiro (parceiro@exemplo.com.br), com um aporte já pago para o Natal
+// do Bem, um patrocínio aceito esperando pagamento e propostas nas outras situações.
+
+const NETWORK = [
+  "Beatz", "Asstam", "Cobreq", "Dayco", "GTA", "Haoc Saúde", "Leonardi", "Lofts", "Lógica",
+  "Mann + Hummel", "Monark", "Sew Eurodrive", "V&S", "Power Fiber",
+]
+
+const DEMO_PARTNER = {
+  company_name: "Horizonte Embalagens Ltda",
+  document: "45781296000163",
+  email: "parceiro@exemplo.com.br",
+  phone: "19 3875-1200",
+}
+
+// A empresa de demonstração doa como qualquer doador: o cadastro de doador é o que o recibo lê.
+async function seedPartnerDonor() {
+  return await Donor.create({
+    name: DEMO_PARTNER.company_name,
+    email: DEMO_PARTNER.email,
+    document: DEMO_PARTNER.document,
+    document_type: "cnpj",
+    phone: DEMO_PARTNER.phone,
+  })
+}
+
+// O aporte que a Horizonte já pagou, pelo mesmo caminho de qualquer doação: entra na corrente de
+// recibos, soma na campanha e aparece no mural, porque a empresa autorizou a marca no site.
+function partnerContribution(donor: Donor, campaigns: Campaign[]): PlannedTransaction {
+  const christmas = campaigns.find((campaign) => campaign.slug === "natal-do-bem-2026") as Campaign
+
+  return {
+    id: randomUUID(),
+    type: "donation",
+    status: "confirmed",
+    amount: money(5000),
+    payment_method: "boleto",
+    donor,
+    campaign_id: christmas.id,
+    event_id: null,
+    public_recognition: true,
+    created_at: fixedDaysAgo(12, 14, 20),
+    confirmed_at: fixedDaysAgo(10, 15, 42),
+    refunded_at: null,
+    notes: "Proposta de parceria: Aporte para o Natal do Bem 2026",
+    items: [],
+  }
+}
+
+async function seedPartners(admin: string, campaigns: Campaign[], events: Event[], contribution: PlannedTransaction) {
+  const hashed = await hashPassword(PASSWORD, 10)
+
+  const legacy = await Partner.bulkCreate(NETWORK.map((name, index) => ({
+    user_id: null,
+    company_name: name,
+    document: null,
+    phone: null,
+    website: null,
+    logo_url: null,
+    interests: ["institutional"] as PartnerInterest[],
+    message: null,
+    public_listing: true,
+    status: "approved" as const,
+    review_note: null,
+    reviewed_at: fixedDaysAgo(500 - index, 13),
+    reviewed_by: null,
+    created_at: fixedDaysAgo(500 - index, 13),
+    updated_at: fixedDaysAgo(500 - index, 13),
+  })))
+
+  const requests: {
+    company_name: string,
+    document: string,
+    contact: string,
+    email: string,
+    phone: string,
+    website: string | null,
+    interests: PartnerInterest[],
+    message: string,
+    public_listing: boolean,
+    status: PartnerStatus,
+    review_note: string | null,
+    days: number,
+    reviewed_days: number | null,
+  }[] = [
+    {
+      company_name: DEMO_PARTNER.company_name,
+      document: DEMO_PARTNER.document,
+      contact: "Carla Mendes",
+      email: DEMO_PARTNER.email,
+      phone: DEMO_PARTNER.phone,
+      website: null,
+      interests: ["sponsorship", "contribution", "volunteering"],
+      message: "Somos uma indústria de embalagens de Indaiatuba e queremos apoiar a associação com aportes nas campanhas, patrocínio de eventos e um dia de voluntariado da equipe por semestre.",
+      public_listing: true,
+      status: "approved",
+      review_note: "Bem-vindos à rede de parceiros! A captação vai ligar nesta semana para combinar a primeira ação.",
+      days: 40,
+      reviewed_days: 37,
+    },
+    {
+      company_name: "Vale Verde Alimentos Ltda",
+      document: "30847125000112",
+      contact: "Rafael Souza",
+      email: "parcerias.valeverde@exemplo.com.br",
+      phone: "19 3894-5500",
+      website: null,
+      interests: ["in_kind", "sponsorship"],
+      message: "Distribuímos alimentos na região e gostaríamos de doar os insumos do Chefs do Bem e de outros eventos com refeição, além de patrocinar uma edição.",
+      public_listing: true,
+      status: "pending",
+      review_note: null,
+      days: 2,
+      reviewed_days: null,
+    },
+    {
+      company_name: "Clínica Sorriso Pleno",
+      document: "61509348000101",
+      contact: "Helena Castro",
+      email: "contato.sorrisopleno@exemplo.com.br",
+      phone: "19 3816-2020",
+      website: null,
+      interests: ["in_kind", "volunteering"],
+      message: "Somos uma clínica odontológica e podemos oferecer atendimento a alunos da escola e acolher dias de prevenção com a nossa equipe, dentro do calendário da casa.",
+      public_listing: false,
+      status: "pending",
+      review_note: null,
+      days: 4,
+      reviewed_days: null,
+    },
+    {
+      company_name: "Agência Impulso Digital",
+      document: "72935614000176",
+      contact: "Bruno Teixeira",
+      email: "bruno.impulso@exemplo.com.br",
+      phone: "19 99701-3344",
+      website: null,
+      interests: ["institutional"],
+      message: "Oferecemos a gestão das redes da associação em troca da nossa marca em todo o material institucional e nas camisetas dos eventos.",
+      public_listing: true,
+      status: "refused",
+      review_note: "Agradecemos o contato. Hoje a associação não aceita parceria em troca de marca em todo o material institucional. Se quiser apoiar uma campanha ou um evento específico, revise o pedido e mande de novo pelo painel.",
+      days: 12,
+      reviewed_days: 8,
+    },
+  ]
+
+  const accounts = await User.bulkCreate(requests.map((request) => ({
+    name: request.contact,
+    email: request.email,
+    hashed_password: hashed,
+    role: "partner" as const,
+  })), { returning: true })
+
+  const companies = await Partner.bulkCreate(requests.map((request, index) => ({
+    user_id: accounts[index].id,
+    company_name: request.company_name,
+    document: request.document,
+    phone: request.phone,
+    website: request.website,
+    logo_url: null,
+    interests: request.interests,
+    message: request.message,
+    public_listing: request.public_listing,
+    status: request.status,
+    review_note: request.review_note,
+    reviewed_at: request.reviewed_days === null ? null : fixedDaysAgo(request.reviewed_days, 17),
+    reviewed_by: request.reviewed_days === null ? null : admin,
+    created_at: fixedDaysAgo(request.days, 14),
+    updated_at: fixedDaysAgo(request.reviewed_days ?? request.days, 17),
+  })))
+
+  const demo = companies[0]
+  const campaign = (slug: string) => (campaigns.find((item) => item.slug === slug) as Campaign).id
+  const event = (slug: string) => (events.find((item) => item.slug === slug) as Event).id
+
+  const proposals: {
+    kind: ProposalKind,
+    title: string,
+    description: string,
+    amount: string | null,
+    campaign_id: string | null,
+    event_id: string | null,
+    status: ProposalStatus,
+    response_note: string | null,
+    transaction_id: string | null,
+    days: number,
+    reviewed_days: number | null,
+  }[] = [
+    {
+      kind: "contribution",
+      title: "Aporte para o Natal do Bem 2026",
+      description: "Queremos começar a parceria com um aporte para a campanha de Natal, para as cestas e os presentes das famílias atendidas.",
+      amount: money(5000),
+      campaign_id: campaign("natal-do-bem-2026"),
+      event_id: null,
+      status: "accepted",
+      response_note: "Aceito, com muita gratidão. O pagamento já está liberado aqui no painel.",
+      transaction_id: contribution.id,
+      days: 14,
+      reviewed_days: 13,
+    },
+    {
+      kind: "sponsorship",
+      title: "Patrocínio do Jantar dos Parceiros 2026",
+      description: "Patrocínio de uma cota do jantar, com a nossa marca no material do evento e dois lugares para a diretoria da empresa.",
+      amount: money(3000),
+      campaign_id: null,
+      event_id: event("jantar-dos-parceiros-2026"),
+      status: "accepted",
+      response_note: "Aceito! A marca entra no material do jantar. O pagamento já está liberado aqui no painel.",
+      transaction_id: null,
+      days: 6,
+      reviewed_days: 4,
+    },
+    {
+      kind: "in_kind",
+      title: "Embalagens para os kits do Natal do Bem",
+      description: "Podemos produzir e doar as caixas dos kits de Natal, com a arte da campanha impressa, na quantidade que a coordenação precisar.",
+      amount: money(1800),
+      campaign_id: campaign("natal-do-bem-2026"),
+      event_id: null,
+      status: "accepted",
+      response_note: "Aceito! A coordenação do Natal do Bem vai combinar com vocês a quantidade e a data de entrega.",
+      transaction_id: null,
+      days: 9,
+      reviewed_days: 7,
+    },
+    {
+      kind: "sponsorship",
+      title: "Camisetas da Corrida e Caminhada",
+      description: "Patrocínio das camisetas da corrida, com a nossa marca nas costas.",
+      amount: money(4500),
+      campaign_id: null,
+      event_id: event("corrida-e-caminhada-somos-do-bem"),
+      status: "refused",
+      response_note: "O patrocínio das camisetas desta edição já está fechado com outro parceiro. Que tal o Jantar dos Parceiros ou a Cantata de Natal?",
+      transaction_id: null,
+      days: 8,
+      reviewed_days: 7,
+    },
+    {
+      kind: "campaign",
+      title: "Campanha de agasalhos para as famílias atendidas",
+      description: "Sugerimos uma campanha de inverno para arrecadar agasalhos e cobertores para as famílias do ambulatório, com a nossa fábrica como ponto de coleta.",
+      amount: money(2000),
+      campaign_id: null,
+      event_id: null,
+      status: "pending",
+      response_note: null,
+      transaction_id: null,
+      days: 2,
+      reviewed_days: null,
+    },
+    {
+      kind: "volunteering",
+      title: "Dia de voluntariado da equipe na Oficina Terapêutica",
+      description: "Doze pessoas da nossa equipe gostariam de passar uma tarde com a Oficina Terapêutica, no dia e na atividade que a coordenação indicar.",
+      amount: null,
+      campaign_id: null,
+      event_id: null,
+      status: "pending",
+      response_note: null,
+      transaction_id: null,
+      days: 1,
+      reviewed_days: null,
+    },
+  ]
+
+  const created = await PartnerProposal.bulkCreate(proposals.map((proposal) => ({
+    partner_id: demo.id,
+    kind: proposal.kind,
+    title: proposal.title,
+    description: proposal.description,
+    amount: proposal.amount,
+    campaign_id: proposal.campaign_id,
+    event_id: proposal.event_id,
+    status: proposal.status,
+    response_note: proposal.response_note,
+    reviewed_at: proposal.reviewed_days === null ? null : fixedDaysAgo(proposal.reviewed_days, 16),
+    reviewed_by: proposal.reviewed_days === null ? null : admin,
+    transaction_id: proposal.transaction_id,
+    created_at: fixedDaysAgo(proposal.days, 11),
+    updated_at: fixedDaysAgo(proposal.reviewed_days ?? proposal.days, 16),
+  })))
+
+  return { partners: legacy.length + companies.length, requests: companies, proposals: created }
+}
+
+// Voluntariado. A Ana Vieira (voluntario@somosdobem.org.br) é a voluntária de demonstração: tem
+// horas validadas, turnos confirmados, um aguardando a coordenação e o histórico do que já fez.
+// As outras pessoas são fictícias e mostram as três situações do cadastro. A escala é contada a
+// partir do dia em que a carga roda; os turnos que já passaram estão com a presença fechada, menos
+// o de ontem, que é o que a coordenação ainda precisa registrar.
+
+const VOLUNTEERS: {
+  name: string,
+  email: string | null,
+  phone: string,
+  city: string | null,
+  area: VolunteerArea,
+  availability: VolunteerPeriod[],
+  about: string,
+  status: VolunteerStatus,
+  review_note: string | null,
+  days: number,
+}[] = [
+  {
+    name: "Ana Vieira",
+    email: null,
+    phone: "19 99654-2210",
+    city: "Indaiatuba",
+    area: "oficina",
+    availability: ["tarde", "fim-de-semana"],
+    about: "Sou terapeuta ocupacional aposentada e quero ajudar nas oficinas, onde já fui voluntária em outra cidade.",
+    status: "approved",
+    review_note: "Bem-vinda! A orientação inicial é com a coordenação da Oficina.",
+    days: 580,
+  },
+  {
+    name: "Lucas Ferreira",
+    email: "lucas.ferreira@exemplo.com.br",
+    phone: "19 99812-3344",
+    city: "Indaiatuba",
+    area: "eventos",
+    availability: ["noite", "fim-de-semana"],
+    about: "Trabalho com produção de eventos e posso ajudar na montagem, na recepção e na logística dos eventos da casa.",
+    status: "approved",
+    review_note: null,
+    days: 260,
+  },
+  {
+    name: "Beatriz Nogueira",
+    email: "beatriz.nogueira@exemplo.com.br",
+    phone: "19 99733-9081",
+    city: "Salto",
+    area: "escola",
+    availability: ["manha", "tarde"],
+    about: "Sou estudante de pedagogia e quero acompanhar as atividades da escola, principalmente leitura e contação de histórias.",
+    status: "approved",
+    review_note: null,
+    days: 190,
+  },
+  {
+    name: "Rafael Duarte",
+    email: "rafael.duarte@exemplo.com.br",
+    phone: "19 99256-7710",
+    city: "Indaiatuba",
+    area: "comunicacao",
+    availability: ["tarde", "fim-de-semana"],
+    about: "Sou fotógrafo e posso registrar as atividades e os eventos para as redes sociais da associação.",
+    status: "approved",
+    review_note: null,
+    days: 150,
+  },
+  {
+    name: "Juliana Prado",
+    email: "juliana.prado@exemplo.com.br",
+    phone: "19 99145-6620",
+    city: "Indaiatuba",
+    area: "ambulatorio",
+    availability: ["manha"],
+    about: "Sou técnica de enfermagem e tenho as manhãs livres para apoiar a recepção e o acolhimento do ambulatório.",
+    status: "approved",
+    review_note: null,
+    days: 120,
+  },
+  {
+    name: "Pedro Henrique Lima",
+    email: "pedro.lima@exemplo.com.br",
+    phone: "19 99377-4105",
+    city: "Indaiatuba",
+    area: "administrativo",
+    availability: ["manha", "tarde"],
+    about: "Sou contador e posso ajudar na organização administrativa, no preparo dos kits e nos mutirões da sede.",
+    status: "approved",
+    review_note: null,
+    days: 95,
+  },
+  {
+    name: "Camila Rocha",
+    email: "camila.rocha@exemplo.com.br",
+    phone: "19 99618-2307",
+    city: "Indaiatuba",
+    area: "oficina",
+    availability: ["tarde"],
+    about: "Faço artesanato há muitos anos e gostaria de ensinar nas oficinas, uma tarde por semana.",
+    status: "pending",
+    review_note: null,
+    days: 2,
+  },
+  {
+    name: "Thiago Santos",
+    email: "thiago.santos@exemplo.com.br",
+    phone: "19 99504-8812",
+    city: "Itu",
+    area: "eventos",
+    availability: ["fim-de-semana"],
+    about: "Quero ajudar nos eventos de fim de semana, na montagem e na recepção do público.",
+    status: "pending",
+    review_note: null,
+    days: 5,
+  },
+  {
+    name: "Mariana Alves",
+    email: "mariana.alves@exemplo.com.br",
+    phone: "19 99420-1173",
+    city: "Indaiatuba",
+    area: "outra",
+    availability: ["noite"],
+    about: "Gostaria de ajudar com aulas de inglês para os jovens da escola, no período da noite.",
+    status: "refused",
+    review_note: "Hoje a escola não tem turma no período da noite. Se puder em outro período, ajuste o cadastro e mande de novo pelo painel.",
+    days: 30,
+  },
+]
+
+type PlannedShift = {
+  activity: string,
+  area: VolunteerArea,
+  place: string,
+  coordinator: string,
+  description: string | null,
+  day: number,
+  from: [number, number],
+  to: [number, number],
+  slots: number,
+  // Quem está no turno, pelo nome, e em que situação. Horas só em quem esteve presente e saiu
+  // antes do fim.
+  people: { name: string, status: AssignmentStatus, hours?: string }[],
+}
+
+const SHIFTS: PlannedShift[] = [
+  {
+    activity: "Preparo de kits para as famílias",
+    area: "administrativo",
+    place: "Sede administrativa",
+    coordinator: "Serviço Social",
+    description: null,
+    day: -40,
+    from: [9, 0],
+    to: [12, 0],
+    slots: 6,
+    people: [
+      { name: "Ana Vieira", status: "attended" },
+      { name: "Pedro Henrique Lima", status: "attended" },
+      { name: "Juliana Prado", status: "absent" },
+    ],
+  },
+  {
+    activity: "Apoio na Oficina Terapêutica",
+    area: "oficina",
+    place: "Oficina Terapêutica",
+    coordinator: "Coordenação da Oficina",
+    description: null,
+    day: -26,
+    from: [14, 0],
+    to: [17, 0],
+    slots: 3,
+    people: [
+      { name: "Ana Vieira", status: "attended" },
+      { name: "Beatriz Nogueira", status: "attended" },
+    ],
+  },
+  {
+    activity: "Recepção no Bazar Solidário",
+    area: "eventos",
+    place: "Salão de eventos da sede",
+    coordinator: "Coordenação de Eventos",
+    description: null,
+    day: -12,
+    from: [9, 0],
+    to: [13, 0],
+    slots: 5,
+    people: [
+      { name: "Ana Vieira", status: "attended" },
+      { name: "Lucas Ferreira", status: "attended" },
+      { name: "Rafael Duarte", status: "attended", hours: "3.50" },
+    ],
+  },
+  {
+    activity: "Apoio na Escola de Educação Especial",
+    area: "escola",
+    place: "Escola de Educação Especial",
+    coordinator: "Coordenação Pedagógica",
+    description: null,
+    day: -5,
+    from: [13, 0],
+    to: [17, 0],
+    slots: 3,
+    people: [
+      { name: "Ana Vieira", status: "attended" },
+      { name: "Beatriz Nogueira", status: "attended" },
+    ],
+  },
+  {
+    activity: "Organização do estoque do bazar",
+    area: "administrativo",
+    place: "Sede administrativa",
+    coordinator: "Coordenação de Captação",
+    description: null,
+    day: -1,
+    from: [9, 0],
+    to: [12, 0],
+    slots: 4,
+    people: [
+      { name: "Pedro Henrique Lima", status: "confirmed" },
+      { name: "Lucas Ferreira", status: "confirmed" },
+    ],
+  },
+  {
+    activity: "Apoio na Oficina Terapêutica",
+    area: "oficina",
+    place: "Oficina Terapêutica",
+    coordinator: "Coordenação da Oficina",
+    description: "Acompanhar os alunos na produção das peças do bazar de Natal.",
+    day: 2,
+    from: [14, 0],
+    to: [17, 0],
+    slots: 3,
+    people: [
+      { name: "Ana Vieira", status: "confirmed" },
+      { name: "Beatriz Nogueira", status: "pending" },
+    ],
+  },
+  {
+    activity: "Recepção no Dia de Portas Abertas",
+    area: "eventos",
+    place: "Ambulatório",
+    coordinator: "Coordenação de Eventos",
+    description: "Receber as famílias, apresentar a casa e conduzir os grupos pelas salas.",
+    day: 5,
+    from: [9, 0],
+    to: [13, 0],
+    slots: 6,
+    people: [
+      { name: "Ana Vieira", status: "confirmed" },
+      { name: "Lucas Ferreira", status: "confirmed" },
+      { name: "Juliana Prado", status: "pending" },
+    ],
+  },
+  {
+    activity: "Montagem do bazar beneficente",
+    area: "eventos",
+    place: "Sede administrativa",
+    coordinator: "Coordenação de Captação",
+    description: null,
+    day: 9,
+    from: [8, 30],
+    to: [12, 0],
+    slots: 4,
+    people: [
+      { name: "Ana Vieira", status: "pending" },
+      { name: "Pedro Henrique Lima", status: "confirmed" },
+    ],
+  },
+  {
+    activity: "Leitura e contação de histórias",
+    area: "escola",
+    place: "Escola de Educação Especial",
+    coordinator: "Coordenação Pedagógica",
+    description: null,
+    day: 12,
+    from: [9, 0],
+    to: [11, 0],
+    slots: 2,
+    people: [
+      { name: "Beatriz Nogueira", status: "confirmed" },
+    ],
+  },
+  {
+    activity: "Fotos e vídeo para as redes sociais",
+    area: "comunicacao",
+    place: "Sede e oficinas",
+    coordinator: "Comunicação",
+    description: "Registrar as atividades da semana para o Instagram e o site.",
+    day: 16,
+    from: [13, 0],
+    to: [16, 0],
+    slots: 2,
+    people: [],
+  },
+  {
+    activity: "Acolhimento no ambulatório",
+    area: "ambulatorio",
+    place: "Ambulatório",
+    coordinator: "Coordenação do Ambulatório",
+    description: null,
+    day: 20,
+    from: [8, 0],
+    to: [12, 0],
+    slots: 3,
+    people: [
+      { name: "Juliana Prado", status: "confirmed" },
+    ],
+  },
+  {
+    activity: "Mutirão de Natal: separação das doações",
+    area: "administrativo",
+    place: "Sede administrativa",
+    coordinator: "Coordenação do Natal do Bem",
+    description: "Separar e conferir os itens doados para os kits de Natal.",
+    day: 30,
+    from: [9, 0],
+    to: [15, 0],
+    slots: 10,
+    people: [
+      { name: "Pedro Henrique Lima", status: "pending" },
+    ],
+  },
+]
+
+async function seedVolunteers(demo: User, coordinator: string) {
+  const hashed = await hashPassword(PASSWORD, 10)
+  const others = VOLUNTEERS.filter((volunteer) => volunteer.email !== null)
+
+  const accounts = await User.bulkCreate(others.map((volunteer) => ({
+    name: volunteer.name,
+    email: volunteer.email as string,
+    hashed_password: hashed,
+    role: "volunteer" as const,
+  })), { returning: true })
+
+  const userOf = (name: string) => (name === demo.name ? demo : accounts.find((account) => account.name === name) as User)
+
+  const volunteers = await Volunteer.bulkCreate(VOLUNTEERS.map((volunteer) => ({
+    user_id: userOf(volunteer.name).id,
+    phone: volunteer.phone,
+    city: volunteer.city,
+    area: volunteer.area,
+    availability: volunteer.availability,
+    about: volunteer.about,
+    status: volunteer.status,
+    review_note: volunteer.review_note,
+    reviewed_at: volunteer.status === "pending" ? null : fixedDaysAgo(volunteer.days - 2, 16),
+    reviewed_by: volunteer.status === "pending" ? null : coordinator,
+    created_at: fixedDaysAgo(volunteer.days, 12),
+    updated_at: fixedDaysAgo(volunteer.status === "pending" ? volunteer.days : volunteer.days - 2, 16),
+  })))
+
+  const volunteerOf = (name: string) => volunteers[VOLUNTEERS.findIndex((volunteer) => volunteer.name === name)]
+
+  const holding: AssignmentStatus[] = ["pending", "confirmed", "attended", "absent"]
+
+  const shifts = await VolunteerShift.bulkCreate(SHIFTS.map((shift) => ({
+    activity: shift.activity,
+    area: shift.area,
+    place: shift.place,
+    coordinator: shift.coordinator,
+    description: shift.description,
+    starts_at: fromToday(shift.day, shift.from[0], shift.from[1]),
+    ends_at: fromToday(shift.day, shift.to[0], shift.to[1]),
+    slots: shift.slots,
+    taken_slots: shift.people.filter((person) => holding.includes(person.status)).length,
+    status: "open" as const,
+    created_by: coordinator,
+    created_at: fromToday(Math.min(shift.day, 0) - 7, 10),
+    updated_at: fromToday(Math.min(shift.day, 0) - 7, 10),
+  })))
+
+  const assignments = await VolunteerAssignment.bulkCreate(SHIFTS.flatMap((shift, index) => {
+    const starts = fromToday(shift.day, shift.from[0], shift.from[1])
+    const ends = fromToday(shift.day, shift.to[0], shift.to[1])
+    const duration = money((ends.getTime() - starts.getTime()) / 3_600_000)
+
+    return shift.people.map((person) => ({
+      shift_id: shifts[index].id,
+      volunteer_id: volunteerOf(person.name).id,
+      status: person.status,
+      hours: person.status === "attended" ? person.hours ?? duration : null,
+      checked_at: person.status === "attended" || person.status === "absent" ? ends : null,
+      checked_by: person.status === "attended" || person.status === "absent" ? coordinator : null,
+      created_at: fromToday(Math.min(shift.day, 0) - 5, 11),
+      updated_at: fromToday(Math.min(shift.day, 0) - 5, 11),
+    }))
+  }))
+
+  return { volunteers, shifts, assignments }
+}
+
+// Redes sociais. Publicações de Instagram e Facebook sobre o que esta carga já tem (campanhas,
+// eventos e programas), com as fotos que o site já serve e sem inventar resultado. O link de cada
+// uma leva ao perfil real da associação, porque o endereço de uma publicação de verdade só a
+// associação tem. Não há vídeo do YouTube: um id inventado abriria o player com erro, e o primeiro
+// vídeo entra pelo painel. Uma publicação está escondida, para o painel mostrar as duas situações.
+
+const INSTAGRAM = "https://www.instagram.com/somosdobem.indaiatuba/"
+const FACEBOOK = "https://www.facebook.com/somosdobem.indaiatuba"
+
+async function seedSocialPosts(author: string) {
+  const posts: { network: SocialNetwork, caption: string, image_url: string, days: number, visible?: boolean }[] = [
+    {
+      network: "instagram",
+      caption: "O Natal do Bem 2026 começou! 🎄 Cestas, presentes e uma ceia para as famílias atendidas pela associação. Toda doação confirmada gera recibo verificável e certificado, e quem quiser pode deixar o nome no Mural do Bem. Doe pelo site: link na bio.",
+      image_url: "/imagens/campanhas/natal-do-bem-2026.jpg",
+      days: 1,
+    },
+    {
+      network: "facebook",
+      caption: "Vem aí a 6ª edição do Chefs do Bem! Três noites de jantar beneficente com chefs convidados de Indaiatuba, e toda a renda sustenta o Ambulatório. Os convites já estão à venda no site.",
+      image_url: "/imagens/eventos/chefs-do-bem-6a-edicao.png",
+      days: 3,
+    },
+    {
+      network: "instagram",
+      caption: "Na Oficina Terapêutica, autonomia, convivência e trabalho protegido para jovens e adultos atendidos pela associação. 🧶",
+      image_url: "/imagens/oficina.jpeg",
+      days: 6,
+    },
+    {
+      network: "instagram",
+      caption: "Dia de Portas Abertas: visita guiada pelo Ambulatório e pela Oficina Terapêutica, com as famílias contando o que muda no dia a dia. A entrada é gratuita, com inscrição pelo site.",
+      image_url: "/imagens/eventos/dia-de-portas-abertas.jpg",
+      days: 10,
+    },
+    {
+      network: "facebook",
+      caption: "Na Escola de Educação Especial, o ensino é adaptado ao ritmo de cada estudante e construído junto com a família. Conheça o programa no nosso site.",
+      image_url: "/imagens/educacional.png",
+      days: 15,
+    },
+    {
+      network: "instagram",
+      caption: "O Ambulatório atende de forma clínica, terapêutica e de reabilitação, com acompanhamento contínuo da pessoa e da família. 💙",
+      image_url: "/imagens/programa-ambulatorio.jpg",
+      days: 21,
+    },
+    {
+      network: "instagram",
+      caption: "Somos do Bem: um nome novo para a mesma história de cuidado em Indaiatuba.",
+      image_url: "/imagens/noticias/mudanca-de-nome.png",
+      days: 30,
+    },
+    {
+      network: "facebook",
+      caption: "Obrigado a todo mundo que fez parte do Chocolate do Bem 2026! Cada caixa vendida virou material da Escola de Educação Especial.",
+      image_url: "/imagens/eventos/chocolate-do-bem-2026.png",
+      days: 45,
+    },
+    {
+      network: "instagram",
+      caption: "Desde 1976 em Indaiatuba, cuidando da inclusão de pessoas com deficiência. Conheça a nossa história no site.",
+      image_url: "/imagens/institucional-missao.jpg",
+      days: 60,
+    },
+    {
+      network: "instagram",
+      caption: "Bastidores: a sala de fisioterapia vai passar por reforma, e a campanha abre em breve.",
+      image_url: "/imagens/sobre-nos.jpg",
+      days: 70,
+      visible: false,
+    },
+  ]
+
+  return await SocialPost.bulkCreate(posts.map((post) => ({
+    network: post.network,
+    url: post.network === "instagram" ? INSTAGRAM : FACEBOOK,
+    external_id: null,
+    caption: post.caption,
+    image_url: post.image_url,
+    video_id: null,
+    published_at: fixedDaysAgo(post.days, 15),
+    visible: post.visible ?? true,
+    created_by: author,
+    created_at: fixedDaysAgo(post.days, 16),
+    updated_at: fixedDaysAgo(post.days, 16),
+  })))
+}
+
 async function run() {
   await sequelize.authenticate()
 
@@ -1785,6 +2647,11 @@ async function run() {
 
   const planned = plan(donors, campaigns, events, products)
 
+  // O aporte da empresa parceira entra depois do sorteio, para não deslocar as outras transações.
+  const partnerDonor = await seedPartnerDonor()
+  const contribution = partnerContribution(partnerDonor, campaigns)
+  planned.push(contribution)
+
   await seedTransactions(planned)
   const receipts = await seedReceipts(planned, designs)
   const logs = await seedAuditLogs(planned, users[1].id)
@@ -1793,6 +2660,9 @@ async function run() {
   const admin = users.find((user) => user.role === "admin") as User
   const registrations = await seedRegistrations(planned, events, communication.id)
   const messages = await seedContactMessages(planned, communication.id, admin.id)
+  const partners = await seedPartners(admin.id, campaigns, events, contribution)
+  const volunteering = await seedVolunteers(users.find((user) => user.role === "volunteer") as User, communication.id)
+  const social = await seedSocialPosts(communication.id)
 
   const listed = new Set(planned
     .filter((transaction) => transaction.confirmed_at && !transaction.refunded_at && transaction.public_recognition)
@@ -1803,11 +2673,11 @@ async function run() {
 
   console.log("")
   console.log("Carga de demonstração concluída")
-  console.log(`  usuários ............ ${users.length}`)
+  console.log(`  usuários ............ ${await User.count()} (${users.length} da equipe, o resto de voluntários e empresas)`)
   console.log(`  campanhas ........... ${campaigns.length}`)
   console.log(`  eventos ............. ${events.length}`)
   console.log(`  produtos ............ ${products.length}`)
-  console.log(`  doadores ............ ${donors.length}`)
+  console.log(`  doadores ............ ${donors.length + 1} (um é a empresa parceira de demonstração)`)
   console.log(`  transações .......... ${planned.length}`)
   console.log(`  recibos ............. ${receipts.length} (${cancelled.length} cancelados por estorno)`)
   console.log(`  linhas de auditoria . ${logs}`)
@@ -1817,8 +2687,14 @@ async function run() {
   console.log(`  Mural do Bem ........ ${listed.size} nomes`)
   console.log(`  inscrições .......... ${registrations.length} (${registrations.filter((row) => row.checked_in_at).length} com entrada registrada)`)
   console.log(`  mensagens ........... ${messages.length} na caixa de entrada`)
+  console.log(`  parceiros ........... ${partners.partners} (${partners.requests.filter((row) => row.status === "pending").length} pedidos em análise)`)
+  console.log(`  propostas ........... ${partners.proposals.length} da empresa de demonstração`)
+  console.log(`  voluntários ......... ${volunteering.volunteers.length} (${volunteering.volunteers.filter((row) => row.status === "pending").length} em análise)`)
+  console.log(`  turnos .............. ${volunteering.shifts.length}, com ${volunteering.assignments.length} participações`)
+  console.log(`  redes sociais ....... ${social.length} publicações`)
   console.log("")
   console.log(`  senha de todos os acessos: ${PASSWORD}`)
+  console.log(`  parceiro de demonstração: ${DEMO_PARTNER.email}`)
   console.log("")
   console.log("  hashes para testar /recibo/verificar:")
   console.log(`    válido ...... ${valid[valid.length - 1]?.hash}`)
