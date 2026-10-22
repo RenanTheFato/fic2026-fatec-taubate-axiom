@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod/v4";
 import { BadRequestError } from "../../config/errors.js";
-import { CERTIFICATE_SCOPES } from "../../models/certificate-design-model.js";
+import { CERTIFICATE_SCOPES, CERTIFICATE_VARIANTS } from "../../models/certificate-design-model.js";
 import { CreateCertificateDesignService } from "../../services/certificate/create-certificate-design-service.js";
 import { certificateDesignSchema } from "../../utils/certificate-design.js";
 
@@ -16,6 +16,9 @@ export class CreateCertificateDesignController {
         .trim()
         .min(2, { error: "The label must be at least 2 characters long" })
         .max(120, { error: "The label has exceeded the maximum length (120)" }),
+      variant: z.enum(CERTIFICATE_VARIANTS, { error: "The variant must be amount or message" })
+        .optional()
+        .default("amount"),
       design: certificateDesignSchema(),
     })
 
@@ -31,7 +34,7 @@ export class CreateCertificateDesignController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { scope, target_id, label, design } = parsedDesign.data
+    const { scope, target_id, label, variant, design } = parsedDesign.data
 
     try {
       const createCertificateDesignService = new CreateCertificateDesignService()
@@ -39,6 +42,7 @@ export class CreateCertificateDesignController {
         scope,
         target_id,
         label,
+        variant,
         design,
         created_by: req.user?.id ?? null,
       })

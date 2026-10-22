@@ -1,5 +1,6 @@
 import { Transaction as DatabaseTransaction } from "sequelize";
-import { CertificateDesign, folderKey } from "../../models/certificate-design-model.js";
+import { CertificateDesign, CERTIFICATE_VARIANTS, folderKey } from "../../models/certificate-design-model.js";
+import type { CertificateVariant } from "../../models/certificate-design-model.js";
 
 interface ResolveCertificateDesignProps {
   campaign_id: string | null,
@@ -7,9 +8,11 @@ interface ResolveCertificateDesignProps {
   database_transaction?: DatabaseTransaction,
 }
 
-// Qual versão de certificado um recibo recebe ao nascer: a mais recente da pasta mais específica
-// que tiver alguma. Evento antes de campanha, campanha antes do modelo padrão. Sem nenhuma, o
-// recibo fica com NULL e sai no modelo de fábrica.
+// Quais versões de certificado um recibo recebe ao nascer, uma por variação: a mais recente da
+// pasta mais específica que tiver alguma daquela variação. Evento antes de campanha, campanha antes
+// do modelo padrão. Sem nenhuma, a variação fica com NULL e sai no modelo de fábrica. As duas são
+// decididas separadamente: uma campanha pode personalizar só o certificado com valor e herdar a
+// mensagem do modelo padrão.
 export class ResolveCertificateDesignService {
   async execute({ campaign_id, event_id, database_transaction }: ResolveCertificateDesignProps) {
     const priority = [
@@ -20,19 +23,25 @@ export class ResolveCertificateDesignService {
 
     const candidates = await CertificateDesign.findAll({
       where: { folder: priority },
-      attributes: ["id", "folder", "version"],
+      attributes: ["id", "folder", "variant", "version"],
       order: [["version", "DESC"]],
       transaction: database_transaction,
     })
 
-    for (const folder of priority) {
-      const latest = candidates.find((candidate) => candidate.folder === folder)
+    function latestOf(variant: CertificateVariant) {
+      for (const folder of priority) {
+        const latest = candidates.find((candidate) => candidate.folder === folder && candidate.variant === variant)
 
-      if (latest) {
-        return latest.id
+        if (latest) {
+          return latest.id
+        }
       }
+
+      return null
     }
 
-    return null
+    const [amount, message] = CERTIFICATE_VARIANTS.map(latestOf)
+
+    return { amount, message }
   }
 }

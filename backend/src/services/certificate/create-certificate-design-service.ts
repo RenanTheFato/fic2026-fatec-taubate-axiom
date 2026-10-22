@@ -12,6 +12,7 @@ interface CreateCertificateDesignProps {
   scope: CertificateDesignInterface['scope'],
   target_id: string | null,
   label: CertificateDesignInterface['label'],
+  variant: CertificateDesignInterface['variant'],
   design: CertificateDesignInterface['design'],
   created_by: CertificateDesignInterface['created_by'],
 }
@@ -19,7 +20,7 @@ interface CreateCertificateDesignProps {
 // Salvar nunca sobrescreve: cada gravação é a versão seguinte da pasta. A anterior continua
 // existindo, e todo recibo emitido com ela continua saindo exatamente como saiu.
 export class CreateCertificateDesignService {
-  async execute({ scope, target_id, label, design, created_by }: CreateCertificateDesignProps) {
+  async execute({ scope, target_id, label, variant, design, created_by }: CreateCertificateDesignProps) {
 
     if (scope === "default" && target_id) {
       throw new BadRequestError("The default design doesn't belong to a campaign or an event")
@@ -51,16 +52,17 @@ export class CreateCertificateDesignService {
 
     try {
       const created = await sequelize.transaction(async (t) => {
-        // A próxima versão é lida e gravada na mesma transação. Se duas pessoas salvarem a mesma
-        // pasta ao mesmo tempo, o índice único (folder, version) recusa a segunda em vez de deixar
-        // duas versões com o mesmo número.
-        const latest = await CertificateDesign.max<number, CertificateDesign>("version", { where: { folder }, transaction: t })
+        // A próxima versão é lida e gravada na mesma transação, e a numeração corre por variação. Se
+        // duas pessoas salvarem a mesma variação ao mesmo tempo, o índice único (folder, variant,
+        // version) recusa a segunda em vez de deixar duas versões com o mesmo número.
+        const latest = await CertificateDesign.max<number, CertificateDesign>("version", { where: { folder, variant }, transaction: t })
 
         return await CertificateDesign.create({
           scope,
           campaign_id: scope === "campaign" ? target_id : null,
           event_id: scope === "event" ? target_id : null,
           folder,
+          variant,
           version: (latest ?? 0) + 1,
           label,
           design,

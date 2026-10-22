@@ -3,10 +3,11 @@ import { sequelize } from "../../config/sequelize.js";
 import { Campaign } from "../../models/campaign-model.js";
 import { Event } from "../../models/event-model.js";
 import { folderKey } from "../../models/certificate-design-model.js";
-import type { CertificateScope } from "../../models/certificate-design-model.js";
+import type { CertificateScope, CertificateVariant } from "../../models/certificate-design-model.js";
 
 type FolderSummaryRow = {
   folder: string,
+  variant: CertificateVariant,
   versions: number,
   latest_id: string,
   latest_version: number,
@@ -21,17 +22,19 @@ type IssuedRow = {
 
 // As pastas do estúdio: o modelo padrão, cada campanha e cada evento. Toda campanha e todo evento
 // aparecem, mesmo sem personalização: é assim que a equipe prepara o certificado de Natal enquanto
-// a campanha ainda é rascunho. As contagens vêm somadas pelo banco.
+// a campanha ainda é rascunho. Cada pasta tem as duas variações, a que mostra o valor e a que leva a
+// mensagem, cada uma com a sua numeração. As contagens vêm somadas pelo banco.
 export class ListCertificateFoldersService {
   async execute() {
     const [campaigns, events, summaries, issued] = await Promise.all([
       Campaign.findAll({ attributes: ["id", "title", "status", "starts_at"], order: [["starts_at", "DESC"], ["id", "ASC"]] }),
       Event.findAll({ attributes: ["id", "title", "status", "starts_at", "campaign_id"], order: [["starts_at", "DESC"], ["id", "ASC"]] }),
       sequelize.query<FolderSummaryRow>(
-        `SELECT summary.folder, summary.versions, latest.id AS latest_id, latest.version AS latest_version,
+        `SELECT summary.folder, summary.variant, summary.versions, latest.id AS latest_id, latest.version AS latest_version,
                 latest.label AS latest_label, latest.created_at AS latest_created_at
-           FROM (SELECT folder, COUNT(*) AS versions, MAX(version) AS top FROM certificate_designs GROUP BY folder) summary
-           JOIN certificate_designs latest ON latest.folder = summary.folder AND latest.version = summary.top`,
+           FROM (SELECT folder, variant, COUNT(*) AS versions, MAX(version) AS top FROM certificate_designs GROUP BY folder, variant) summary
+           JOIN certificate_designs latest
+             ON latest.folder = summary.folder AND latest.variant = summary.variant AND latest.version = summary.top`,
         { type: QueryTypes.SELECT }
       ),
       sequelize.query<IssuedRow>(
@@ -43,21 +46,14 @@ export class ListCertificateFoldersService {
       ),
     ])
 
-    const summaryByFolder = new Map(summaries.map((row) => [row.folder, row]))
+    const summaryByKey = new Map(summaries.map((row) => [`${row.folder}|${row.variant}`, row]))
     const issuedByFolder = new Map(issued.map((row) => [row.folder, Number(row.issued)]))
 
-    function describe(scope: CertificateScope, target_id: string | null, title: string, status: string | null) {
-      const folder = folderKey(scope, target_id)
-      const summary = summaryByFolder.get(folder)
+    function variantOf(folder: string, variant: CertificateVariant) {
+      const summary = summaryByKey.get(`${folder}|${variant}`)
 
       return {
-        folder,
-        scope,
-        target_id,
-        title,
-        status,
         versions: summary ? Number(summary.versions) : 0,
-        issued: issuedByFolder.get(folder) ?? 0,
         current: summary
           ? {
             id: summary.latest_id,
@@ -66,6 +62,23 @@ export class ListCertificateFoldersService {
             created_at: summary.latest_created_at,
           }
           : null,
+      }
+    }
+
+    function describe(scope: CertificateScope, target_id: string | null, title: string, status: string | null) {
+      const folder = folderKey(scope, target_id)
+      const amount = variantOf(folder, "amount")
+      const message = variantOf(folder, "message")
+
+      return {
+        folder,
+        scope,
+        target_id,
+        title,
+        status,
+        versions: amount.versions + message.versions,
+        issued: issuedByFolder.get(folder) ?? 0,
+        variants: { amount, message },
       }
     }
 

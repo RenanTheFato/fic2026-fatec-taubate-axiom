@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod/v4";
-import { CERTIFICATE_SCOPES } from "../../models/certificate-design-model.js";
+import { CERTIFICATE_SCOPES, CERTIFICATE_VARIANTS } from "../../models/certificate-design-model.js";
 import { ListCertificateDesignsService } from "../../services/certificate/list-certificate-designs-service.js";
 
 export class ListCertificateDesignsController {
@@ -10,6 +10,9 @@ export class ListCertificateDesignsController {
       target_id: z.uuid({ error: "The target id must be a valid uuid" })
         .nullish()
         .default(null),
+      variant: z.enum(CERTIFICATE_VARIANTS, { error: "The variant must be amount or message" })
+        .optional()
+        .default("amount"),
     })
 
     const parsedFolderQuery = folderQuery.safeParse(req.query)
@@ -24,11 +27,11 @@ export class ListCertificateDesignsController {
       return res.status(400).json({ error: "Validation Errors Occurred", errors })
     }
 
-    const { scope, target_id } = parsedFolderQuery.data
+    const { scope, target_id, variant } = parsedFolderQuery.data
 
     try {
       const listCertificateDesignsService = new ListCertificateDesignsService()
-      const designs = await listCertificateDesignsService.execute({ scope, target_id })
+      const designs = await listCertificateDesignsService.execute({ scope, target_id, variant })
 
       return res.status(200).json({ message: "Certificate Designs Fetched Successfully", designs })
     } catch (error: unknown) {

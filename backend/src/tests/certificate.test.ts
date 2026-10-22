@@ -9,9 +9,9 @@ import { CertificateDesign } from "../models/certificate-design-model.js";
 import { CreateCertificateDesignService } from "../services/certificate/create-certificate-design-service.js";
 import { ResolveCertificateDesignService } from "../services/certificate/resolve-certificate-design-service.js";
 import { BadRequestError } from "../config/errors.js";
-import { FACTORY_DESIGN, classicDesign } from "../utils/certificate-classic.js";
+import { FACTORY_DESIGN, FACTORY_MESSAGE_DESIGN, classicDesign } from "../utils/certificate-classic.js";
 import type { CertificateDesignSpec, CertificateText } from "../utils/certificate-design.js";
-import { layoutText } from "../utils/certificate-layout.js";
+import { designProblems, layoutText, variantProblems } from "../utils/certificate-layout.js";
 import { readImageInfo } from "../utils/image-size.js";
 import { buildReceiptCertificate } from "../utils/receipt-certificate-template.js";
 import { mockRequest, mockResponse } from "./utils/mock-http.js";
@@ -40,12 +40,12 @@ function withElement(design: CertificateDesignSpec, id: string, change: Record<s
   }
 }
 
-async function postDesign(design: unknown) {
+async function postDesign(design: unknown, variant?: "amount" | "message") {
   const res = mockResponse()
 
   await new CreateCertificateDesignController().handle(mockRequest({
     user: { id: "user-communication" },
-    body: { scope: "default", target_id: null, label: "Teste", design },
+    body: { scope: "default", target_id: null, label: "Teste", design, ...(variant ? { variant } : {}) },
   } as never), res)
 
   return res
@@ -76,6 +76,7 @@ describe("Certificate studio (versions, library and rendering)", () => {
       scope: "campaign",
       target_id: campaignId,
       label: "Natal com neve",
+      variant: "amount",
       design: christmasDesign(),
       created_by: "user-communication",
     })
@@ -95,6 +96,7 @@ describe("Certificate studio (versions, library and rendering)", () => {
       scope: "campaign",
       target_id: campaignId,
       label: "Natal",
+      variant: "amount",
       design: christmasDesign(),
       created_by: null,
     })).rejects.toBeInstanceOf(BadRequestError)
@@ -111,38 +113,52 @@ describe("Certificate studio (versions, library and rendering)", () => {
     expect(create).toHaveBeenCalledTimes(1)
   })
 
-  it("refuses the donor name in a color that can't be read on the paper behind it", async () => {
+  it("warns about the donor name in a color that can't be read on the paper, and saves it all the same", async () => {
+    const create = jest.spyOn(CreateCertificateDesignService.prototype, "execute").mockResolvedValue({ version: 1 } as never)
     const index = FACTORY_DESIGN.elements.findIndex((element) => element.id === "nome")
+    const faint = withElement(FACTORY_DESIGN, "nome", { color: "#E7E5E4", size: 12 })
 
-    const res = await postDesign(withElement(FACTORY_DESIGN, "nome", { color: "#E7E5E4", size: 12 }))
-
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(issueMessages(res)[0].path).toBe(`design/elements/${index}/color`)
+    expect(designProblems(faint)).toContainEqual(expect.objectContaining({ code: "text-contrast", index }))
+    expect((await postDesign(faint)).status).toHaveBeenCalledWith(201)
+    expect(create).toHaveBeenCalledTimes(1)
   })
 
-  it("judges the contrast against the shape behind the text, not against the paper", async () => {
+  it("judges the contrast against the shape behind the text, not against the paper", () => {
     // Texto claro sobre a faixa escura do valor é legível; o mesmo branco solto no papel não seria.
-    const res = await postDesign(withElement(FACTORY_DESIGN, "valor", { color: "#FFFFFF" }))
-    const loose = await postDesign(withElement(FACTORY_DESIGN, "abertura", { color: "#FFFFFF" }))
+    const onBand = designProblems(withElement(FACTORY_DESIGN, "valor", { color: "#FFFFFF" }))
+    const loose = designProblems(withElement(FACTORY_DESIGN, "abertura", { color: "#FFFFFF" }))
 
-    expect(res.status).not.toHaveBeenCalledWith(400)
-    expect(loose.status).toHaveBeenCalledWith(400)
+    expect(onBand).toEqual([])
+    expect(loose.map((problem) => problem.code)).toContain("text-contrast")
   })
 
-  it("refuses a certificate without its QR code or without the verification code", async () => {
+  it("saves what the checklist only warns about: no QR, no verification code, an unknown field, a character the font lacks", async () => {
+    const create = jest.spyOn(CreateCertificateDesignService.prototype, "execute").mockResolvedValue({ version: 1 } as never)
     const withoutQr = { ...FACTORY_DESIGN, elements: FACTORY_DESIGN.elements.filter((element) => element.type !== "qr") }
     const withoutCode = withElement(FACTORY_DESIGN, "registro", { content: "registro #{{registro}}" })
-
-    expect(issueMessages(await postDesign(withoutQr)).map((issue) => issue.message)).toContain("The certificate needs its verification QR code")
-    expect(issueMessages(await postDesign(withoutCode)).map((issue) => issue.message)).toContain("A text must carry the verification code ({{codigo}})")
-  })
-
-  it("refuses a field the certificate doesn't know and a character the font can't print", async () => {
     const unknown = withElement(FACTORY_DESIGN, "abertura", { content: "Olá, {{apelido}}" })
     const emoji = withElement(FACTORY_DESIGN, "abertura", { content: "Feliz Natal 🎄" })
 
-    expect(issueMessages(await postDesign(unknown))[0].message).toBe("Unknown field {{apelido}}")
-    expect(issueMessages(await postDesign(emoji))[0].message).toContain("can't be printed")
+    expect(designProblems(withoutQr).map((problem) => problem.code)).toContain("qr-missing")
+    expect(designProblems(withoutCode).map((problem) => problem.code)).toContain("code-missing")
+    expect(designProblems(unknown)).toContainEqual(expect.objectContaining({ code: "unknown-field", field: "apelido" }))
+    expect(designProblems(emoji)).toContainEqual(expect.objectContaining({ code: "unsupported-char", char: "🎄" }))
+
+    for (const design of [withoutQr, withoutCode, unknown, emoji]) {
+      expect((await postDesign(design)).status).toHaveBeenCalledWith(201)
+    }
+
+    expect(create).toHaveBeenCalledTimes(4)
+  })
+
+  it("refuses only a broken design: two elements with the same id", async () => {
+    const create = jest.spyOn(CreateCertificateDesignService.prototype, "execute")
+    const [first, second] = FACTORY_DESIGN.elements
+    const res = await postDesign({ ...FACTORY_DESIGN, elements: [first, { ...second, id: first.id }, ...FACTORY_DESIGN.elements.slice(2)] })
+
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(issueMessages(res)).toEqual([expect.objectContaining({ path: "design/elements/1/id", message: "Each element needs a unique id" })])
+    expect(create).not.toHaveBeenCalled()
   })
 
   it("shrinks the donor name to fit one line and wraps a long paragraph by words", () => {
@@ -162,21 +178,48 @@ describe("Certificate studio (versions, library and rendering)", () => {
 
   it("gives a new receipt the newest version of the most specific folder: event, then campaign, then default", async () => {
     jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([
-      { id: "default-v2", folder: "default", version: 2 },
-      { id: "campaign-v3", folder: `campaign:${campaignId}`, version: 3 },
-      { id: "default-v1", folder: "default", version: 1 },
+      { id: "default-v2", folder: "default", variant: "amount", version: 2 },
+      { id: "campaign-v3", folder: `campaign:${campaignId}`, variant: "amount", version: 3 },
+      { id: "default-v1", folder: "default", variant: "amount", version: 1 },
     ] as never)
 
     const resolver = new ResolveCertificateDesignService()
 
-    expect(await resolver.execute({ campaign_id: campaignId, event_id: "event-without-design" })).toBe("campaign-v3")
-    expect(await resolver.execute({ campaign_id: null, event_id: null })).toBe("default-v2")
+    expect((await resolver.execute({ campaign_id: campaignId, event_id: "event-without-design" })).amount).toBe("campaign-v3")
+    expect((await resolver.execute({ campaign_id: null, event_id: null })).amount).toBe("default-v2")
+  })
+
+  it("resolves the two variants apart: a campaign with its own amount certificate still takes the default message", async () => {
+    jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([
+      { id: "campaign-amount-v1", folder: `campaign:${campaignId}`, variant: "amount", version: 1 },
+      { id: "default-message-v2", folder: "default", variant: "message", version: 2 },
+      { id: "default-amount-v2", folder: "default", variant: "amount", version: 2 },
+      { id: "default-message-v1", folder: "default", variant: "message", version: 1 },
+    ] as never)
+
+    expect(await new ResolveCertificateDesignService().execute({ campaign_id: campaignId, event_id: null }))
+      .toEqual({ amount: "campaign-amount-v1", message: "default-message-v2" })
   })
 
   it("leaves the receipt on the factory model when nothing was ever customized", async () => {
     jest.spyOn(CertificateDesign, "findAll").mockResolvedValue([] as never)
 
-    expect(await new ResolveCertificateDesignService().execute({ campaign_id: campaignId, event_id: null })).toBeNull()
+    expect(await new ResolveCertificateDesignService().execute({ campaign_id: campaignId, event_id: null }))
+      .toEqual({ amount: null, message: null })
+  })
+
+  it("warns about the amount on the certificate with the message, and about its absence on the other, without refusing either", async () => {
+    const create = jest.spyOn(CreateCertificateDesignService.prototype, "execute").mockResolvedValue({ version: 1 } as never)
+    const index = FACTORY_DESIGN.elements.findIndex((element) => element.id === "valor")
+
+    expect(variantProblems(FACTORY_DESIGN, "message")).toEqual([{ code: "amount-present", index }])
+    expect(variantProblems(FACTORY_MESSAGE_DESIGN, "amount")).toEqual([{ code: "amount-missing" }])
+    expect(variantProblems(FACTORY_MESSAGE_DESIGN, "message")).toEqual([])
+
+    expect((await postDesign(FACTORY_DESIGN, "message")).status).toHaveBeenCalledWith(201)
+    expect((await postDesign(FACTORY_MESSAGE_DESIGN, "amount")).status).toHaveBeenCalledWith(201)
+    expect(create).toHaveBeenCalledTimes(2)
+    expect(create).toHaveBeenNthCalledWith(1, expect.objectContaining({ variant: "message" }))
   })
 
   it("reads the image type from the bytes and refuses anything that is not PNG or JPEG", async () => {
@@ -254,5 +297,45 @@ describe("Certificate studio (versions, library and rendering)", () => {
     expect(content.match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1)
     expect(content).toContain("841.89 595.28")
     expect(content).toContain("GreatVibes")
+  })
+
+  it("puts the certificate with the amount and the one with the message in the same file, one page each", async () => {
+    const pdf = await buildReceiptCertificate({
+      number: "2026/000124",
+      sequence: 124,
+      status: "issued",
+      donor_name: "Maria Aparecida Oliveira",
+      amount: "150.00",
+      transaction_type: "donation",
+      issued_at: new Date("2026-12-10T12:00:00.000Z"),
+      hash: "b".repeat(64),
+    }, "http://localhost:5173/certificado/bbb", {
+      designs: [FACTORY_DESIGN, FACTORY_MESSAGE_DESIGN],
+      destination: "à campanha Natal do Bem 2026",
+    })
+
+    expect(pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g)).toHaveLength(2)
+  })
+
+  it("still renders a design the checklist warns about: no QR, an unknown field and a character the font lacks", async () => {
+    const design = withElement(
+      { ...FACTORY_DESIGN, elements: FACTORY_DESIGN.elements.filter((element) => element.type !== "qr") },
+      "abertura",
+      { content: "Feliz Natal 🎄, {{apelido}}" },
+    )
+
+    const pdf = await buildReceiptCertificate({
+      number: "2026/000125",
+      sequence: 125,
+      status: "issued",
+      donor_name: "Maria Aparecida Oliveira",
+      amount: "150.00",
+      transaction_type: "donation",
+      issued_at: new Date("2026-12-10T12:00:00.000Z"),
+      hash: "c".repeat(64),
+    }, "http://localhost:5173/certificado/ccc", { design })
+
+    expect(pdf.subarray(0, 5).toString()).toBe("%PDF-")
+    expect(pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1)
   })
 })

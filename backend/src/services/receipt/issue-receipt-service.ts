@@ -69,7 +69,7 @@ export class IssueReceiptService {
 
     // A versão de certificado é decidida na emissão e gravada no recibo, fora do hash. Personalizar
     // a pasta depois não muda o que este doador recebeu: muda só o que os próximos vão receber.
-    const certificateDesignId = await new ResolveCertificateDesignService().execute({
+    const certificateDesigns = await new ResolveCertificateDesignService().execute({
       campaign_id: transaction.campaign_id ?? null,
       event_id: transaction.event_id ?? null,
       database_transaction,
@@ -86,7 +86,8 @@ export class IssueReceiptService {
       issued_at: issuedAt,
       previous_hash: previousHash,
       hash,
-      certificate_design_id: certificateDesignId,
+      certificate_design_id: certificateDesigns.amount,
+      certificate_message_design_id: certificateDesigns.message,
     }, { transaction: database_transaction })
 
     // O avanço do contador é a última coisa: se qualquer passo acima falhar, a transação de banco

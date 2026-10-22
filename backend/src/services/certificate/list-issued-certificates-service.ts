@@ -18,7 +18,7 @@ export class ListIssuedCertificatesService {
     const folder = folderKey(scope, target_id)
 
     const designs = await CertificateDesign.findAll({
-      where: { folder, ...(design_id ? { id: design_id } : {}) },
+      where: { folder, variant: "amount", ...(design_id ? { id: design_id } : {}) },
       attributes: ["id", "version", "label"],
     })
 
