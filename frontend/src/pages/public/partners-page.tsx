@@ -1,4 +1,4 @@
-import { Building2, FileText, HandHeart, Handshake, Megaphone, Package } from "lucide-react"
+import { Building2, FileText, HandHeart, Handshake, LogIn, Megaphone, Package } from "lucide-react"
 import { PageHero } from "../../components/layout/page-hero"
 import { ReadingModeToggle } from "../../components/layout/reading-mode-toggle"
 import { ReadingSwitch } from "../../components/layout/reading-switch"
@@ -94,10 +94,16 @@ export default function PartnersPage() {
           </ReadingSwitch>
         }
       >
-        <ButtonLink to="/fale-conosco" size="lg" tone="partner">
-          <Building2 className="size-5" aria-hidden="true" />
-          Quero ser parceiro
-        </ButtonLink>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <ButtonLink to="/seja-parceiro" size="lg" tone="partner">
+            <Building2 className="size-5" aria-hidden="true" />
+            Quero ser parceiro
+          </ButtonLink>
+          <ButtonLink to="/entrar" size="lg" variant="outline" tone="ink">
+            <LogIn className="size-5" aria-hidden="true" />
+            Painel do parceiro
+          </ButtonLink>
+        </div>
       </PageHero>
 
       <section aria-labelledby="rede" className="py-16 sm:py-20">
@@ -139,6 +145,15 @@ export default function PartnersPage() {
             </div>
           )}
 
+          {data && data.length === 0 && (
+            <div className="mt-10 max-w-md">
+              <StateMessage
+                title="A rede está se formando"
+                description="As empresas parceiras aparecem aqui assim que autorizam a marca no site."
+              />
+            </div>
+          )}
+
           {data && data.length > 0 && (
             <ul className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {data.map((partner) => (
@@ -155,7 +170,7 @@ export default function PartnersPage() {
             id="como-apoiar"
             eyebrow="Formas de apoiar"
             title="Como uma empresa entra na rede"
-            description="A parceria é desenhada junto com a associação, a partir do que a empresa pode oferecer."
+            description="A empresa faz o pedido pelo site e ganha um painel para acompanhar a análise. Aprovada, ela propõe o apoio que cabe no perfil dela."
             tone="partner"
           />
 
@@ -214,17 +229,18 @@ export default function PartnersPage() {
 
           <Card className="h-full">
             <CardBody className="justify-center gap-4">
-              <h3 className="font-display text-xl font-bold">Falar com a captação</h3>
+              <h3 className="font-display text-xl font-bold">Entrar para a rede</h3>
               <p className="text-sm leading-relaxed text-ink-soft">
-                A equipe de captação apresenta os programas, os eventos do calendário e as formas de
-                apoio que cabem no perfil da sua empresa.
+                O pedido de parceria cria o painel da empresa. Lá ela acompanha a análise e, depois
+                de aprovada, sugere campanhas, aportes e patrocínios, paga o que foi aceito e guarda
+                os recibos.
               </p>
               <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink to="/fale-conosco" tone="partner" size="sm">
-                  Fale conosco
+                <ButtonLink to="/seja-parceiro" tone="partner" size="sm">
+                  Fazer o pedido
                 </ButtonLink>
-                <ButtonLink to="/doe-agora" size="sm" variant="outline">
-                  Doar como empresa
+                <ButtonLink to="/fale-conosco" size="sm" variant="outline">
+                  Falar com a captação
                 </ButtonLink>
               </div>
             </CardBody>
