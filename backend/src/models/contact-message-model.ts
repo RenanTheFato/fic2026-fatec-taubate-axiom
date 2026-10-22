@@ -25,6 +25,7 @@ export const CONTACT_CHANNELS_BY_ROLE: Record<UserRole, readonly ContactChannel[
   communication: ["contact", "wall_removal"],
   finance: [],
   volunteer: [],
+  partner: [],
 }
 
 export class ContactMessage extends Model<InferAttributes<ContactMessage>, InferCreationAttributes<ContactMessage>> {
