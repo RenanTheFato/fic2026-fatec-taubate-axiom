@@ -47,7 +47,7 @@ const STEPS = [
   },
   {
     title: "Sua escala começa",
-    text: "Você entra no calendário da frente escolhida e passa a acompanhar seus turnos pelo painel do voluntariado.",
+    text: "Com o cadastro aprovado, você escolhe os turnos abertos no painel do voluntariado e acompanha ali as horas que a coordenação registra.",
   },
 ]
 

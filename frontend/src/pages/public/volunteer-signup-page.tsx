@@ -12,8 +12,8 @@ import { SectionHeading } from "../../components/ui/section"
 const NOTES = [
   {
     icon: CalendarClock,
-    title: "Você escolhe os períodos",
-    text: "Marque quantos períodos quiser. A escala é combinada depois, junto com a coordenação.",
+    title: "Você escolhe os turnos",
+    text: "O cadastro cria o seu acesso ao painel. Aprovado pela coordenação, você escolhe lá os turnos abertos que cabem nos seus períodos.",
   },
   {
     icon: ShieldCheck,
@@ -41,14 +41,15 @@ export default function VolunteerSignupPage() {
           <ReadingSwitch
             simple={
               <p>
-                Preencha o formulário abaixo. A coordenação liga ou escreve para combinar os dias e
-                explicar como funciona.
+                Preencha o formulário abaixo e crie uma senha. A coordenação aprova o cadastro, e
+                você escolhe os turnos no seu painel.
               </p>
             }
           >
             <p>
-              Conte quem você é, onde quer ajudar e quando tem tempo livre. A coordenação do
-              voluntariado entra em contato para combinar a conversa inicial e o começo da escala.
+              Conte quem você é, onde quer ajudar e quando tem tempo livre. O cadastro cria o seu
+              acesso ao painel do voluntariado: aprovado pela coordenação, você escolhe ali os turnos
+              abertos e acompanha as suas horas.
             </p>
           </ReadingSwitch>
         }
