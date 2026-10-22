@@ -21,6 +21,7 @@ export class Receipt extends Model<InferAttributes<Receipt>, InferCreationAttrib
   declare previous_hash: CreationOptional<string | null>
   declare hash: string
   declare certificate_design_id: CreationOptional<string | null>
+  declare certificate_message_design_id: CreationOptional<string | null>
   declare readonly created_at: CreationOptional<Date>
   declare readonly updated_at: CreationOptional<Date>
 }
@@ -95,6 +96,12 @@ Receipt.init(
     // Fora do hash: é a versão de certificado com que o recibo nasceu, ou seja, a roupa do
     // documento e não o conteúdo assinado. NULL é o modelo de fábrica.
     certificate_design_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    // A versão da variação com mensagem no lugar do valor, que o doador pode escolher na segunda
+    // via. Também fora do hash, pelo mesmo motivo. NULL é a variação de fábrica.
+    certificate_message_design_id: {
       type: DataTypes.UUID,
       allowNull: true,
     },

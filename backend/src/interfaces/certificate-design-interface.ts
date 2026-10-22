@@ -1,4 +1,4 @@
-import { CertificateScope } from "../models/certificate-design-model.js";
+import { CertificateScope, CertificateVariant } from "../models/certificate-design-model.js";
 import type { CertificateDesignSpec } from "../utils/certificate-design.js";
 
 export interface CertificateDesignInterface{
@@ -7,6 +7,7 @@ export interface CertificateDesignInterface{
   campaign_id: string | null,
   event_id: string | null,
   folder: string,
+  variant: CertificateVariant,
   version: number,
   label: string,
   design: CertificateDesignSpec,

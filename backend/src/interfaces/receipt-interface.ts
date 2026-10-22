@@ -16,6 +16,7 @@ export interface ReceiptInterface{
   previous_hash: string | null,
   hash: string,
   certificate_design_id: string | null,
+  certificate_message_design_id: string | null,
   created_at: Date,
   updated_at: Date
 }

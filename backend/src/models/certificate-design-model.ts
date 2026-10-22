@@ -6,6 +6,12 @@ export const CERTIFICATE_SCOPES = ["default", "campaign", "event"] as const
 
 export type CertificateScope = typeof CERTIFICATE_SCOPES[number]
 
+// As duas variações de cada pasta: a que mostra o valor e a que leva uma mensagem no lugar dele.
+// Quem contribuiu escolhe na segunda via qual delas quer, ou as duas.
+export const CERTIFICATE_VARIANTS = ["amount", "message"] as const
+
+export type CertificateVariant = typeof CERTIFICATE_VARIANTS[number]
+
 // Uma versão de certificado. Imutável depois de gravada: personalizar de novo é criar a versão
 // seguinte na mesma pasta, e o recibo guarda o id da versão com que nasceu.
 export class CertificateDesign extends Model<InferAttributes<CertificateDesign>, InferCreationAttributes<CertificateDesign>> {
@@ -14,6 +20,7 @@ export class CertificateDesign extends Model<InferAttributes<CertificateDesign>,
   declare campaign_id: CreationOptional<string | null>
   declare event_id: CreationOptional<string | null>
   declare folder: string
+  declare variant: CreationOptional<CertificateVariant>
   declare version: number
   declare label: string
   declare design: CertificateDesignSpec
@@ -44,6 +51,11 @@ CertificateDesign.init(
     folder: {
       type: DataTypes.STRING(64),
       allowNull: false,
+    },
+    variant: {
+      type: DataTypes.ENUM(...CERTIFICATE_VARIANTS),
+      allowNull: false,
+      defaultValue: "amount",
     },
     version: {
       type: DataTypes.INTEGER.UNSIGNED,
