@@ -1,8 +1,6 @@
 import { z } from "zod/v4";
 import { CERTIFICATE_FONTS } from "./certificate-fonts.js";
 import type { CertificateFont } from "./certificate-fonts.js";
-import { CODE_MIN_SIZE, QR_MIN_SIZE, designProblems } from "./certificate-layout.js";
-import type { DesignProblem } from "./certificate-layout.js";
 
 // O certificado é uma página com elementos soltos, como um slide: textos, formas, imagens da
 // biblioteca, a logo e o QR de verificação, cada um com posição, tamanho, giro e opacidade. O
@@ -182,38 +180,10 @@ const elementSchema = z.discriminatedUnion("type", [
   }),
 ], { error: "The element type must be text, shape, image, logo or qr" })
 
-function problemIssue(problem: DesignProblem): { path: (string | number)[], message: string } {
-  switch (problem.code) {
-    case "duplicate-id":
-      return { path: ["elements", problem.index, "id"], message: "Each element needs a unique id" }
-    case "qr-missing":
-      return { path: ["elements"], message: "The certificate needs its verification QR code" }
-    case "qr-duplicate":
-      return { path: ["elements", problem.index], message: "The certificate takes only one QR code" }
-    case "qr-small":
-      return { path: ["elements", problem.index, "width"], message: `The QR code must be at least ${QR_MIN_SIZE} points wide to be read on paper` }
-    case "qr-contrast":
-      return { path: ["elements", problem.index, "color"], message: "The QR code color must have a contrast of at least 4.5:1 against white" }
-    case "code-missing":
-      return { path: ["elements"], message: "A text must carry the verification code ({{codigo}})" }
-    case "code-small":
-      return { path: ["elements", problem.index, "size"], message: `The verification code must be at least ${CODE_MIN_SIZE} points tall` }
-    case "empty-text":
-      return { path: ["elements", problem.index, "content"], message: "A text element can't be empty" }
-    case "unknown-field":
-      return { path: ["elements", problem.index, "content"], message: `Unknown field {{${problem.field}}}` }
-    case "unsupported-char":
-      return { path: ["elements", problem.index, "content"], message: `The character "${problem.char}" can't be printed with this font` }
-    case "text-contrast":
-      return {
-        path: ["elements", problem.index, "color"],
-        message: `The text has a contrast of ${problem.ratio.toFixed(1)}:1 with what is behind it, and needs at least ${problem.required}:1`,
-      }
-  }
-}
-
-// Compartilhado pelo controller que grava uma versão e pelo que gera a prévia: os dois precisam
-// recusar exatamente o mesmo desenho, senão a prévia mostraria algo que salvar não aceita.
+// Compartilhado pelo controller que grava uma versão e pelo que gera a prévia, para que os dois
+// aceitem exatamente o mesmo desenho. O esquema confere só a forma: os avisos do editor
+// (`designProblems`, como um contraste baixo ou a falta do QR) não impedem salvar nem gerar a
+// prévia, porque quem decide como o certificado sai é a associação.
 export function certificateDesignSchema() {
   return z.object({
     palette: z.object({
@@ -232,9 +202,17 @@ export function certificateDesignSchema() {
     elements: z.array(elementSchema, { error: "The elements must be a list" })
       .max(MAX_ELEMENTS, { error: `The elements have exceeded the maximum allowed length (${MAX_ELEMENTS})` }),
   }).superRefine((design, ctx) => {
-    for (const problem of designProblems(design as CertificateDesignSpec)) {
-      ctx.addIssue({ code: "custom", ...problemIssue(problem) })
-    }
+    // O editor seleciona e reordena pelo id. Um id repetido é um desenho corrompido, e não uma
+    // escolha de quem desenhou, então é a única coisa que o esquema recusa além da forma.
+    const ids = new Set<string>()
+
+    design.elements.forEach((element, index) => {
+      if (ids.has(element.id)) {
+        ctx.addIssue({ code: "custom", path: ["elements", index, "id"], message: "Each element needs a unique id" })
+      }
+
+      ids.add(element.id)
+    })
   })
 }
 

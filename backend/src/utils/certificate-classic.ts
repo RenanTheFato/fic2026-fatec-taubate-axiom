@@ -44,6 +44,9 @@ export interface ClassicOptions {
   frame?: boolean,
   title?: string | null,
   message?: string | null,
+  // Monta a variação sem valor: a faixa do meio leva esta frase no lugar de {{valor}}, e a linha de
+  // cima troca {{acao}} (que termina pedindo o número) por {{gesto}}.
+  insteadOfAmount?: string | null,
   background?: { asset_id: string, opacity: number } | null,
   stickers?: ClassicSticker[],
 }
@@ -201,7 +204,7 @@ export function classicDesign(options: ClassicOptions): CertificateDesignSpec {
     diamond("losango", CENTER, ornament, 5),
     text("abertura", "Este certificado reconhece que", ornament + 18, { x: CENTER - 280, width: 560, size: 10.5, font, color: "@muted" }),
     text("nome", "{{nome}}", nameTop, { x: 80, width: W - 160, size: 24, font, bold: true, color: "@ink", fit: "shrink" }),
-    text("acao", "{{acao}}", afterName + 12, { x: CENTER - 280, width: 560, size: 11.5, font, color: "@ink" }),
+    text("acao", options.insteadOfAmount ? "{{gesto}}" : "{{acao}}", afterName + 12, { x: CENTER - 280, width: 560, size: 11.5, font, color: "@ink" }),
     shape("faixa-valor", {
       shape: "rect",
       x: CENTER - 130,
@@ -211,7 +214,11 @@ export function classicDesign(options: ClassicOptions): CertificateDesignSpec {
       radius: 24,
       fill: { stops: ["@primary", "@secondary"], angle: degrees(48, 260) },
     }),
-    text("valor", "{{valor}}", bandTop + 15, { x: CENTER - 130, width: 260, size: 21, font, bold: true, color: "@contrast", fit: "shrink" }),
+    // A frase da variação sem valor é mais longa que um valor em reais: ganha folga dos dois lados
+    // da faixa e letra um pouco menor, para não encostar na borda arredondada.
+    options.insteadOfAmount
+      ? text("valor", options.insteadOfAmount, bandTop + 16.5, { x: CENTER - 112, width: 224, size: 17, font, bold: true, color: "@contrast", fit: "shrink" })
+      : text("valor", "{{valor}}", bandTop + 15, { x: CENTER - 130, width: 260, size: 21, font, bold: true, color: "@contrast", fit: "shrink" }),
     text("destino", "destinada {{destino}}.", bandTop + 62, { x: CENTER - 300, width: 600, size: 10, font, color: "@muted", fit: "shrink" }),
   )
 
@@ -248,3 +255,13 @@ export function classicDesign(options: ClassicOptions): CertificateDesignSpec {
 }
 
 export const FACTORY_DESIGN = classicDesign({ palette: FACTORY_PALETTE })
+
+// A frase de fábrica da variação sem valor. A associação troca o texto no estúdio, como qualquer
+// outro elemento.
+export const FACTORY_MESSAGE = "Obrigado por fazer o bem"
+
+export const FACTORY_MESSAGE_DESIGN = classicDesign({ palette: FACTORY_PALETTE, insteadOfAmount: FACTORY_MESSAGE })
+
+export function factoryDesign(variant: "amount" | "message") {
+  return variant === "amount" ? FACTORY_DESIGN : FACTORY_MESSAGE_DESIGN
+}

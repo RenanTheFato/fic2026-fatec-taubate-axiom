@@ -2,7 +2,7 @@ import { organization } from "../config/organization.js";
 import { ReceiptInterface } from "../interfaces/receipt-interface.js";
 import type { CertificateField } from "./certificate-layout.js";
 import { formatDate, formatMoney } from "./pdf-document.js";
-import { CERTIFICATE_DEED_BY_TYPE, CERTIFICATE_TITLE_BY_TYPE } from "./receipt-labels.js";
+import { CERTIFICATE_DEED_BY_TYPE, CERTIFICATE_GESTURE_BY_TYPE, CERTIFICATE_TITLE_BY_TYPE } from "./receipt-labels.js";
 
 export type CertificateReceipt = Pick<ReceiptInterface,
   "number" | "sequence" | "status" | "donor_name" | "amount" | "transaction_type" | "issued_at" | "hash"
@@ -17,6 +17,7 @@ export function certificateFields(receipt: CertificateReceipt, destination: stri
     valor: formatMoney(receipt.amount),
     titulo: CERTIFICATE_TITLE_BY_TYPE[receipt.transaction_type],
     acao: CERTIFICATE_DEED_BY_TYPE[receipt.transaction_type],
+    gesto: CERTIFICATE_GESTURE_BY_TYPE[receipt.transaction_type],
     destino: destination ?? `às atividades da ${organization.name}`,
     numero: receipt.number,
     data: formatDate(receipt.issued_at),

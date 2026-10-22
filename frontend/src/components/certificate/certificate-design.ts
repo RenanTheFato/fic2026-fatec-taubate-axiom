@@ -38,6 +38,13 @@ export const CERTIFICATE_DEED: Record<TransactionType, string> = {
   product: "apoiou nossas ações pela loja solidária, com",
 }
 
+export const CERTIFICATE_GESTURE: Record<TransactionType, string> = {
+  donation: "contribuiu com uma doação",
+  sponsorship: "apoiou nossas ações como patrocinador",
+  ticket: "esteve presente conosco",
+  product: "apoiou nossas ações pela loja solidária",
+}
+
 export const TYPE_OPTIONS: { value: TransactionType; label: string }[] = [
   { value: "donation", label: "Doação" },
   { value: "sponsorship", label: "Patrocínio" },
@@ -55,7 +62,8 @@ export const FIELD_INFO: { key: string; label: string }[] = [
   { key: "nome", label: "Nome de quem contribuiu" },
   { key: "valor", label: "Valor" },
   { key: "titulo", label: "Título pelo tipo de apoio" },
-  { key: "acao", label: "O que a pessoa fez" },
+  { key: "acao", label: "O que a pessoa fez, antes do valor" },
+  { key: "gesto", label: "O que a pessoa fez, sem o valor" },
   { key: "destino", label: "Campanha ou evento" },
   { key: "data", label: "Data de emissão" },
   { key: "numero", label: "Número do recibo" },
@@ -71,6 +79,7 @@ export function sampleFields(type: TransactionType, destination: string | null):
     valor: formatCurrency(type === "sponsorship" ? 5000 : 150),
     titulo: CERTIFICATE_TITLE[type],
     acao: CERTIFICATE_DEED[type],
+    gesto: CERTIFICATE_GESTURE[type],
     destino: destination ?? `às atividades da ${ORGANIZATION.name}`,
     numero: `${new Date().getFullYear()}/000123`,
     data: new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "America/Sao_Paulo" }).format(new Date()),
@@ -253,28 +262,30 @@ function ratio(value: number): string {
 
 export function problemMessage(problem: DesignProblem): string {
   switch (problem.code) {
-    case "duplicate-id":
-      return "Dois elementos ficaram com o mesmo identificador. Apague a cópia e duplique de novo."
     case "qr-missing":
-      return "Falta o QR de verificação. Insira-o pela aba Elementos."
+      return "Falta o QR de verificação. Sem ele, o certificado não é conferido pela câmera."
     case "qr-duplicate":
-      return "O certificado leva um QR só."
+      return "Há mais de um QR de verificação."
     case "qr-small":
-      return `O QR precisa de ao menos ${QR_MIN_SIZE} pontos de lado para ser lido no papel.`
+      return `Com menos de ${QR_MIN_SIZE} pontos de lado, o QR pode não ser lido no papel.`
     case "qr-contrast":
-      return `A cor do QR tem contraste de ${ratio(problem.ratio)}:1 com o branco. O mínimo é 4,5:1.`
+      return `A cor do QR tem contraste de ${ratio(problem.ratio)}:1 com o branco. O recomendado é 4,5:1.`
     case "code-missing":
       return "Nenhum texto leva o código de verificação ({{codigo}})."
     case "code-small":
-      return `O código de verificação precisa de letra com ao menos ${CODE_MIN_SIZE} pontos.`
+      return `Com letra abaixo de ${CODE_MIN_SIZE} pontos, o código de verificação fica difícil de ler.`
     case "empty-text":
       return "Há um texto vazio."
     case "unknown-field":
-      return `O campo {{${problem.field}}} não existe.`
+      return `O campo {{${problem.field}}} não existe e sai escrito assim no PDF.`
     case "unsupported-char":
-      return `A fonte deste texto não imprime "${problem.char}".`
+      return `A fonte deste texto não tem "${problem.char}", que sai trocado no PDF.`
     case "text-contrast":
-      return `Contraste de ${ratio(problem.ratio)}:1 com o que está atrás. O mínimo é ${ratio(problem.required)}:1.`
+      return `Contraste de ${ratio(problem.ratio)}:1 com o que está atrás. O recomendado é ${ratio(problem.required)}:1.`
+    case "amount-missing":
+      return "Nenhum texto leva o campo {{valor}}, então este certificado sai sem o valor."
+    case "amount-present":
+      return "Este texto mostra o valor ({{valor}}) no certificado com mensagem."
   }
 }
 

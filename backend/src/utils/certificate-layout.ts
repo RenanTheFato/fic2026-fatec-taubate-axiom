@@ -9,8 +9,8 @@ import type {
 } from "./certificate-design.js";
 
 // A matemática do certificado que o backend e o frontend precisam fazer igual: resolver as cores do
-// tema, medir e quebrar o texto, saber o que está atrás de cada elemento e o que torna um desenho
-// impossível de salvar. O frontend tem uma cópia deste arquivo
+// tema, medir e quebrar o texto, saber o que está atrás de cada elemento e o que merece aviso num
+// desenho. O frontend tem uma cópia deste arquivo
 // (`frontend/src/components/certificate/certificate-layout.ts`) que só muda nos imports. Se uma
 // regra mudar aqui, muda lá, senão o editor mostra uma quebra de linha que o PDF não faz.
 
@@ -108,6 +108,7 @@ export const CERTIFICATE_FIELDS = [
   "valor",
   "titulo",
   "acao",
+  "gesto",
   "destino",
   "numero",
   "data",
@@ -388,7 +389,6 @@ export const QR_MIN_SIZE = 56
 export const CODE_MIN_SIZE = 5
 
 export type DesignProblem =
-  | { code: "duplicate-id", index: number }
   | { code: "qr-missing" }
   | { code: "qr-duplicate", index: number }
   | { code: "qr-small", index: number }
@@ -399,22 +399,19 @@ export type DesignProblem =
   | { code: "unknown-field", index: number, field: string }
   | { code: "unsupported-char", index: number, char: string }
   | { code: "text-contrast", index: number, ratio: number, required: number }
+  | { code: "amount-missing" }
+  | { code: "amount-present", index: number }
 
-// O que impede um desenho de virar certificado. O backend recusa ao salvar e o editor mostra a
-// mesma lista enquanto a pessoa desenha, a partir desta mesma função.
+// Os avisos do editor: o que pode deixar o certificado difícil de ler, de verificar ou de imprimir.
+// Eles orientam e não impedem nada, porque quem decide como o certificado sai é a associação: o
+// editor mostra a lista enquanto a pessoa desenha, e salvar ou pedir a prévia aceita o desenho
+// do jeito que estiver.
 export function designProblems(design: CertificateDesignSpec): DesignProblem[] {
   const problems: DesignProblem[] = []
-  const ids = new Set<string>()
   let qrCodes = 0
   let carriesCode = false
 
   design.elements.forEach((element, index) => {
-    if (ids.has(element.id)) {
-      problems.push({ code: "duplicate-id", index })
-    }
-
-    ids.add(element.id)
-
     if (element.type === "qr") {
       qrCodes += 1
 
@@ -482,4 +479,21 @@ export function designProblems(design: CertificateDesignSpec): DesignProblem[] {
   }
 
   return problems
+}
+
+// Cada pasta tem duas variações. A que mostra o valor espera um texto com {{valor}}, e a que leva
+// a mensagem existe justamente para quem não quer o valor impresso. O editor avisa quando uma
+// delas foge disso, mas a decisão continua sendo de quem desenha.
+export type CertificateVariantKey = "amount" | "message"
+
+export function variantProblems(design: CertificateDesignSpec, variant: CertificateVariantKey): DesignProblem[] {
+  const carriers = design.elements.flatMap((element, index) =>
+    element.type === "text" && fieldsIn(element.content).includes("valor") ? [index] : []
+  )
+
+  if (variant === "amount") {
+    return carriers.length === 0 ? [{ code: "amount-missing" }] : []
+  }
+
+  return carriers.map((index) => ({ code: "amount-present", index }))
 }

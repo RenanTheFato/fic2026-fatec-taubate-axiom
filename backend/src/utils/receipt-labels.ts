@@ -31,6 +31,15 @@ export const CERTIFICATE_DEED_BY_TYPE: Record<TransactionType, string> = {
   product: "apoiou nossas ações pela loja solidária, com",
 }
 
+// O mesmo gesto sem o valor, para o certificado que leva uma mensagem no lugar dele. A frase da
+// `acao` termina pedindo o número ("com a doação de"), e por isso não serve ali.
+export const CERTIFICATE_GESTURE_BY_TYPE: Record<TransactionType, string> = {
+  donation: "contribuiu com uma doação",
+  sponsorship: "apoiou nossas ações como patrocinador",
+  ticket: "esteve presente conosco",
+  product: "apoiou nossas ações pela loja solidária",
+}
+
 // O complemento de "destinada" no certificado. Evento vem antes de campanha porque é o mais
 // específico: um convite do Chefs do Bem também aponta para a campanha que o evento sustenta.
 export function destinationPhrase(destination: { event?: string | null, campaign?: string | null }) {
