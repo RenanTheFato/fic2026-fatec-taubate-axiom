@@ -2,8 +2,9 @@
 
 Interface web da associação **Somos do Bem** (Indaiatuba, SP), desenvolvida para o FIC 2026. O
 site evolui o endereço institucional que a associação já tem (`somosdobem.org.br`) e acrescenta
-doação, campanhas, eventos, loja, voluntariado, transparência, verificação de documentos e a área
-de trabalho da equipe.
+doação, campanhas, eventos, loja, voluntariado, rede de parceiros, redes sociais, transparência,
+verificação de documentos, a área de trabalho da equipe e os painéis do voluntário e da empresa
+parceira.
 
 A API consumida por esta interface fica em `../backend`. A visão geral do projeto está no
 [README da raiz](../README.md).
@@ -29,15 +30,23 @@ O site tem duas metades que compartilham o mesmo sistema de design, mas não o m
 
 **O site público** é feito para ler e decidir. Qualquer pessoa conhece a associação, acompanha
 notícias, apoia uma campanha, compra um convite ou um produto, se inscreve num evento gratuito,
-confere a autenticidade de um recibo, recupera o próprio certificado de agradecimento e escreve
-para a associação. Navegação horizontal, uma ideia por seção.
+confere a autenticidade de um recibo, recupera o próprio certificado de agradecimento (com o valor,
+com uma mensagem no lugar dele ou os dois), acompanha as publicações das redes sociais sem sair do
+site, se cadastra como voluntário, pede para a empresa entrar na rede de parceiros e escreve para a
+associação. Navegação horizontal, uma ideia por seção.
 
 **A área da equipe** é feita para trabalhar. Depois do login, cada pessoa vê apenas os módulos do
 seu papel: o financeiro acompanha transações, reconciliação, recibos e doadores; a comunicação
 cadastra e edita campanhas, eventos, produtos e notícias (com troca de foto), cuida dos
-certificados, da lista de presença e do check-in dos eventos e responde as mensagens do site; a
-administração enxerga tudo. Menu horizontal em dois andares, tabelas densas e a tarefa em primeiro
-lugar.
+certificados, da lista de presença e do check-in dos eventos, das redes sociais no site, da
+coordenação do voluntariado e dos pedidos e propostas de parceria, e responde as mensagens do site;
+a administração enxerga tudo. Menu horizontal em dois andares, tabelas densas e a tarefa em
+primeiro lugar.
+
+**Os painéis de quem é de fora** usam a mesma casca. O voluntário acompanha o cadastro, as horas
+validadas, a própria escala e escolhe os turnos abertos. A empresa parceira acompanha o pedido e,
+aprovada, propõe campanhas, aportes e patrocínios, paga o que foi aceito pelo checkout e guarda os
+recibos.
 
 Dois recursos merecem destaque:
 
@@ -188,14 +197,17 @@ conhece. Nenhuma URL pública expõe id numérico: conteúdo é endereçado por 
 | `/mural-do-bem` | Mural do Bem geral e o pedido de retirada do nome | API |
 | `/pedido/:transacaoId/status` | Status do pedido depois do pagamento | API |
 | `/noticias` `/noticias/:slug` | Notícias e publicação | API |
+| `/redes-sociais` | Publicações do Instagram, do Facebook e do YouTube, com o vídeo tocando no site | API |
 | `/assinaturas/gerenciar/:token` | Gestão da doação mensal, sem login | conteúdo |
-| `/parceiros` | Rede de parceiros | conteúdo |
-| `/voluntariado` `/seja-voluntario` | Programa de voluntariado e cadastro | conteúdo |
+| `/parceiros` | Rede de parceiros | API |
+| `/seja-parceiro` | Pedido de parceria, que cria a conta da empresa | API |
+| `/voluntariado` | Programa de voluntariado | conteúdo |
+| `/seja-voluntario` | Cadastro de voluntário, que cria a conta | API |
 | `/fale-conosco` `/ouvidoria` `/trabalhe-conosco` | Formulários que chegam à caixa de entrada da equipe | API |
 | `/perguntas-frequentes` `/politica-de-privacidade` | Apoio | conteúdo |
 
 Onde a coluna diz "conteúdo", o dado é resolvido por um módulo de `src/services/` em vez de uma
-rota da API, porque voluntariado, parceiros, painel de impacto e doação recorrente ainda não têm
+rota da API: textos institucionais, e o painel de impacto e a doação recorrente, que ainda não têm
 domínio no backend. O tipo usado já é o que a API vai devolver, então ligar cada um deles é trocar
 uma função de serviço, sem mexer na tela.
 
@@ -218,7 +230,14 @@ O acesso é sempre por `/entrar`, e cada pessoa é levada para a casa do seu pap
 | `/admin/comunicacao/certificados` | Estúdio de certificados | admin, communication |
 | `/admin/comunicacao/certificados/editor` | Editor em tela inteira | admin, communication |
 | `/admin/comunicacao/mensagens` | Caixa de entrada; ouvidoria e candidaturas só para a administração | admin, communication |
-| `/voluntario/painel` | Painel do voluntário | volunteer, admin |
+| `/admin/comunicacao/redes-sociais` | Publicações das redes no site: cadastrar, esconder, apagar e importar do Instagram | admin, communication |
+| `/admin/voluntariado/cadastros` | Cadastros de voluntariado: aprovar ou recusar | admin, communication |
+| `/admin/voluntariado/escala` | Turnos, confirmação de quem se ofereceu e presença | admin, communication |
+| `/admin/parcerias/pedidos` | Pedidos de parceria: aprovar ou recusar | admin, communication |
+| `/admin/parcerias/propostas` | Propostas das empresas: aceitar ou recusar | admin, communication |
+| `/voluntario/painel` | Painel do voluntário: cadastro, horas, escala e turnos abertos | volunteer |
+| `/parceiro/painel` | Painel da empresa: pedido, retorno, pagamentos e recibos | partner |
+| `/parceiro/propostas` | Propostas da empresa: enviar, retirar e pagar | partner |
 
 ## Fluxos principais
 
@@ -288,8 +307,32 @@ e a tabela de larguras das fontes é gerada pelo script do backend para os dois 
 editor quebra a linha exatamente onde o PDF quebra, e um teste confere isso contra números
 calculados pelo backend. Salvar sempre cria a próxima versão; nada é sobrescrito.
 
+Cada pasta tem duas variações, escolhidas no estúdio por um seletor: o certificado que mostra o
+valor e o que leva uma mensagem no lugar dele. Enquanto se desenha, o editor avisa quando a
+variação com valor não tem um texto com `{{valor}}` ou quando a com mensagem tem um. Como todos os
+avisos do estúdio (contraste, QR, código de verificação), ele orienta e não impede salvar: quem
+decide como o certificado sai é a associação.
+
 Quem perdeu o certificado abre `/certificado`, digita o código impresso nele (ou lê o QR, que já
-leva para lá) e vê o certificado na tela, com botões para baixar e imprimir o PDF.
+leva para lá) e vê o certificado na tela. Ali escolhe como quer o documento, com o valor, com a
+mensagem ou os dois, e baixa ou imprime o PDF da escolha (os dois saem no mesmo arquivo, uma página
+cada).
+
+### Voluntariado e parceria
+
+O cadastro de voluntário e o pedido de parceria criam a conta junto com o pedido e já entram com
+ela, levando ao painel onde a análise é acompanhada. Recusado, o painel mostra o motivo e o caminho
+para mandar de novo. Aprovado, o voluntário escolhe os turnos abertos (a vaga é decidida pela API, e
+a coordenação confirma) e vê as horas que a coordenação registra na presença; a empresa propõe
+campanhas, aportes, patrocínios, doação de produtos e voluntariado da equipe. O aporte aceito é pago
+pelo mesmo checkout de qualquer doação, e a tela só leva ao gateway: quem confirma é o webhook, e o
+recibo aparece no painel da empresa depois disso.
+
+### Redes sociais
+
+A página mostra a foto e o texto de cada publicação, e o filtro só oferece as redes que têm o que
+mostrar. O vídeo do YouTube toca na própria página, pelo player sem cookie de rastreamento, que só é
+carregado quando a pessoa pede para assistir. A home traz as quatro publicações mais recentes.
 
 ## Acessibilidade e desempenho
 
@@ -360,7 +403,8 @@ A carga de demonstração cria um usuário por papel, todos com a senha `Somos@2
 | `admin@somosdobem.org.br` | administração | painel geral, financeiro e comunicação |
 | `financeiro@somosdobem.org.br` | financeiro | transações, reconciliação, recibos, doadores e estorno |
 | `comunicacao@somosdobem.org.br` | comunicação | campanhas, eventos e inscritos, produtos, notícias, certificados e mensagens |
-| `voluntario@somosdobem.org.br` | voluntariado | painel próprio com escala, horas e atividades abertas |
+| `voluntario@somosdobem.org.br` | voluntariado | painel próprio com horas, escala e turnos abertos |
+| `parceiro@exemplo.com.br` | empresa parceira | painel da empresa com aporte pago, patrocínio a pagar e propostas |
 
 O script imprime no fim um hash válido e um cancelado para testar a página de verificação de
 recibo. Eles mudam a cada carga.
@@ -432,7 +476,8 @@ guardadas pela API. As fotos fixas das páginas institucionais continuam sendo a
 | Campanha | enviada pelo painel, no formulário da campanha | 16/9 |
 | Notícia | enviada pelo painel, no editor de notícias | 16/9 |
 | Produto | enviada pelo painel, no formulário do produto | 1/1 |
-| Logo de parceiro | `public/parceiros/<slug>.png` | livre, fundo transparente, altura mínima de 96px |
+| Logo de parceiro | endereço em `partners.logo_url`, no banco | livre, fundo transparente, altura mínima de 96px |
+| Publicação das redes | enviada pelo painel, no formulário da publicação | 1/1 |
 | Missão (Quem somos) | `public/imagens/institucional-missao.jpg` | 4/3 |
 | História (Quem somos) | `public/imagens/institucional-historia.jpg` | 4/3 |
 | Retrato de dirigente | `public/imagens/pessoas/<slug>.jpg` | 1/1 |

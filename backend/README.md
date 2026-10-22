@@ -1,9 +1,10 @@
 # Backend da Somos do Bem
 
 API REST da associação **Somos do Bem** (Indaiatuba, SP), desenvolvida para o FIC 2026. É o motor
-que sustenta o site público e o painel da equipe: recebe doações, vende convites e produtos, emite
-recibos verificáveis, publica notícias, desenha certificados e agradece publicamente a quem
-autorizou.
+que sustenta o site público, o painel da equipe e os painéis de voluntários e de empresas parceiras:
+recebe doações, vende convites e produtos, emite recibos verificáveis, publica notícias, desenha
+certificados, coordena o voluntariado, administra a rede de parceiros, traz as redes sociais para o
+site e agradece publicamente a quem autorizou.
 
 O site que consome esta API fica em `../frontend`. A visão geral do projeto está no
 [README da raiz](../README.md).
@@ -35,7 +36,9 @@ Em linguagem direta, a API permite:
 - **Receber contribuições** por PIX, cartão ou boleto, com confirmação automática do pagamento.
 - **Vender convites e produtos** com controle de vagas e de estoque que nunca vende o que não tem.
 - **Emitir recibos** numerados que qualquer pessoa consegue conferir pela internet, sem login.
-- **Desenhar certificados** de agradecimento por campanha ou evento, guardando cada versão.
+- **Desenhar certificados** de agradecimento por campanha ou evento, guardando cada versão, em duas
+  variações: uma que mostra o valor e outra com uma mensagem no lugar dele, para quem contribuiu
+  escolher na segunda via.
 - **Publicar notícias** com rascunho, publicação e arquivamento.
 - **Manter o Mural do Bem**, que mostra o nome de quem pediu para aparecer, sem nunca revelar valores,
   e atender o pedido de quem quer sair dele.
@@ -43,6 +46,13 @@ Em linguagem direta, a API permite:
 - **Receber as mensagens do site** (Fale Conosco, Ouvidoria, Trabalhe Conosco) numa caixa de entrada
   da equipe, com a ouvidoria e as candidaturas restritas à administração.
 - **Guardar as fotos de capa** de campanha, evento, produto e notícia enviadas pelo painel.
+- **Coordenar o voluntariado:** cadastro com conta pelo site, aprovação da coordenação, turnos com
+  vagas, escolha do turno pelo voluntário e presença que vira hora validada.
+- **Administrar a rede de parceiros:** pedido da empresa pelo site, aprovação ou recusa, propostas
+  de campanha, aporte, patrocínio, doação de produtos e voluntariado de equipe, e o pagamento do
+  aporte aceito pelo mesmo checkout de qualquer doação, com recibo no CNPJ da empresa.
+- **Mostrar as redes sociais no site:** as publicações do Instagram, do Facebook e do YouTube da
+  associação, cadastradas pela Comunicação ou importadas da API oficial do Instagram.
 
 ## Stack
 
@@ -134,7 +144,7 @@ verbo HTTP continua carregando a intenção. Conteúdo público é endereçado p
 verificável por `hash`, nunca por um id numérico.
 
 Legenda de acesso: **público** (sem login), **autenticado** (qualquer papel) ou os papéis exigidos
-(`admin`, `finance`, `communication`).
+(`admin`, `finance`, `communication`, `volunteer`, `partner`).
 
 ### Usuário
 
@@ -199,12 +209,12 @@ Legenda de acesso: **público** (sem login), **autenticado** (qualquer papel) ou
 |---|---|---|---|
 | GET | `/receipt/verify/:hash` | público | Confere o recibo contra a corrente de hash |
 | GET | `/receipt/download/:hash` | público | PDF do recibo institucional |
-| GET | `/receipt/certificate/:hash` | público | PDF do certificado de agradecimento |
-| GET | `/receipt/view-certificate/:hash` | público | Dados da segunda via para o site desenhar |
+| GET | `/receipt/certificate/:hash` | público | PDF do certificado; `?variant=amount`, `message` ou `both` (duas páginas) |
+| GET | `/receipt/view-certificate/:hash` | público | As duas variações do certificado, prontas para o site desenhar |
 | GET | `/receipt/list` · `/receipt/:id` | admin, finance | Lista e detalhe |
 | GET | `/certificate/list-folders` | admin, communication | Pastas: padrão, por campanha e por evento |
-| GET | `/certificate/list-designs` | admin, communication | Versões de uma pasta |
-| POST | `/certificate/create-design` | admin, communication | Salva a próxima versão |
+| GET | `/certificate/list-designs` | admin, communication | Versões de uma variação da pasta (`amount` ou `message`) |
+| POST | `/certificate/create-design` | admin, communication | Salva a próxima versão da variação |
 | POST | `/certificate/preview` | admin, communication | Prévia em PDF de um desenho não salvo |
 | GET | `/certificate/preview/:id` | admin, communication | Prévia em PDF de uma versão salva |
 | GET | `/certificate/list-issued` | admin, finance | Certificados emitidos |
@@ -242,6 +252,54 @@ Legenda de acesso: **público** (sem login), **autenticado** (qualquer papel) ou
 | PATCH | `/contact/withdraw-from-wall/:id` | admin, communication | Atende o pedido: tira o nome do mural |
 | POST | `/photo/upload` | admin, communication | Envio de foto de capa crua (PNG ou JPEG) |
 | GET | `/photo/:id` | público | Foto de capa, imutável |
+
+### Parcerias
+
+| Método | Caminho | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/partner/apply` | público | Pedido de parceria; cria a conta da empresa e o pedido em análise |
+| GET | `/partner/list` | público | Rede pública: empresas aprovadas que autorizaram a marca |
+| GET | `/partner/profile` | partner | A empresa logada, a situação do pedido e o retorno da parceria |
+| PATCH | `/partner/resubmit` | partner | Manda de novo um pedido recusado |
+| GET | `/partner/list-applications` | admin, communication | Pedidos de parceria |
+| PATCH | `/partner/review/:id` | admin, communication | Aprova ou recusa (a recusa leva motivo) |
+| POST | `/partner-proposal/create` | partner | Proposta de campanha, aporte, patrocínio, produto ou voluntariado |
+| GET | `/partner-proposal/mine` | partner | Propostas da empresa, com pagamento e recibo |
+| PATCH | `/partner-proposal/withdraw/:id` | partner | Retira uma proposta em análise |
+| POST | `/partner-proposal/pay/:id` | partner | Abre o checkout do aporte ou patrocínio aceito |
+| GET | `/partner-proposal/list` | admin, communication | Propostas de todos os parceiros |
+| PATCH | `/partner-proposal/review/:id` | admin, communication | Aceita ou recusa, sempre com nota |
+
+### Voluntariado
+
+| Método | Caminho | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/volunteer/apply` | público | Cadastro; cria a conta e o cadastro em análise |
+| GET | `/volunteer/profile` | volunteer | Cadastro, horas validadas e próximos turnos |
+| PATCH | `/volunteer/resubmit` | volunteer | Manda de novo um cadastro recusado |
+| GET | `/volunteer/list` | admin, communication | Cadastros, com as horas de cada pessoa |
+| PATCH | `/volunteer/review/:id` | admin, communication | Aprova ou recusa (a recusa leva motivo) |
+| POST | `/volunteer-shift/create` | admin, communication | Abre um turno na escala |
+| GET | `/volunteer-shift/list` | admin, communication | Escala com quem está em cada turno (`upcoming` ou `past`) |
+| PATCH | `/volunteer-shift/cancel/:id` | admin, communication | Cancela um turno que não começou |
+| PATCH | `/volunteer-shift/review-assignment/:id` | admin, communication | Confirma ou dispensa quem se ofereceu |
+| PATCH | `/volunteer-shift/attendance/:id` | admin, communication | Presença (com horas) ou falta, depois do início |
+| GET | `/volunteer-shift/open` | volunteer | Turnos abertos, com vagas livres |
+| GET | `/volunteer-shift/mine` | volunteer | A escala de quem está logado |
+| POST | `/volunteer-shift/join/:id` | volunteer | Entra num turno; a vaga é decidida pelo banco |
+| PATCH | `/volunteer-shift/leave/:id` | volunteer | Sai de um turno que não começou |
+
+### Redes sociais
+
+| Método | Caminho | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/social/list` | público | Publicações visíveis, com a contagem por rede |
+| GET | `/social/list-all` | admin, communication | Todas, inclusive as escondidas |
+| POST | `/social/create` | admin, communication | Traz uma publicação do Instagram, do Facebook ou do YouTube |
+| PUT | `/social/update/:id` | admin, communication | Edição |
+| PATCH | `/social/visibility/:id` | admin, communication | Mostra ou esconde no site |
+| DELETE | `/social/delete/:id` | admin | Apaga do site |
+| POST | `/social/import-instagram` | admin, communication | Importa as publicações recentes pela API do Instagram |
 
 A documentação interativa completa, com corpos, parâmetros e respostas, está no Swagger UI em
 `http://localhost:3333/api-docs`, e a especificação OpenAPI bruta em
@@ -312,8 +370,15 @@ depois, o que torna adulterações detectáveis por qualquer pessoa.
 
 O certificado é uma página livre, como um slide: textos, formas, imagens da biblioteca, a logo e um
 QR code, cada um com posição, tamanho, rotação e opacidade. Os dados do recibo entram como campos
-(`{{nome}}`, `{{valor}}`, `{{titulo}}`, `{{acao}}`, `{{destino}}`, `{{numero}}`, `{{data}}`,
-`{{registro}}`, `{{codigo}}`, `{{associacao}}`, `{{cnpj}}`).
+(`{{nome}}`, `{{valor}}`, `{{titulo}}`, `{{acao}}`, `{{gesto}}`, `{{destino}}`, `{{numero}}`,
+`{{data}}`, `{{registro}}`, `{{codigo}}`, `{{associacao}}`, `{{cnpj}}`).
+
+- **Duas variações por pasta.** A que mostra o valor espera um texto com `{{valor}}`, e a que leva
+  uma mensagem no lugar dele, nenhum; ela usa `{{gesto}}` ("contribuiu com uma doação") no lugar de
+  `{{acao}}`, que termina pedindo o número. O editor avisa quando uma delas foge disso, sem impedir
+  salvar. Cada variação tem a própria numeração de versões,
+  e o recibo grava as duas com que nasceu. Na segunda via, quem contribuiu escolhe uma delas ou as
+  duas, e o PDF sai com uma página por variação.
 
 - **Versões imutáveis por pasta.** Salvar sempre cria a próxima versão da pasta (`default`,
   `campaign:<id>` ou `event:<id>`), protegida por índice único.
@@ -352,6 +417,33 @@ cancela a inscrição junto com a vaga.
   ingresso de outro evento, inscrição cancelada e entrada repetida, com trava na linha da inscrição.
 - **Cancelar é só da inscrição gratuita.** O convite pago sai por estorno, que devolve o dinheiro.
 
+### Parceria, do pedido ao aporte
+
+A empresa pede para entrar na rede pelo site e já cria a conta com que acompanha a análise. A
+associação aprova ou recusa (com motivo, que a empresa lê no painel e pode responder mandando o
+pedido de novo). Aprovada, a empresa sugere campanhas, aportes, patrocínios, doações de produtos e
+dias de voluntariado da equipe. O aporte e o patrocínio aceitos são pagos pelo mesmo caminho de
+qualquer doação: uma transação `pending` com a empresa como doadora, o checkout do Stripe e a
+confirmação pelo webhook, que soma na campanha e emite o recibo no nome e no CNPJ da empresa. Um
+segundo clique em "pagar" devolve o mesmo checkout em vez de abrir outra cobrança. A marca entra na
+rede pública do site só com autorização da empresa.
+
+### Voluntariado
+
+A pessoa se cadastra pelo site com conta própria, e a coordenação aprova ou recusa. Aprovada, ela vê
+os turnos abertos e escolhe de quais participar; a vaga é um `UPDATE` condicional, como a do evento,
+e a participação aguarda a confirmação da coordenação. Depois que o turno começa, a coordenação
+registra presença (com as horas, por padrão a duração do turno) ou falta, e só a presença registrada
+soma no painel do voluntário. Cancelar um turno tira todo mundo dele numa transação só.
+
+### Redes sociais
+
+A Comunicação traz para o site cada publicação com a foto e o texto, ou o endereço do vídeo do
+YouTube, de onde a API tira o id e a capa. Com `INSTAGRAM_ACCESS_TOKEN` configurado, o painel importa
+as publicações recentes pela API oficial do Instagram e copia cada imagem para a tabela de fotos,
+porque o endereço de imagem do Instagram expira. O id da mídia impede que a mesma publicação entre
+duas vezes.
+
 ### Caixa de entrada e retirada do mural
 
 As mensagens do site ficam abertas até alguém da equipe marcá-las como resolvidas, com autor e data.
@@ -367,9 +459,11 @@ certificado continuam valendo.
 
 - **Autenticação stateless** por JWT HS256 com validade de 2 horas; o middleware recarrega o usuário
   do banco a cada requisição, então um papel alterado vale na hora.
-- **Autorização por papel** (`admin`, `finance`, `communication`, `volunteer`): dinheiro responde a
-  `finance`, divulgação a `communication` e ações destrutivas apenas a `admin`. O papel nunca é
-  aceito no corpo da requisição.
+- **Autorização por papel** (`admin`, `finance`, `communication`, `volunteer`, `partner`): dinheiro
+  responde a `finance`, divulgação a `communication` e ações destrutivas apenas a `admin`. O papel
+  nunca é aceito no corpo da requisição: o cadastro de voluntário nasce `volunteer` e o pedido de
+  parceria nasce `partner`. O voluntário e a empresa só alcançam os próprios registros, e o registro
+  de outra pessoa responde 404.
 - **Sem enumeração de usuários:** e-mail inexistente e senha errada recebem a mesma mensagem.
 - **Senhas** com bcrypt, e `hashed_password` é removido de toda resposta.
 - **Webhook autenticado** por HMAC sobre o corpo cru (`express.raw` montado antes do `express.json`).
@@ -432,12 +526,15 @@ O seed cria um usuário por papel, todos com a senha `Somos@2026`:
 | `admin@somosdobem.org.br` | `admin` |
 | `financeiro@somosdobem.org.br` | `finance` |
 | `comunicacao@somosdobem.org.br` | `communication` |
-| `voluntario@somosdobem.org.br` | `volunteer` |
+| `voluntario@somosdobem.org.br` | `volunteer`, com cadastro aprovado, horas e escala |
+| `parceiro@exemplo.com.br` | `partner`, empresa aprovada com aporte pago e propostas |
 
 No fim da execução, o script imprime um hash de recibo válido e um cancelado para testar a
 verificação pública, e um código de ingresso para testar a página `/inscricao/:codigo`. Eles mudam
 a cada carga. A carga também traz inscrições coerentes com os convites confirmados, inscrições nos
-dois eventos gratuitos e mensagens nos quatro canais da caixa de entrada.
+dois eventos gratuitos, mensagens nos quatro canais da caixa de entrada, a rede de parceiros com
+pedidos nas três situações, voluntários e uma escala contada a partir do dia em que a carga roda, e
+publicações das redes sociais.
 
 > O seed executa `TRUNCATE` em todas as tabelas. Nunca o rode contra um banco com dados reais.
 
@@ -457,6 +554,7 @@ ausente ou inválido impede a API de subir, em vez de falhar no meio de uma requ
 | `STRIPE_WEBHOOK_SECRET` | sim | | Segredo de assinatura do webhook (`whsec_...`) |
 | `APP_URL` | não | `http://localhost:3000` | Origem da própria API, impressa no QR do recibo |
 | `WEB_URL` | não | `http://localhost:5173` | Origem do site: retorno do Stripe e QR do certificado |
+| `INSTAGRAM_ACCESS_TOKEN` | não | | Token de longa duração da conta do Instagram; liga a importação das publicações |
 | `MYSQL_*` | sim, para o Docker | | Lidas apenas pelo `docker-compose.yml` para criar o banco |
 
 `APP_URL` e `WEB_URL` não são intercambiáveis. Apontar o retorno do Stripe para `APP_URL` leva o
@@ -496,6 +594,11 @@ APP_URL=http://localhost:3333
 # Origem do site (Vite). O Stripe devolve o navegador para cá depois do pagamento,
 # e o QR do certificado aponta para a página de segunda via deste endereço.
 WEB_URL=http://localhost:5173
+
+# Opcional. Token de longa duração da conta do Instagram da associação (API do Instagram com
+# login do Instagram). Com ele, o painel importa as publicações recentes para a página de redes
+# sociais; sem ele, a Comunicação cadastra cada publicação à mão. O token vale 60 dias.
+# INSTAGRAM_ACCESS_TOKEN=
 ```
 
 ## Comandos

@@ -28,21 +28,31 @@ programa estruturado de voluntariado.
 
 ## A solução
 
-A plataforma organiza esse trabalho em duas frentes que conversam entre si.
+A plataforma organiza esse trabalho em três frentes que conversam entre si.
 
 **Para o público**, um site acessível onde qualquer pessoa pode conhecer a associação, acompanhar
 notícias, apoiar uma campanha, comprar um convite ou um produto e pagar por PIX, cartão ou boleto.
 Depois do pagamento, a pessoa recebe um recibo que pode ser conferido pela internet e um
-certificado de agradecimento que pode ser recuperado a qualquer momento. Quem quiser pode ter o
+certificado de agradecimento que pode ser recuperado a qualquer momento, com o valor, com uma
+mensagem no lugar dele ou os dois, como a pessoa preferir. Quem quiser pode ter o
 nome no Mural do Bem, sem que nenhum valor seja exibido, e pedir para sair dele quando quiser. O
 evento gratuito recebe inscrição pelo site, e todo participante, pagante ou não, ganha um ingresso
 com QR para a entrada. As mensagens do Fale Conosco, da Ouvidoria e do Trabalhe Conosco chegam
-direto à equipe.
+direto à equipe. As publicações da associação no Instagram, no Facebook e no YouTube aparecem
+dentro do próprio site, com os vídeos tocando na página.
 
 **Para a equipe**, um painel em que cada pessoa vê apenas o que é do seu papel. O financeiro
 acompanha transações, reconciliação, recibos e doadores. A comunicação cadastra e edita campanhas,
-eventos, produtos e notícias, com troca de foto, cuida dos certificados, faz o check-in dos
-eventos e responde as mensagens do site. A administração enxerga tudo, inclusive a ouvidoria.
+eventos, produtos e notícias, com troca de foto, cuida dos certificados e das redes sociais no
+site, faz o check-in dos eventos, coordena a escala do voluntariado, analisa os pedidos e as
+propostas de parceria e responde as mensagens do site. A administração enxerga tudo, inclusive a
+ouvidoria.
+
+**Para quem apoia com tempo ou como empresa**, painéis próprios. O voluntário se cadastra pelo site,
+e, aprovado pela coordenação, escolhe os turnos abertos e acompanha as horas validadas. A empresa
+pede para entrar na rede de parceiros e, aprovada, sugere campanhas, aportes, patrocínios, doações
+de produtos e dias de voluntariado da equipe; o aporte aceito é pago pelo mesmo checkout de
+qualquer doação, com recibo verificável no CNPJ da empresa.
 
 A ideia central que torna o sistema simples de manter é esta: **toda entrada de dinheiro é uma
 transação**. Doação, patrocínio, convite e produto passam pelo mesmo caminho, pelo mesmo checkout e
@@ -169,6 +179,7 @@ Todos com a senha `Somos@2026`:
 | `financeiro@somosdobem.org.br` | Financeiro |
 | `comunicacao@somosdobem.org.br` | Comunicação |
 | `voluntario@somosdobem.org.br` | Voluntariado |
+| `parceiro@exemplo.com.br` | Empresa parceira |
 
 Para pagar um checkout de teste, use o cartão `4242 4242 4242 4242`, com qualquer data futura e
 qualquer CVC.
