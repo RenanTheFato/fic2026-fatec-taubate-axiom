@@ -13,6 +13,11 @@ import { certificateRoutes } from "./certificate-routes.js";
 import { photoRoutes } from "./photo-routes.js";
 import { contactRoutes } from "./contact-routes.js";
 import { registrationRoutes } from "./registration-routes.js";
+import { partnerRoutes } from "./partner-routes.js";
+import { partnerProposalRoutes } from "./partner-proposal-routes.js";
+import { volunteerRoutes } from "./volunteer-routes.js";
+import { volunteerShiftRoutes } from "./volunteer-shift-routes.js";
+import { socialRoutes } from "./social-routes.js";
 
 export const routes = Router()
 
@@ -36,3 +41,8 @@ routes.use("/certificate", certificateRoutes)
 routes.use("/photo", photoRoutes)
 routes.use("/contact", contactRoutes)
 routes.use("/registration", registrationRoutes)
+routes.use("/partner", partnerRoutes)
+routes.use("/partner-proposal", partnerProposalRoutes)
+routes.use("/volunteer", volunteerRoutes)
+routes.use("/volunteer-shift", volunteerShiftRoutes)
+routes.use("/social", socialRoutes)

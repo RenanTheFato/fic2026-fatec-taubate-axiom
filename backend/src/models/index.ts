@@ -15,6 +15,12 @@ import { CertificateDesign } from "./certificate-design-model.js";
 import { Photo } from "./photo-model.js";
 import { ContactMessage } from "./contact-message-model.js";
 import { Registration } from "./registration-model.js";
+import { Partner } from "./partner-model.js";
+import { PartnerProposal } from "./partner-proposal-model.js";
+import { Volunteer } from "./volunteer-model.js";
+import { VolunteerShift } from "./volunteer-shift-model.js";
+import { VolunteerAssignment } from "./volunteer-assignment-model.js";
+import { SocialPost } from "./social-post-model.js";
 
 // Identity
 
@@ -79,6 +85,7 @@ CertificateDesign.belongsTo(Event, { foreignKey: "event_id", as: "event" })
 CertificateDesign.belongsTo(User, { foreignKey: "created_by", as: "author" })
 CertificateDesign.hasMany(Receipt, { foreignKey: "certificate_design_id", as: "receipts" })
 Receipt.belongsTo(CertificateDesign, { foreignKey: "certificate_design_id", as: "certificate_design" })
+Receipt.belongsTo(CertificateDesign, { foreignKey: "certificate_message_design_id", as: "certificate_message_design" })
 
 CertificateAsset.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" })
 
@@ -90,5 +97,35 @@ Photo.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" })
 
 ContactMessage.belongsTo(User, { foreignKey: "resolved_by", as: "resolver" })
 
+// Partner
+
+User.hasOne(Partner, { foreignKey: "user_id", as: "partner" })
+Partner.belongsTo(User, { foreignKey: "user_id", as: "user" })
+Partner.belongsTo(User, { foreignKey: "reviewed_by", as: "reviewer" })
+
+Partner.hasMany(PartnerProposal, { foreignKey: "partner_id", as: "proposals" })
+PartnerProposal.belongsTo(Partner, { foreignKey: "partner_id", as: "partner" })
+PartnerProposal.belongsTo(Campaign, { foreignKey: "campaign_id", as: "campaign" })
+PartnerProposal.belongsTo(Event, { foreignKey: "event_id", as: "event" })
+PartnerProposal.belongsTo(Transaction, { foreignKey: "transaction_id", as: "transaction" })
+PartnerProposal.belongsTo(User, { foreignKey: "reviewed_by", as: "reviewer" })
+
+// Volunteer
+
+User.hasOne(Volunteer, { foreignKey: "user_id", as: "volunteer" })
+Volunteer.belongsTo(User, { foreignKey: "user_id", as: "user" })
+Volunteer.belongsTo(User, { foreignKey: "reviewed_by", as: "reviewer" })
+
+VolunteerShift.hasMany(VolunteerAssignment, { foreignKey: "shift_id", as: "assignments" })
+VolunteerAssignment.belongsTo(VolunteerShift, { foreignKey: "shift_id", as: "shift" })
+
+Volunteer.hasMany(VolunteerAssignment, { foreignKey: "volunteer_id", as: "assignments" })
+VolunteerAssignment.belongsTo(Volunteer, { foreignKey: "volunteer_id", as: "volunteer" })
+VolunteerAssignment.belongsTo(User, { foreignKey: "checked_by", as: "checker" })
+
+// Social
+
+SocialPost.belongsTo(User, { foreignKey: "created_by", as: "author" })
+
 // ReceiptSequence não tem associação: é a linha única que serializa a emissão da corrente.
-export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem, Post, CertificateAsset, CertificateDesign, Photo, ContactMessage, Registration }
+export { sequelize, User, Campaign, Donor, Product, Event, Transaction, TransactionAuditLog, Receipt, ReceiptSequence, TransactionItem, Post, CertificateAsset, CertificateDesign, Photo, ContactMessage, Registration, Partner, PartnerProposal, Volunteer, VolunteerShift, VolunteerAssignment, SocialPost }

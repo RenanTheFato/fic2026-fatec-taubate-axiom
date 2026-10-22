@@ -88,6 +88,39 @@ import { listEventRegistrationsDoc } from "../docs/registration/list-event-regis
 import { checkInRegistrationDoc } from "../docs/registration/check-in-registration.doc.js";
 import { undoCheckInDoc } from "../docs/registration/undo-check-in.doc.js";
 import { cancelRegistrationDoc } from "../docs/registration/cancel-registration.doc.js";
+import { applyPartnerDoc } from "../docs/partner/apply-partner.doc.js";
+import { listPartnersDoc } from "../docs/partner/list-partners.doc.js";
+import { getPartnerProfileDoc } from "../docs/partner/get-partner-profile.doc.js";
+import { resubmitPartnerDoc } from "../docs/partner/resubmit-partner.doc.js";
+import { listPartnerApplicationsDoc } from "../docs/partner/list-partner-applications.doc.js";
+import { reviewPartnerDoc } from "../docs/partner/review-partner.doc.js";
+import { createPartnerProposalDoc } from "../docs/partner-proposal/create-partner-proposal.doc.js";
+import { listMyPartnerProposalsDoc } from "../docs/partner-proposal/list-my-partner-proposals.doc.js";
+import { withdrawPartnerProposalDoc } from "../docs/partner-proposal/withdraw-partner-proposal.doc.js";
+import { payPartnerProposalDoc } from "../docs/partner-proposal/pay-partner-proposal.doc.js";
+import { listPartnerProposalsDoc } from "../docs/partner-proposal/list-partner-proposals.doc.js";
+import { reviewPartnerProposalDoc } from "../docs/partner-proposal/review-partner-proposal.doc.js";
+import { applyVolunteerDoc } from "../docs/volunteer/apply-volunteer.doc.js";
+import { getVolunteerProfileDoc } from "../docs/volunteer/get-volunteer-profile.doc.js";
+import { resubmitVolunteerDoc } from "../docs/volunteer/resubmit-volunteer.doc.js";
+import { listVolunteersDoc } from "../docs/volunteer/list-volunteers.doc.js";
+import { reviewVolunteerDoc } from "../docs/volunteer/review-volunteer.doc.js";
+import { createVolunteerShiftDoc } from "../docs/volunteer-shift/create-volunteer-shift.doc.js";
+import { listVolunteerShiftsDoc } from "../docs/volunteer-shift/list-volunteer-shifts.doc.js";
+import { cancelVolunteerShiftDoc } from "../docs/volunteer-shift/cancel-volunteer-shift.doc.js";
+import { reviewVolunteerAssignmentDoc } from "../docs/volunteer-shift/review-volunteer-assignment.doc.js";
+import { recordVolunteerAttendanceDoc } from "../docs/volunteer-shift/record-volunteer-attendance.doc.js";
+import { listOpenVolunteerShiftsDoc } from "../docs/volunteer-shift/list-open-volunteer-shifts.doc.js";
+import { listMyVolunteerShiftsDoc } from "../docs/volunteer-shift/list-my-volunteer-shifts.doc.js";
+import { joinVolunteerShiftDoc } from "../docs/volunteer-shift/join-volunteer-shift.doc.js";
+import { leaveVolunteerShiftDoc } from "../docs/volunteer-shift/leave-volunteer-shift.doc.js";
+import { listSocialPostsDoc } from "../docs/social/list-social-posts.doc.js";
+import { listAllSocialPostsDoc } from "../docs/social/list-all-social-posts.doc.js";
+import { createSocialPostDoc } from "../docs/social/create-social-post.doc.js";
+import { importInstagramPostsDoc } from "../docs/social/import-instagram-posts.doc.js";
+import { updateSocialPostDoc } from "../docs/social/update-social-post.doc.js";
+import { setSocialPostVisibilityDoc } from "../docs/social/set-social-post-visibility.doc.js";
+import { deleteSocialPostDoc } from "../docs/social/delete-social-post.doc.js";
 
 function toOperation<T extends ApiDoc>(doc: T): ZodOpenApiOperationObject {
   return {
@@ -231,5 +264,43 @@ export const openApiDocument = createDocument({
     "/registration/check-in/{code}": { patch: toOperation(checkInRegistrationDoc) },
     "/registration/undo-check-in/{id}": { patch: toOperation(undoCheckInDoc) },
     "/registration/cancel/{id}": { patch: toOperation(cancelRegistrationDoc) },
+
+    "/partner/apply": { post: toOperation(applyPartnerDoc) },
+    "/partner/list": { get: toOperation(listPartnersDoc) },
+    "/partner/profile": { get: toOperation(getPartnerProfileDoc) },
+    "/partner/resubmit": { patch: toOperation(resubmitPartnerDoc) },
+    "/partner/list-applications": { get: toOperation(listPartnerApplicationsDoc) },
+    "/partner/review/{id}": { patch: toOperation(reviewPartnerDoc) },
+
+    "/partner-proposal/create": { post: toOperation(createPartnerProposalDoc) },
+    "/partner-proposal/mine": { get: toOperation(listMyPartnerProposalsDoc) },
+    "/partner-proposal/withdraw/{id}": { patch: toOperation(withdrawPartnerProposalDoc) },
+    "/partner-proposal/pay/{id}": { post: toOperation(payPartnerProposalDoc) },
+    "/partner-proposal/list": { get: toOperation(listPartnerProposalsDoc) },
+    "/partner-proposal/review/{id}": { patch: toOperation(reviewPartnerProposalDoc) },
+
+    "/volunteer/apply": { post: toOperation(applyVolunteerDoc) },
+    "/volunteer/profile": { get: toOperation(getVolunteerProfileDoc) },
+    "/volunteer/resubmit": { patch: toOperation(resubmitVolunteerDoc) },
+    "/volunteer/list": { get: toOperation(listVolunteersDoc) },
+    "/volunteer/review/{id}": { patch: toOperation(reviewVolunteerDoc) },
+
+    "/volunteer-shift/create": { post: toOperation(createVolunteerShiftDoc) },
+    "/volunteer-shift/list": { get: toOperation(listVolunteerShiftsDoc) },
+    "/volunteer-shift/cancel/{id}": { patch: toOperation(cancelVolunteerShiftDoc) },
+    "/volunteer-shift/review-assignment/{id}": { patch: toOperation(reviewVolunteerAssignmentDoc) },
+    "/volunteer-shift/attendance/{id}": { patch: toOperation(recordVolunteerAttendanceDoc) },
+    "/volunteer-shift/open": { get: toOperation(listOpenVolunteerShiftsDoc) },
+    "/volunteer-shift/mine": { get: toOperation(listMyVolunteerShiftsDoc) },
+    "/volunteer-shift/join/{id}": { post: toOperation(joinVolunteerShiftDoc) },
+    "/volunteer-shift/leave/{id}": { patch: toOperation(leaveVolunteerShiftDoc) },
+
+    "/social/list": { get: toOperation(listSocialPostsDoc) },
+    "/social/list-all": { get: toOperation(listAllSocialPostsDoc) },
+    "/social/create": { post: toOperation(createSocialPostDoc) },
+    "/social/import-instagram": { post: toOperation(importInstagramPostsDoc) },
+    "/social/update/{id}": { put: toOperation(updateSocialPostDoc) },
+    "/social/visibility/{id}": { patch: toOperation(setSocialPostVisibilityDoc) },
+    "/social/delete/{id}": { delete: toOperation(deleteSocialPostDoc) },
   },
 })
