@@ -10,6 +10,7 @@ const SITE_LINKS = [
   { label: "Institucional", to: "/institucional" },
   { label: "Parceiros", to: "/parceiros" },
   { label: "Notícias", to: "/noticias" },
+  { label: "Redes sociais", to: "/redes-sociais" },
   { label: "Campanhas", to: "/campanhas" },
   { label: "Eventos", to: "/eventos" },
   { label: "Mural do Bem", to: "/mural-do-bem" },

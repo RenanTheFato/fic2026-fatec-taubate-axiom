@@ -21,10 +21,12 @@ const EventsPage = lazy(() => import("./pages/public/events-page"))
 const NewsPage = lazy(() => import("./pages/public/news-page"))
 const OrderStatusPage = lazy(() => import("./pages/public/order-status-page"))
 const PartnersPage = lazy(() => import("./pages/public/partners-page"))
+const PartnerSignupPage = lazy(() => import("./pages/public/partner-signup-page"))
 const PostPage = lazy(() => import("./pages/public/post-page"))
 const ProductPage = lazy(() => import("./pages/public/product-page"))
 const StorePage = lazy(() => import("./pages/public/store-page"))
 const SubscriptionPage = lazy(() => import("./pages/public/subscription-page"))
+const SocialPage = lazy(() => import("./pages/public/social-page"))
 const SupportersPage = lazy(() => import("./pages/public/supporters-page"))
 const TicketPage = lazy(() => import("./pages/public/ticket-page"))
 const VolunteeringPage = lazy(() => import("./pages/public/volunteering-page"))
@@ -36,6 +38,8 @@ const LoginPage = lazy(() => import("./pages/public/login-page"))
 // projeto e não serve a ninguém de fora da associação.
 const AdminLayout = lazy(() => import("./layouts/admin-layout"))
 const AdminEventsPage = lazy(() => import("./pages/admin/admin-events-page"))
+const AdminPartnerProposalsPage = lazy(() => import("./pages/admin/admin-partner-proposals-page"))
+const AdminVolunteersPage = lazy(() => import("./pages/admin/admin-volunteers-page"))
 const CampaignsPage = lazy(() => import("./pages/admin/campaigns-page"))
 const CertificateEditorPage = lazy(() => import("./pages/admin/certificate-editor-page"))
 const CertificatesPage = lazy(() => import("./pages/admin/certificates-page"))
@@ -43,12 +47,17 @@ const DashboardPage = lazy(() => import("./pages/admin/dashboard-page"))
 const DonorsPage = lazy(() => import("./pages/admin/donors-page"))
 const EventRegistrationsPage = lazy(() => import("./pages/admin/event-registrations-page"))
 const MessagesPage = lazy(() => import("./pages/admin/messages-page"))
+const PartnerRequestsPage = lazy(() => import("./pages/admin/partner-requests-page"))
 const PostsPage = lazy(() => import("./pages/admin/posts-page"))
 const ProductsPage = lazy(() => import("./pages/admin/products-page"))
 const ReceiptsPage = lazy(() => import("./pages/admin/receipts-page"))
 const ReconciliationPage = lazy(() => import("./pages/admin/reconciliation-page"))
+const SocialPostsPage = lazy(() => import("./pages/admin/social-posts-page"))
 const TransactionsPage = lazy(() => import("./pages/admin/transactions-page"))
+const VolunteerScalePage = lazy(() => import("./pages/admin/volunteer-scale-page"))
 const VolunteerPanelPage = lazy(() => import("./pages/volunteer/volunteer-panel-page"))
+const PartnerPanelPage = lazy(() => import("./pages/partner/partner-panel-page"))
+const PartnerProposalsPage = lazy(() => import("./pages/partner/partner-proposals-page"))
 const BoardPage = lazy(() => import("./pages/public/board-page"))
 const ContactPage = lazy(() => import("./pages/public/contact-page"))
 const CouncilPage = lazy(() => import("./pages/public/council-page"))
@@ -198,22 +207,79 @@ export default function App() {
               </RequireRole>
             }
           />
+          <Route
+            path="/admin/comunicacao/redes-sociais"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <SocialPostsPage />
+              </RequireRole>
+            }
+          />
+
+          <Route
+            path="/admin/voluntariado/cadastros"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <AdminVolunteersPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/voluntariado/escala"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <VolunteerScalePage />
+              </RequireRole>
+            }
+          />
+
+          <Route
+            path="/admin/parcerias/pedidos"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <PartnerRequestsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/parcerias/propostas"
+            element={
+              <RequireRole roles={["admin", "communication"]}>
+                <AdminPartnerProposalsPage />
+              </RequireRole>
+            }
+          />
         </Route>
 
         {/* O voluntariado tem a sua própria porta na mesma casca. Ele não entra
             no bloco acima porque as telas de lá são de dinheiro e de catálogo, e
-            um voluntário não alcança nenhuma das duas. A Administração entra nos
-            dois porque é quem demonstra o sistema inteiro. */}
+            um voluntário não alcança nenhuma das duas. O painel é da pessoa: a
+            equipe acompanha o voluntariado pela coordenação, no bloco acima. */}
         <Route
           element={
             <Suspense fallback={<PageFallback />}>
-              <RequireRole roles={["volunteer", "admin"]}>
+              <RequireRole roles={["volunteer"]}>
                 <AdminLayout />
               </RequireRole>
             </Suspense>
           }
         >
           <Route path="/voluntario/painel" element={<VolunteerPanelPage />} />
+        </Route>
+
+        {/* A empresa parceira também entra pela mesma casca, com o próprio
+            menu: o painel do retorno da parceria e as propostas. */}
+        <Route
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <RequireRole roles={["partner"]}>
+                <AdminLayout />
+              </RequireRole>
+            </Suspense>
+          }
+        >
+          <Route path="/parceiro/painel" element={<PartnerPanelPage />} />
+          <Route path="/parceiro/propostas" element={<PartnerProposalsPage />} />
         </Route>
 
         <Route element={<PublicLayout />}>
@@ -231,6 +297,7 @@ export default function App() {
 
           <Route path="/noticias" element={<NewsPage />} />
           <Route path="/noticias/:slug" element={<PostPage />} />
+          <Route path="/redes-sociais" element={<SocialPage />} />
 
           <Route path="/eventos" element={<EventsPage />} />
           <Route path="/eventos/:slug" element={<EventPage />} />
@@ -245,6 +312,7 @@ export default function App() {
           <Route path="/assinaturas/gerenciar/:token" element={<SubscriptionPage />} />
 
           <Route path="/parceiros" element={<PartnersPage />} />
+          <Route path="/seja-parceiro" element={<PartnerSignupPage />} />
           <Route path="/voluntariado" element={<VolunteeringPage />} />
           <Route path="/seja-voluntario" element={<VolunteerSignupPage />} />
 

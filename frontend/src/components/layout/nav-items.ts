@@ -15,7 +15,9 @@ export type NavItem = {
 // existem; o que é leitura e transparência entra no dropdown Institucional,
 // que já é onde o visitante procura esse tipo de conteúdo. Campanhas é um
 // dropdown porque leva junto o Mural do Bem, que agradece quem apoiou todas
-// elas: o mural é a outra metade de uma campanha, e não uma página solta.
+// elas: o mural é a outra metade de uma campanha, e não uma página solta. Pelo
+// mesmo motivo Notícias leva junto as Redes sociais: são as duas portas para o
+// que a associação conta do próprio dia a dia.
 export const MAIN_NAV: NavItem[] = [
   { label: "Home", to: "/" },
   {
@@ -30,7 +32,13 @@ export const MAIN_NAV: NavItem[] = [
       { label: "Meu certificado", to: "/certificado" },
     ],
   },
-  { label: "Notícias", to: "/noticias" },
+  {
+    label: "Notícias",
+    children: [
+      { label: "Todas as notícias", to: "/noticias" },
+      { label: "Redes sociais", to: "/redes-sociais" },
+    ],
+  },
   {
     label: "Campanhas",
     children: [
